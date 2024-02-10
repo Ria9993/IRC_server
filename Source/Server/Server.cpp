@@ -18,7 +18,7 @@ Server& Server::operator=(const Server& rhs)
 	return *this;
 }
 
-Server* Server::CreateServer(short port, const std::string& password)
+Server* Server::CreateServer(const short port, const std::string& password)
 {
 	// Validate port number and password
 	if (port < REGISTED_PORT_MIN || port > REGISTED_PORT_MAX)
@@ -38,7 +38,7 @@ Server* Server::CreateServer(short port, const std::string& password)
 	return new Server(port, password);
 }
 
-Server::Server(short port, const std::string& password)
+Server::Server(const short port, const std::string& password)
 	: mServerPort(port)
 	, mServerPassword(password)
 {
