@@ -24,7 +24,20 @@ int main(int argc, char** argv)
 		const short port = std::atoi(argv[1]); 
 		const char* password = argv[2];
 		Server* server = Server::CreateServer(port, password);
-		
+		if (server == NULL)
+		{
+			std::cerr << "Failed to create server" << std::endl;
+			return 1;
+		}
+
+		if (server->Startup() == false)
+		{
+			std::cerr << "Failed to start server" << std::endl;
+			delete server;
+			return 1;
+		}
+
+		delete server;
 	}
 	catch (std::exception& e) {
 		std::cerr << "[Error]: " << e.what() << std::endl;
