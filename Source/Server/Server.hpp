@@ -6,7 +6,7 @@
 class Server
 {
 public:
-	static Server* CreateServer(short port, const std::string& password);
+	static Server* CreateServer(const short port, const std::string& password);
 	
 	~Server();
 
@@ -14,11 +14,11 @@ public:
 	bool Startup();
 
 private:
-	Server(short port, const std::string& password);
+	Server(const short port, const std::string& password);
 	UNUSED Server(const Server& rhs);
 	UNUSED Server& operator=(const Server& rhs);
 
 private:
-	const short		  mServerPort;
-	const std::string mServerPassword;
+	short		mServerPort;
+	std::string	mServerPassword;
 };
