@@ -19,7 +19,7 @@
 3. 재사용하지 않는 코드일 경우 함수로 작성하는 것을 되도록 지양합니다.
 4. ```const```를 최대한 사용합니다.
 5. 값 수정이 없는 함수는 모두 ```const``` 키워드를 붙입니다.
-6. ```#include <>```이 항상 ```#include ""```보다 위에 작성합니다.
+6. ```#include <>```을 항상 ```#include ""```보다 위에 작성합니다.
 7. ```struct```나 ```class```에서 값 변경을 막기 위해 변수를 ```const```나 ```참조(&)```로 선언하지 않습니다.
 8. ```Magic Number```가 없도록 상수 변수나 ```enum```, ```#define```을 사용합니다.
 9. 한 줄의 식이 너무 길어지거나 복잡한 경우 중간 변수를 적극적으로 활용합니다.
@@ -60,7 +60,8 @@ if (bIsAligned && bIsMarked == false)
 14. ```NULL```이나 널 문자를 조건문으로 확인할 땐 ```if (retAddr == NULL)``` 처럼 명확히 표기합니다.
 15. 지역변수의 선언은 되도록 사용하기 직전에 사용될 코드와 붙여 선언합니다.
 16. 메모리 할당 ```new```에 대해 실패하는 경우는 검사하지 않고 의도적으로 ```Crach```를 발생시킵니다.
-17. ```throw (Exception);```을 사용하지 않습니다.
+17. 특수한 상황이 아니라면 ```예외```를 던지지 않습니다.
+18. ```delete``` 이후 곧바로 ```NULL```을 대입합니다.
 ***
 
 ### Formatting
@@ -84,7 +85,7 @@ if (bIsAligned && bIsMarked == false)
   int y;
   bool bExitFlag;
 ```
-5. 포인터(```*```)나 레퍼런스 기호(```&```)는 자료형에 붙입니다.
+4. 포인터(```*```)나 레퍼런스 기호(```&```)는 자료형에 붙입니다.
 ```cpp
   int& mCount;
   int* mCount;
@@ -95,6 +96,12 @@ Human::Human(std::string name)
   : mHeight(175)
   , mName(name)
   , mAge(20)
+{
+}
+```
+6. ```Iterator```에 대한 증감문은 전위 연산자를 사용합니다.
+```cpp
+for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 {
 }
 ```
