@@ -46,7 +46,7 @@ if (bIsAligned && bIsMarked == false)
       }
       right -= 1;
   
-      // Reserve
+      // Reverse
       for (char* left = str; left < right; left++, right--)
       {
           // swap
