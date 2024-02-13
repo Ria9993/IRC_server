@@ -1,5 +1,10 @@
 # IRC_server
-**IRC server implemented in C++ 98 standard**
+IRC server written by C++98 standard
+***
+
+### Support IRC standard
+- RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
+***
 
 ### Support Compiler
 - `GNUC (GCC, Clang)`
