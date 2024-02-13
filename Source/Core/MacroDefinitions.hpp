@@ -7,6 +7,10 @@
 	#error "This compiler is not supported"
 #endif
 
+/** 
+ *	Implemented as direct interrupt to avoid dirtying the call stack with assert function when debugging.
+ *	And for optimization, change to Assume() in release builds.
+ */
 #if defined(__GNUC__)
 	#if defined(NDEBUG)
 		#define Assert(exp, msg) do { if (!(exp)) __builtin_unreachable(); } while (0)
