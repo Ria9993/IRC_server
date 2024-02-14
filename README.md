@@ -134,6 +134,8 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 12. 함수의 이름은 `동사`로 시작합니다. `(ex. SearchPosition(), GetIndex())`  
 13. `goto`문의 라벨 이름은 대문자로 쓰되 밑줄로 단어를 구분합니다. `(ex. CLEANUP_ARGS:, END_SEARCH_LOOP:)` 
 14. `enum class`의 이름은 `E`로 시작합니다. `(ex. EColor, EState)`
+15. `File Descriptor`이나 `Handle`은 변수 이름 앞에 `h`를 붙입니다. `(ex. hFile, hSocket)`
+16. `Event`는 변수 이름 앞에 `ev`를 붙입니다. `(ex. evShutdown, evComplete)`
 ***
 
 ### Class Organization
