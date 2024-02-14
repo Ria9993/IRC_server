@@ -63,3 +63,10 @@
     #define NOINLINE
 #endif
 
+#if defined(__GNUC__)
+    #define ALIGNAS(x) __attribute__((aligned(x)))
+#elif defined(_MSC_VER)
+    #define ALIGNAS(x) __declspec(align(x))
+#else
+    #error "This compiler is not supported"
+#endif

@@ -1,4 +1,5 @@
 #include <cstring>
+#include <vector>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -15,6 +16,9 @@ namespace irc
 {
     Server::~Server()
     {
+        // TODO:
+        // mhKqueue
+        // mhListenSocket
     }
 
     Server::Server(UNUSED const Server& rhs)
@@ -98,7 +102,7 @@ namespace irc
             return IRC_FAILED_TO_CREATE_KQUEUE;
         }
 
-        struct kevent evListen;
+        kevent_t evListen;
         std::memset(&evListen, 0, sizeof(evListen));
         evListen.ident  = mhListenSocket;
         evListen.filter = EVFILT_READ;
@@ -112,4 +116,82 @@ namespace irc
 
         return IRC_SUCCESS;
     }
+
+    EIrcErrorCode Server::eventLoop()
+    {
+        struct timespec nonBlockingTimeout;
+        nonBlockingTimeout.tv_sec  = 0;
+        nonBlockingTimeout.tv_nsec = 0;
+
+        std::vector<kevent_t> eventRegistQueue;
+        eventRegistQueue.reserve(CLIENT_MAX);
+
+        ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
+        int observedEventNum = 0;
+
+        while (true)
+        {
+            // Receive observed events as non-blocking from kqueue
+            observedEventNum = kevent(mhKqueue, eventRegistQueue.data(), eventRegistQueue.size(), observedEvents, CLIENT_MAX, &nonBlockingTimeout);
+            if (UNLIKELY(observedEventNum == -1))
+            {
+                return IRC_FAILED_TO_WAIT_KEVENT;
+            }
+
+            for (int eventIdx = 0; eventIdx < observedEventNum; eventIdx++)
+            {
+                kevent_t& event = observedEvents[eventIdx];
+                
+                // #1. Error event
+                if (UNLIKELY(event.flags & EV_ERROR))
+                {
+                    if (UNLIKELY(event.ident == mhListenSocket))
+                    {
+                        return IRC_FAILED_TO_OBSERVE_KEVENT;
+                    }
+
+                    // Client socket error
+                    else
+                    {
+                        // TODO: disconnect client
+                    }
+                }
+
+                // #2. Read event
+                else if (event.filter == EVFILT_READ)
+                {
+                    if (event.ident == mhListenSocket)
+                    {
+                        // Accept client
+                        sockaddr_in_t   clientAddr;
+                        socklen_t       clientAddrLen = sizeof(clientAddr);
+                        const int clientSocket = accept(mhListenSocket, reinterpret_cast<sockaddr_t*>(&clientAddr), &clientAddrLen);
+                        if (clientSocket == -1)
+                        {
+                            logErrorCode(IRC_FAILED_TO_ACCEPT_SOCKET);
+                        }
+
+                        // TODO: Add client socket to queue
+                    }
+
+                    // TODO: Client socket
+                    {
+                        // Find source client
+                        // Receive message from client
+                        // Parse and Process message
+                    }
+                }
+
+                // #3. Write event
+                else if (event.filter == EVFILT_WRITE)
+                {
+                    // TODO: Send message to client
+                    
+                }
+            }
+        }
+
+        return IRC_SUCCESS;
+    }
+
 }
