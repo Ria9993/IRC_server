@@ -126,12 +126,14 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 8. 인터페이스의 이름은 `I`로 시작합니다. `(ex. ICharacter)`
 9. 매개변수 값으로 `Null`이 허용된다면 해당 매개변수 이름은 `Opt`로 끝납니다.
 10. 결과를 반환 받을 변수의 주소를 매개변수로 받아 해당 주소로 값을 반환하는 경우에는 매개변수의 이름이 `out`으로 시작합니다.
+    반환하는 값이 포인터일 경우에는 `outPtr`로 시작합니다.
 ```cpp
-  bool TryBlocking(int option, int* outResultSize void** outPtrResult);
+  bool TryBlocking(int option, int* outResultSize, void** outPtrResult);
 ```
 11. 재귀함수는 이름이 `Recursive`로 끝납니다.
 12. 함수의 이름은 `동사`로 시작합니다. `(ex. SearchPosition(), GetIndex())`  
 13. `goto`문의 라벨 이름은 대문자로 쓰되 밑줄로 단어를 구분합니다. `(ex. CLEANUP_ARGS:, END_SEARCH_LOOP:)` 
+14. `enum class`의 이름은 `E`로 시작합니다. `(ex. EColor, EState)`
 ***
 
 ### Class Organization
