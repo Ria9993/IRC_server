@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/MacroDefinitions.hpp"
-#include "Core/AttributeDefinitions.hpp"
-#include "Core/AnsiColorDefinitions.hpp"
+#include "Core/MacroDefines.hpp"
+#include "Core/AttributeDefines.hpp"
+#include "Core/AnsiColorDefines.hpp"
 #include "Core/SAL.hpp"

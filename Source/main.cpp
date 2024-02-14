@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 		{
 			const short port = std::atoi(argv[1]); 
 			const char* password = argv[2];
-			Server* server = Server::CreateServer(port, password);
+			Server::CreateServer(&server, port, password);
 			if (server == NULL)
 			{
 				std::cerr << "Failed to create server" << std::endl;

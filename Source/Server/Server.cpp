@@ -1,24 +1,24 @@
 #include "Server/Server.hpp"
-#include "Network/TcpIpDefinitions.hpp"
+#include "Network/TcpIpDefines.hpp"
 
 Server::~Server()
 {
 }
 
-Server::Server(const Server& rhs)
+Server::Server(UNUSED const Server& rhs)
 	: mServerPort()
 	, mServerPassword()
 {
 	Assert(false);
 }
 
-Server& Server::operator=(const Server& rhs)
+Server& Server::operator=(UNUSED const Server& rhs)
 {
 	Assert(false);
 	return *this;
 }
 
-Server* Server::CreateServer(const short port, const std::string& password)
+Server* Server::CreateServer(const unsigned short port, const std::string& password)
 {
 	// Validate port number and password
 	if (port < REGISTED_PORT_MIN || port > REGISTED_PORT_MAX)

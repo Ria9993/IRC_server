@@ -2,11 +2,12 @@
 
 #include <string>
 #include "Core/Core.hpp"
+#include "Server/ErrorCode.hpp"
 
 class Server
 {
 public:
-	static Server* CreateServer(const short port, const std::string& password);
+	static Server* CreateServer(const unsigned short port, const std::string& password);
 	
 	~Server();
 

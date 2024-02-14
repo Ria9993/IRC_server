@@ -1,0 +1,13 @@
+#pragma once
+
+enum
+{
+	IRC_SUCCESS = 0,
+
+	// CreateServer
+	IRC_INVALID_PORT,
+	IRC_INVALID_PASSWORD,
+	IRC_FAILED_TO_CREATE_SERVER
+
+
+};
