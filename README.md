@@ -8,7 +8,6 @@ IRC server written by C++98 standard
 
 ### Support Compiler
 - `GNUC (GCC, Clang)`
-- `MSVC`
 ***
 
 ## Coding Standard
