@@ -22,21 +22,22 @@ int main(int argc, char** argv)
         {
             const short port = std::atoi(argv[1]); 
             const char* password = argv[2];
-            Server* server = NULL;
-            EIrcErrorCode err = Server::CreateServer(&server, port, password);
+            irc::Server* server = NULL;
+            irc::EIrcErrorCode err = irc::Server::CreateServer(&server, port, password);
             if (server == NULL)
             {
-                std::cerr << GetIrcErrorMessage(err) << std::endl;
+                std::cerr << irc::GetIrcErrorMessage(err) << std::endl;
                 return 1;
             }
     
-            if (server->Startup() == false)
+            if (server->Startup() != irc::IRC_SUCCESS)
             {
                 std::cerr << "Failed to start server" << std::endl;
                 delete server;
                 return 1;
             }
-    
+
+            std::cerr << "Exit main() successfully" << std::endl;
             delete server;
             return 0;
         }
