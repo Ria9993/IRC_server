@@ -2,12 +2,12 @@
 
 #include <string>
 #include "Core/Core.hpp"
-#include "Server/ErrorCode.hpp"
+#include "Server/IrcErrorCode.hpp"
 
 class Server
 {
 public:
-	static Server* CreateServer(const unsigned short port, const std::string& password);
+	static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
 	
 	~Server();
 
