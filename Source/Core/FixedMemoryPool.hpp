@@ -2,8 +2,11 @@
 
 #include "Core/Core.hpp"
 
-// @Note: 	Allocate the class through heap allocation rather than stack allocation.
-//			It's too big to be allocated on the stack.
+/** 
+ * @brief A memory pool that can allocate fixed number of data
+ * @note: 	Allocate the class through heap allocation rather than stack allocation.
+ * 			It's too big to be allocated on the stack.
+*/
 template <typename T, size_t Capacity>
 class FixedMemoryPool
 {
