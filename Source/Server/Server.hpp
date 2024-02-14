@@ -1,25 +1,34 @@
 #pragma once
 
+#include <cstring>
 #include <string>
+#include <vector>
+#include <unistd.h>
+#include <fcntl.h>
+#include <map>
+
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/event.h>
+#include <sys/time.h>
+#include <arpa/inet.h>
 
 #include "Core/Core.hpp"
 #include "Server/IrcErrorCode.hpp"
+#include "Server/Client.hpp"
+#include "Network/SocketTypedef.hpp"
 
 namespace irc
 {
-    typedef struct kevent kevent_t;
-    typedef struct sockaddr sockaddr_t;
-    typedef struct sockaddr_in sockaddr_in_t;
-
     enum Constants {
         SVR_PASS_MIN = 4,
         SVR_PASS_MAX = 32,
-        PAGE_SIZE = 4096,
-        CACHE_LINE_SIZE = 64,
+        
         CLIENT_MAX = 65535,
         CLIENT_TIMEOUT = 60,
-        KEVENT_OBSERVE_MAX = (PAGE_SIZE / sizeof(kevent_t))
+        KEVENT_OBSERVE_MAX = (PAGE_SIZE / sizeof(kevent_t)),
+        CLIENT_RESERVE_MIN = 1024,
+        MESSAGE_LEN_MAX = 512
     };
 
     class Server
@@ -54,6 +63,9 @@ namespace irc
         /* Main event loop */
         EIrcErrorCode eventLoop();
 
+        /* Parse and process the message */
+        void ProcessMessage(Client client, size_t clientIdx, const char* msg, const size_t msgLen);
+
         FORCEINLINE void logErrorCode(EIrcErrorCode errorCode) const
         {
             std::cerr << ANSI_REDB << "[LOG][ERROR]" << GetIrcErrorMessage(errorCode) << std::endl << ANSI_WHT;
@@ -62,7 +74,23 @@ namespace irc
     private:
         short       mServerPort;
         std::string mServerPassword;
-        int         mhKqueue;
+
         int         mhListenSocket;
+        int         mhKqueue;
+        std::vector<kevent_t> mEventRegisterPendingQueue;
+
+        std::vector<Client> mClients;
+        std::map<std::string, size_t> mNicknameToClientIdxMap;
+
+        /**
+         * @brief   Memory pool for message block.
+         * @note    Optimize by setting the chunk size in units of memory page size.
+         */
+        typedef struct MsgBlock {
+            char msg[MESSAGE_LEN_MAX];
+            size_t msgLen;
+        } MsgBlock_t;
+        enum { VariableMemoryPoolBlockSize = sizeof(struct __VariableMemoryPoolBlock<MsgBlock_t>) };
+        VariableMemoryPool<MsgBlock_t, PAGE_SIZE / VariableMemoryPoolBlockSize> mMessagePool;
     };
 }

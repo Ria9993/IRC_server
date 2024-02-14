@@ -44,14 +44,14 @@ int main(int argc, char** argv)
 #ifndef NDEBUG
         catch (std::exception& e)
         {
-            std::cerr << "[Error]: " << e.what() << std::endl;
-            return 1;
+            std::cerr << ANSI_RED << "[Error]: " << e.what() << std::endl << ANSI_WHT;
         }
         catch (...)
         {
-            std::cerr << "[Error] Non-standard exception" << std::endl;
-            return 1;
+            std::cerr << ANSI_RED << "[Error] Non-standard exception" << std::endl << ANSI_WHT;
         }
+        std::cerr << "[Restarting server...]" << std::endl;
+        continue;
 #endif
     }
 

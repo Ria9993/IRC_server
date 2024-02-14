@@ -27,8 +27,8 @@
                                                                                          \
     /* Related kqueue and kevent */                                                      \
     ERROR_CODE_X(IRC_FAILED_TO_CREATE_KQUEUE, 300, "Failed to create kqueue")            \
-    ERROR_CODE_X(IRC_FAILED_TO_ADD_KQUEUE, 301, "Failed to add kqueue")                  \
-    ERROR_CODE_X(IRC_FAILED_TO_DEL_KQUEUE, 302, "Failed to del kqueue")                  \
+    ERROR_CODE_X(IRC_FAILED_TO_ADD_KEVENT, 301, "Failed to add kqueue")                  \
+    ERROR_CODE_X(IRC_FAILED_TO_DEL_KEVENT, 302, "Failed to del kqueue")                  \
     ERROR_CODE_X(IRC_FAILED_TO_WAIT_KEVENT, 303, "Failed to wait kevent")                \
     ERROR_CODE_X(IRC_FAILED_TO_OBSERVE_KEVENT, 304, "Failed to observe kevent")
 

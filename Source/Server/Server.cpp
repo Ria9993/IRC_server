@@ -1,14 +1,3 @@
-#include <cstring>
-#include <vector>
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/event.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
 #include "Server/Server.hpp"
 #include "Network/TcpIpDefines.hpp"
 
@@ -22,7 +11,8 @@ namespace irc
     }
 
     Server::Server(UNUSED const Server& rhs)
-        : mServerPort(), mServerPassword()
+        : mServerPort()
+        , mServerPassword()
     {
         Assert(false);
     }
@@ -60,6 +50,8 @@ namespace irc
         : mServerPort(port)
         , mServerPassword(password)
     {
+        mClients.reserve(CLIENT_RESERVE_MIN);
+        mEventRegisterPendingQueue.reserve(CLIENT_MAX);
     }
 
     EIrcErrorCode Server::Startup()
@@ -111,7 +103,7 @@ namespace irc
         {
             close(mhListenSocket);
             close(mhKqueue);
-            return IRC_FAILED_TO_ADD_KQUEUE;
+            return IRC_FAILED_TO_ADD_KEVENT;
         }
 
         return IRC_SUCCESS;
@@ -123,26 +115,38 @@ namespace irc
         nonBlockingTimeout.tv_sec  = 0;
         nonBlockingTimeout.tv_nsec = 0;
 
-        std::vector<kevent_t> eventRegistQueue;
-        eventRegistQueue.reserve(CLIENT_MAX);
-
         ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
         int observedEventNum = 0;
+
+        std::vector<size_t> clientIndicesWithPendingMsg;
 
         while (true)
         {
             // Receive observed events as non-blocking from kqueue
-            observedEventNum = kevent(mhKqueue, eventRegistQueue.data(), eventRegistQueue.size(), observedEvents, CLIENT_MAX, &nonBlockingTimeout);
+            observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &nonBlockingTimeout);
+            mEventRegisterPendingQueue.clear();
             if (UNLIKELY(observedEventNum == -1))
             {
                 return IRC_FAILED_TO_WAIT_KEVENT;
+            }
+
+            // If there is no event, process the pending messages from the client 
+            if (observedEventNum == 0)
+            {
+                for (size_t i = 0; i < clientIndicesWithPendingMsg.size(); i++)
+                {
+                    const size_t clientIdx = clientIndicesWithPendingMsg[i];
+                    Client& client = mClients[clientIdx];
+                    ProcessMessage(client, clientIdx, client.msgBuf.c_str(), client.msgBuf.size());
+                }
+                continue;
             }
 
             for (int eventIdx = 0; eventIdx < observedEventNum; eventIdx++)
             {
                 kevent_t& event = observedEvents[eventIdx];
                 
-                // #1. Error event
+                // 1. Error event
                 if (UNLIKELY(event.flags & EV_ERROR))
                 {
                     if (UNLIKELY(event.ident == mhListenSocket))
@@ -157,7 +161,7 @@ namespace irc
                     }
                 }
 
-                // #2. Read event
+                // 2. Read event
                 else if (event.filter == EVFILT_READ)
                 {
                     if (event.ident == mhListenSocket)
@@ -166,32 +170,101 @@ namespace irc
                         sockaddr_in_t   clientAddr;
                         socklen_t       clientAddrLen = sizeof(clientAddr);
                         const int clientSocket = accept(mhListenSocket, reinterpret_cast<sockaddr_t*>(&clientAddr), &clientAddrLen);
-                        if (clientSocket == -1)
+                        if (UNLIKELY(clientSocket == -1))
                         {
                             logErrorCode(IRC_FAILED_TO_ACCEPT_SOCKET);
+                            continue;
                         }
 
-                        // TODO: Add client socket to queue
+                        // Set client socket as non-blocking
+                        if (UNLIKELY(fcntl(clientSocket, F_SETFL, O_NONBLOCK) == -1))
+                        {
+                            logErrorCode(IRC_FAILED_TO_SETSOCKOPT_SOCKET);
+                            close(clientSocket);
+                            continue;
+                        }
+
+                        // Add client to the client list
+                        Client newClient;
+                        const size_t clientIdx = mClients.size();
+                        newClient.hSocket = clientSocket;
+                        newClient.lastActiveTime = std::time(NULL);
+                        mClients.push_back(Client());
+
+                        // Register client socket to kqueue.
+                        // Pass the index to identify the client in the udata field.
+                        kevent_t evClient;
+                        std::memset(&evClient, 0, sizeof(evClient));
+                        evClient.ident  = clientSocket;
+                        evClient.filter = EVFILT_READ;
+                        evClient.flags  = EV_ADD;
+                        evClient.udata  = reinterpret_cast<void*>(clientIdx);
+                        if (UNLIKELY(kevent(mhKqueue, &evClient, 1, NULL, 0, NULL) == -1))
+                        {
+                            logErrorCode(IRC_FAILED_TO_ADD_KEVENT);
+                            continue;
+                        }
                     }
 
-                    // TODO: Client socket
+                    // Client socket
+                    // Append received message to the client's message buffer
+                    else
                     {
-                        // Find source client
+                        // Find client index from udata
+                        const size_t clientIdx = reinterpret_cast<size_t>(event.udata);
+                        Client& client = mClients[clientIdx];
+                        Assert(clientIdx < mClients.size());
+
                         // Receive message from client
-                        // Parse and Process message
+                        char recvBuffer[MESSAGE_LEN_MAX];
+                        const int recvSize = recv(client.hSocket, recvBuffer, MESSAGE_LEN_MAX, 0);
+                        if (UNLIKELY(recvSize == -1))
+                        {
+                            logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
+                            // TODO: Disconnect client
+                            continue;
+                        }
+                        // Client disconnected
+                        else if (recvSize == 0)
+                        {
+                            // TODO: Disconnect client
+                            continue;
+                        }
+
+                        // Append received message to the client's message buffer,
+                        // and add the client to the pending queue.
+                        // This is then processed asynchronously in the main loop.
+                        client.msgBuf.append(recvBuffer, recvSize);
+                        clientIndicesWithPendingMsg.push_back(clientIdx);
+
+                        // Pending register the client socket to kqueue.
+                        // This is necessary because the EVFILT_READ event is automatically removed after the event is triggered.
+                        // This is also added to the pending queue and registered again in next loop.
+                        kevent_t evClient;
+                        std::memset(&evClient, 0, sizeof(evClient));
+                        evClient.ident  = client.hSocket;
+                        evClient.filter = EVFILT_READ;
+                        evClient.flags  = EV_ADD;
+                        evClient.udata  = reinterpret_cast<void*>(clientIdx);
+                        mEventRegisterPendingQueue.push_back(evClient);
                     }
                 }
 
-                // #3. Write event
+                // 3. Write event
                 else if (event.filter == EVFILT_WRITE)
                 {
                     // TODO: Send message to client
-                    
+                    // Is it need to do send as a kqueue event?
                 }
             }
         }
 
         return IRC_SUCCESS;
+    }
+
+    void Server::ProcessMessage(Client client, size_t clientIdx, const char* msg, const size_t msgLen)
+    {
+        // TODO: Implement
     }
 
 }
