@@ -71,7 +71,7 @@ if (bIsAligned && bIsMarked == false)
 
 ### Formatting
 0. 들여쓰기는 `Tab`이 아닌 `Space`를 사용합니다. (4칸) 
-1. 중괄호를 열고 닫을 때는 언제나 새로운 줄에 작성합니다.
+1. 중괄호를 열고 닫을 때는 언제나 새로운 줄에 작성합니다. (`struct`, `enum` 예외)
 ```cpp
   while (true)
   {
