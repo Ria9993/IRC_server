@@ -5,13 +5,13 @@
 #include "Core/Core.hpp"
 #include "Core/FixedMemoryPool.hpp"
 
-/**
- * @brief A block of data in the memory pool
+/** A block of data in the memory pool
  * 
- * @note  VariableMemoryPool uses this structure to manage the data
- * 		  - poolIdx: Index of the pool that allocated this block
- * 		  - data: Data to allocate
- * 		  It can be optimized by adjusting the byte size of the chunk to the page size.
+ * @details  VariableMemoryPool uses this structure to manage the data
+ * 		  	- poolIdx: Index of the pool that allocated this block
+ * 		  	- data: Data to allocate
+ * 
+ * @note	It can be optimized by adjusting the byte size of the chunk to the page size.
 */
 template <typename T>
 struct __VariableMemoryPoolBlock
@@ -20,8 +20,7 @@ struct __VariableMemoryPoolBlock
 	T data;
 };
 
-/**
- * @brief A memory pool that can allocate variable number of data
+/** A memory pool that can allocate variable number of data
  * 
  * @note  The variableMemoryPool Implementated using multiple FixedMemoryPool
  * 
@@ -56,14 +55,14 @@ public:
 		{
 			if (!mPools[i]->IsCapacityFull())
 			{
-				__VariableMemoryPoolBlock* block = mPools[i]->Allocate();
+				Block* block = mPools[i]->Allocate();
 				block->poolIdx = i;
 				return &block->data;
 			}
 		}
 
 		// Create new pool if all pools are full
-		FixedMemoryPool<void, ChunkSize>* newPool = new FixedMemoryPool<void, ChunkSize>();
+		FixedMemoryPool<Block, ChunkSize>* newPool = new FixedMemoryPool<Block, ChunkSize>();
 		mPools.push_back(newPool);
 
 		Block* block = newPool->Allocate();
@@ -81,5 +80,5 @@ public:
 	}
 
 private:
-	std::vector<FixedMemoryPool<void, ChunkSize>*> mPools;
+	std::vector<FixedMemoryPool<Block, ChunkSize>*> mPools;
 };

@@ -31,11 +31,15 @@ namespace irc
         MESSAGE_LEN_MAX = 512
     };
 
+    typedef struct MsgBlock {
+        char msg[MESSAGE_LEN_MAX];
+        size_t msgLen;
+    } MsgBlock_t;
+
     class Server
     {
     public:
-        /**
-         * @brief Validate the port number and password and create the server instance.
+        /** Create the server instance. Accompanied by port and password validation.
          * 
          * @param outPtrServer      [out] Pointer to receive the server instance.
          * @param port              Port number to listen.
@@ -44,31 +48,35 @@ namespace irc
          */
         static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
 
-        /**
-         * @brief   Initialize the kqueue and listen socket, etc resources.
+        /** Initialize and start the server.
+         *  
+         * @details the kqueue and listen socket, etc resources.
          *          register the listen socket to the kqueue And then call the eventLoop() to start server.
          * 
+         * @warning All non-static methods must be called after this function is called.
          * @note    Blocking until the server is terminated.
-         *          All non-static methods must be called after this function is called.
+         * @return  EIrcErrorCode    Error code.
          */
         EIrcErrorCode Startup();
 
         ~Server();
 
     private:
+        /** Do not use directly. Use CreateServer() instead. */
         Server(const unsigned short port, const std::string& password);
+        
         UNUSED Server(const Server& rhs);
         UNUSED Server &operator=(const Server& rhs);
 
-        /* Main event loop */
+        /** Main event loop */
         EIrcErrorCode eventLoop();
 
-        /* Parse and process the message */
-        void ProcessMessage(Client client, size_t clientIdx, const char* msg, const size_t msgLen);
+        /** Parse and process the message */
+        void ProcessMessage(size_t clientIdx);
 
         FORCEINLINE void logErrorCode(EIrcErrorCode errorCode) const
         {
-            std::cerr << ANSI_REDB << "[LOG][ERROR]" << GetIrcErrorMessage(errorCode) << std::endl << ANSI_WHT;
+            std::cerr << ANSI_BRED << "[LOG][ERROR]" << GetIrcErrorMessage(errorCode) << std::endl << ANSI_RESET;
         }
 
     private:
@@ -79,18 +87,16 @@ namespace irc
         int         mhKqueue;
         std::vector<kevent_t> mEventRegisterPendingQueue;
 
-        std::vector<Client> mClients;
+        std::vector<ClientControlBlock_t> mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
 
-        /**
-         * @brief   Memory pool for message block.
-         * @note    Optimize by setting the chunk size in units of memory page size.
-         */
-        typedef struct MsgBlock {
-            char msg[MESSAGE_LEN_MAX];
-            size_t msgLen;
-        } MsgBlock_t;
+        /** Memory pool for message blocks.
+         * 
+         * Rather than having individual message buffers for each client,
+         * they allocate and use the message blocks from this memory pool.
+         * 
+         * Optimized by setting the chunk size in units of memory page size. */
         enum { VariableMemoryPoolBlockSize = sizeof(struct __VariableMemoryPoolBlock<MsgBlock_t>) };
-        VariableMemoryPool<MsgBlock_t, PAGE_SIZE / VariableMemoryPoolBlockSize> mMessagePool;
+        VariableMemoryPool<MsgBlock_t, PAGE_SIZE / VariableMemoryPoolBlockSize> mMsgBlockPool;
     };
 }

@@ -2,8 +2,8 @@
 
 #include "Core/Core.hpp"
 
-/** 
- * @brief A memory pool that can allocate fixed number of data
+/** A memory pool that can allocate fixed number of data
+ * 
  * @note: 	Allocate the class through heap allocation rather than stack allocation.
  * 			It's too big to be allocated on the stack.
 */

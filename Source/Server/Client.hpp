@@ -6,9 +6,12 @@
 #include "Core/Core.hpp"
 #include "Network/SocketTypedef.hpp"
 
+
 namespace irc
 {
-	typedef struct _Client
+	typedef struct MsgBlock MsgBlock_t;
+
+	typedef struct _ClientControlBlock
 	{
 		int hSocket;
 		sockaddr_in_t addr;
@@ -18,24 +21,29 @@ namespace irc
 		std::string realname;
 		std::string hostname;
 
-		time_t lastActiveTime;
-		bool bExpired;
 		bool bRegistered;
 
-		std::string msgBuf;
+		time_t lastActiveTime;
+		bool bExpired;
 
-		FORCEINLINE _Client()
+		/** Queue of received messages pending to be processed
+		 *  
+		 * At the end of processing,
+		 * it should be returned to the memory pool it was allocated from */
+		std::vector<MsgBlock_t*> msgBlockPendingQueue;
+
+		FORCEINLINE _ClientControlBlock()
 			: hSocket(-1)
 			, addr()
 			, nickname()
 			, username()
 			, realname()
 			, hostname()
+			, bRegistered(false)
 			, lastActiveTime(0)
 			, bExpired(false)
-			, bRegistered(false)
-			, msgBuf()
+			, msgBlockPendingQueue()
 		{
 		}
-	} Client;
+	} ClientControlBlock_t;
 }

@@ -120,6 +120,7 @@ namespace irc
 
         std::vector<size_t> clientIndicesWithPendingMsg;
 
+
         while (true)
         {
             // Receive observed events as non-blocking from kqueue
@@ -136,12 +137,13 @@ namespace irc
                 for (size_t i = 0; i < clientIndicesWithPendingMsg.size(); i++)
                 {
                     const size_t clientIdx = clientIndicesWithPendingMsg[i];
-                    Client& client = mClients[clientIdx];
-                    ProcessMessage(client, clientIdx, client.msgBuf.c_str(), client.msgBuf.size());
+                    ProcessMessage(clientIdx);
                 }
                 continue;
             }
 
+            // Process observed events
+            const time_t currentTickServerTime = std::time(NULL);
             for (int eventIdx = 0; eventIdx < observedEventNum; eventIdx++)
             {
                 kevent_t& event = observedEvents[eventIdx];
@@ -149,7 +151,7 @@ namespace irc
                 // 1. Error event
                 if (UNLIKELY(event.flags & EV_ERROR))
                 {
-                    if (UNLIKELY(event.ident == mhListenSocket))
+                    if (UNLIKELY(static_cast<int>(event.ident) == mhListenSocket))
                     {
                         return IRC_FAILED_TO_OBSERVE_KEVENT;
                     }
@@ -164,7 +166,7 @@ namespace irc
                 // 2. Read event
                 else if (event.filter == EVFILT_READ)
                 {
-                    if (event.ident == mhListenSocket)
+                    if (static_cast<int>(event.ident) == mhListenSocket)
                     {
                         // Accept client
                         sockaddr_in_t   clientAddr;
@@ -173,7 +175,7 @@ namespace irc
                         if (UNLIKELY(clientSocket == -1))
                         {
                             logErrorCode(IRC_FAILED_TO_ACCEPT_SOCKET);
-                            continue;
+                            goto CONTINUE_NEXT_EVENT_LOOP;
                         }
 
                         // Set client socket as non-blocking
@@ -181,15 +183,15 @@ namespace irc
                         {
                             logErrorCode(IRC_FAILED_TO_SETSOCKOPT_SOCKET);
                             close(clientSocket);
-                            continue;
+                            goto CONTINUE_NEXT_EVENT_LOOP;
                         }
 
                         // Add client to the client list
-                        Client newClient;
+                        ClientControlBlock_t newClient;
                         const size_t clientIdx = mClients.size();
                         newClient.hSocket = clientSocket;
-                        newClient.lastActiveTime = std::time(NULL);
-                        mClients.push_back(Client());
+                        newClient.lastActiveTime = currentTickServerTime;
+                        mClients.push_back(newClient);
 
                         // Register client socket to kqueue.
                         // Pass the index to identify the client in the udata field.
@@ -212,30 +214,53 @@ namespace irc
                     {
                         // Find client index from udata
                         const size_t clientIdx = reinterpret_cast<size_t>(event.udata);
-                        Client& client = mClients[clientIdx];
+                        ClientControlBlock_t& client = mClients[clientIdx];
                         Assert(clientIdx < mClients.size());
 
-                        // Receive message from client
-                        char recvBuffer[MESSAGE_LEN_MAX];
-                        const int recvSize = recv(client.hSocket, recvBuffer, MESSAGE_LEN_MAX, 0);
-                        if (UNLIKELY(recvSize == -1))
-                        {
-                            logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                            // TODO: Disconnect client
-                            continue;
-                        }
+                        // Receive up to [MESSAGE_LEN_MAX] bytes in the MsgBlock allocated by the mMesssagePool
+                        // And add them to the client's message pending queue.
+                        // It is processed asynchronously in the main loop.
+                        int nTotalRecvBytes = 0;
+                        int nRecvBytes;
+                        do {
+                            MsgBlock_t* newRecvMsgBlock = mMsgBlockPool.Allocate();
+                            STATIC_ASSERT(sizeof(newRecvMsgBlock->msg) == MESSAGE_LEN_MAX);
+                            nRecvBytes = recv(client.hSocket, newRecvMsgBlock->msg, MESSAGE_LEN_MAX, 0);
+                            if (UNLIKELY(nRecvBytes == -1))
+                            {
+                                logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
+                                mMsgBlockPool.Deallocate(newRecvMsgBlock);
+
+                                // TODO: Disconnect client
+                                
+                                goto CONTINUE_NEXT_EVENT_LOOP;
+                            }
+                            else if (nRecvBytes == 0)
+                            {
+                                mMsgBlockPool.Deallocate(newRecvMsgBlock);
+                                break;
+                            }
+
+                            // Append received message to the client's message buffer
+                            newRecvMsgBlock->msgLen = nRecvBytes;
+                            client.msgBlockPendingQueue.push_back(newRecvMsgBlock);
+
+                            nTotalRecvBytes += nRecvBytes;
+
+                        } while (nRecvBytes == MESSAGE_LEN_MAX);
+
                         // Client disconnected
-                        else if (recvSize == 0)
+                        if (nTotalRecvBytes == 0)
                         {
                             // TODO: Disconnect client
-                            continue;
+                            goto CONTINUE_NEXT_EVENT_LOOP;
                         }
 
-                        // Append received message to the client's message buffer,
-                        // and add the client to the pending queue.
+                        // Add the client index to the message processing pending queue.
                         // This is then processed asynchronously in the main loop.
-                        client.msgBuf.append(recvBuffer, recvSize);
                         clientIndicesWithPendingMsg.push_back(clientIdx);
+
+                        client.lastActiveTime = currentTickServerTime;
 
                         // Pending register the client socket to kqueue.
                         // This is necessary because the EVFILT_READ event is automatically removed after the event is triggered.
@@ -256,14 +281,20 @@ namespace irc
                     // TODO: Send message to client
                     // Is it need to do send as a kqueue event?
                 }
-            }
-        }
 
+            CONTINUE_NEXT_EVENT_LOOP:;
+
+            } // for (int eventIdx = 0; eventIdx < observedEventNum; eventIdx++)
+
+        } // while (true)
+
+        Assert(false);
         return IRC_SUCCESS;
     }
 
-    void Server::ProcessMessage(Client client, size_t clientIdx, const char* msg, const size_t msgLen)
+    void Server::ProcessMessage(size_t clientIdx)
     {
+        (void)clientIdx;
         // TODO: Implement
     }
 

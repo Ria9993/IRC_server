@@ -38,3 +38,5 @@
 #else
     #define Assume(x)
 #endif
+
+#define STATIC_ASSERT(exp) UNUSED typedef char static_assertion_[(exp) ? 1 : -1]
