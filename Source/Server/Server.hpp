@@ -95,8 +95,9 @@ namespace irc
          * Rather than having individual message buffers for each client,
          * they allocate and use the message blocks from this memory pool.
          * 
-         * Optimized by setting the chunk size in units of memory page size. */
-        enum { VariableMemoryPoolBlockSize = sizeof(struct __VariableMemoryPoolBlock<MsgBlock_t>) };
-        VariableMemoryPool<MsgBlock_t, PAGE_SIZE / VariableMemoryPoolBlockSize> mMsgBlockPool;
+         * Optimized by setting the chunk size to match memory page size. */
+        enum { MsgBlockMemoryPoolBlockSize = sizeof(struct __VariableMemoryPoolBlock<MsgBlock_t>) };
+        enum { MsgBlockMemoryPoolChunkSize = PAGE_SIZE / MsgBlockMemoryPoolBlockSize };
+        VariableMemoryPool<MsgBlock_t, MsgBlockMemoryPoolChunkSize> mMsgBlockPool;
     };
 }
