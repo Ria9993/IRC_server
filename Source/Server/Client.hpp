@@ -28,8 +28,7 @@ namespace irc
 
         /** Queue of received messages pending to be processed
          *  
-         * At the end of processing,
-         * it should be returned to the memory pool it was allocated from */
+         * It should be deallocated and returned to the memory pool after processing. */
         std::vector<MsgBlock_t*> msgBlockPendingQueue;
 
         FORCEINLINE _ClientControlBlock()
