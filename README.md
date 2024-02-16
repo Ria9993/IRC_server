@@ -40,9 +40,9 @@ IRC server written by C++98 standard
 ***
 
 ### Maintenance
-1. `Assert`를 최대한 사용합니다.
+1. Precondition에 가정하여 작성하는 코드라면 `Assert` 및 `STATIC_ASSERT`를 모든 곳에 사용합니다.
 
-2. 표준 `assert` 대신 별도로 구현한 `Assert(exp)`, `Assert(exp, msg)`를 사용합니다.
+2. 표준 `assert`와 `static_assert` 대신 별도로 구현한 `Assert(exp)`, `STATIC_ASSERT(exp)`를 사용합니다.
 
 3. 재사용하지 않는 코드일 경우 함수로 작성하는 것을 되도록 지양합니다.
 
@@ -201,7 +201,7 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 
 ### Class Organization
 1. 클래스 멤버의 배치 순서는 다음을 따릅니다.
-  ```
+  ```cpp
   {
      friend      <Class>
 
@@ -216,6 +216,63 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 
 2. 모든 멤버변수는 `public`이 아닌 `protected`나 `private`입니다.
 ***
+
+### Comment / Documentation
+해당 프로젝트는 `doxygen`을 사용하여 문서화합니다.  
+
+1. 외부에 노출되는 함수나 클래스, 변수에 대한 주석은 `doxygen`을 사용하여 작성합니다.  
+```cpp
+  /** This is a brief description of the function.
+   * 
+   * @details This is a detailed description of the function.
+   * 
+   * @param   param1 Description of param1.
+   * @param   param2 Description of param2.
+   * 
+   * @note    This is a note.
+   * @warning This is a warning.
+   * @todo    This is a todo.
+   * @return  Description of the return value.
+   */
+  int Function(int param1, int param2);
+```
+
+2. 간단한 함수나 변수의 선언에 대한 주석은 `/**`, `*/`를 사용하여 작성합니다.
+```cpp
+  /** 
+   * Parse the message and process it.
+   * At the end of processing, deallocate the message to the memory pool it was allocated. 
+   */
+  bool ProcessMessage(int clientIdx);
+
+  /** The number of elements in the array. */
+  int mCount;
+
+  /** Queue of received messages pending to be processed
+   *  
+   * At the end of processing,
+   * it should be returned to the memory pool it was allocated from */
+  std::vector<MsgBlock_t*> msgBlockPendingQueue;
+```
+
+3. 구현 내부에 대한 주석은 기본적으로 `//`를 사용하여 작성합니다.  
+   주석 내용이 길어질 경우 `/**`, `*/`를 사용하여 작성합니다.
+```cpp
+  // Receive up to [MESSAGE_LEN_MAX] bytes in the MsgBlock allocated by the mMesssagePool
+  // And add them to the client's message pending queue.
+  // It is processed asynchronously in the main loop.
+  int nTotalRecvBytes = 0;
+  int nRecvBytes;
+  do {
+      MsgBlock_t* newRecvMsgBlock = mMsgBlockPool.Allocate();
+      STATIC_ASSERT(sizeof(newRecvMsgBlock->msg) == MESSAGE_LEN_MAX);
+      nRecvBytes = recv(client.hSocket, newRecvMsgBlock->msg, MESSAGE_LEN_MAX, 0);
+```
+
+4. `//<`는 해당 줄의 주석이 다음 줄의 코드에 대한 주석임을 나타냅니다.
+```cpp
+  int x; //< This is a comment.
+```
 
 ### Optimization (Optional)
 1. `switch`문의 `default`에 도달할 일이 없다면 `Assume(0)`을 기입하여 컴파일러 최적화 힌트를 제공합니다.
