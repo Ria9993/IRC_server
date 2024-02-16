@@ -27,6 +27,7 @@ namespace irc
             sMemoryPool.Deallocate(reinterpret_cast<MsgBlock_t*>(ptr));
         }
 
+    private:
         /** Unavailable by memory pool implementation */  
         UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
 
