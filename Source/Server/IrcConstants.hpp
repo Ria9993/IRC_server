@@ -5,7 +5,7 @@
 
 namespace irc
 {
-	enum Constants {
+    enum Constants {
         SVR_PASS_MIN = 4,
         SVR_PASS_MAX = 32,
         

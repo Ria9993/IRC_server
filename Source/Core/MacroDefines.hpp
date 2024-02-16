@@ -8,8 +8,8 @@
 #endif
 
 /** 
- *	Implemented as direct interrupt to avoid dirtying the call stack with assert function when debugging.
- *	And for optimization, change to Assume() in release builds.
+ *  Implemented as direct interrupt to avoid dirtying the call stack with assert function when debugging.
+ *  And for optimization, change to Assume() in release builds.
  */
 #if defined(__GNUC__)
     #if defined(NDEBUG)

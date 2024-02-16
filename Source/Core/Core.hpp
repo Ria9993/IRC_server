@@ -2,8 +2,8 @@
 
 enum GLOBAL_CONSTANTS {
     CACHE_LINE_SIZE = 64,
-	PAGE_SIZE = 4096,
-	QUAD_PAGE_SIZE = PAGE_SIZE * 4
+    PAGE_SIZE = 4096,
+    QUAD_PAGE_SIZE = PAGE_SIZE * 4
 };
 
 #include "Core/MacroDefines.hpp"

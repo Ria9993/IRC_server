@@ -2,7 +2,7 @@
 #include "Core/Core.hpp"
 #include "Server/Server.hpp"
 
-// Usage :	 ./<executable> <port> <password>
+// Usage :   ./<executable> <port> <password>
 int main(int argc, char** argv)
 {
     // Invalid number of arguments
