@@ -8,7 +8,7 @@
 /** A block of data in the memory pool
  * 
  * @details  VariableMemoryPool uses this structure to manage the data
- *          - poolIdx: Index of the pool that allocated this block
+ *          - chunkIdx: Index of the pool that allocated this block
  *          - data: Data to allocate
  * 
  * @note    It can be optimized by adjusting the byte size of the chunk to the page size.
@@ -19,7 +19,7 @@
 template <typename T>
 struct __VariableMemoryPoolBlock
 {
-    size_t poolIdx;
+    size_t chunkIdx;
     T data;
 };
 #define VARIABLE_MEMORY_POOL_BLOCK_SIZE(DATA_TYPE) (sizeof(struct __VariableMemoryPoolBlock<DATA_TYPE>))
@@ -63,7 +63,7 @@ public:
             if (!mPools[i]->IsCapacityFull())
             {
                 Block* block = mPools[i]->Allocate();
-                block->poolIdx = i;
+                block->chunkIdx = i;
                 return &block->data;
             }
         }
@@ -73,7 +73,7 @@ public:
         mPools.push_back(newPool);
 
         Block* block = newPool->Allocate();
-        block->poolIdx = mPools.size() - 1;
+        block->chunkIdx = mPools.size() - 1;
         return &block->data;
     }
 
@@ -87,7 +87,7 @@ public:
             return;
         
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
-        mPools[block->poolIdx]->Deallocate(block);
+        mPools[block->chunkIdx]->Deallocate(block);
     }
 
 private:
