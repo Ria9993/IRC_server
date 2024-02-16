@@ -166,6 +166,7 @@ namespace irc
                 // 2. Read event
                 else if (event.filter == EVFILT_READ)
                 {
+                    // Connection request from client
                     if (static_cast<int>(event.ident) == mhListenSocket)
                     {
                         // Accept client
@@ -198,7 +199,7 @@ namespace irc
                         kevent_t evClient;
                         std::memset(&evClient, 0, sizeof(evClient));
                         evClient.ident  = clientSocket;
-                        evClient.filter = EVFILT_READ;
+                        evClient.filter = EVFILT_READ | EVFILT_WRITE;
                         evClient.flags  = EV_ADD;
                         evClient.udata  = reinterpret_cast<void*>(clientIdx);
                         if (UNLIKELY(kevent(mhKqueue, &evClient, 1, NULL, 0, NULL) == -1))
@@ -208,8 +209,7 @@ namespace irc
                         }
                     }
 
-                    // Client socket
-                    // Append received message to the client's message buffer
+                    // Receive message from client
                     else
                     {
                         // Find client index from udata
@@ -223,13 +223,13 @@ namespace irc
                         int nTotalRecvBytes = 0;
                         int nRecvBytes;
                         do {
-                            MsgBlock_t* newRecvMsgBlock = mMsgBlockPool.Allocate();
+                            MsgBlock_t* newRecvMsgBlock = new MsgBlock_t();
                             STATIC_ASSERT(sizeof(newRecvMsgBlock->msg) == MESSAGE_LEN_MAX);
                             nRecvBytes = recv(client.hSocket, newRecvMsgBlock->msg, MESSAGE_LEN_MAX, 0);
                             if (UNLIKELY(nRecvBytes == -1))
                             {
                                 logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                                mMsgBlockPool.Deallocate(newRecvMsgBlock);
+                                delete newRecvMsgBlock;
 
                                 // TODO: Disconnect client
                                 
@@ -237,11 +237,11 @@ namespace irc
                             }
                             else if (nRecvBytes == 0)
                             {
-                                mMsgBlockPool.Deallocate(newRecvMsgBlock);
+                                delete newRecvMsgBlock;
                                 break;
                             }
 
-                            // Append received message to the client's message buffer
+                            // Append the message block to the client's queue
                             newRecvMsgBlock->msgLen = nRecvBytes;
                             client.msgBlockPendingQueue.push_back(newRecvMsgBlock);
 
@@ -262,24 +262,34 @@ namespace irc
 
                         client.lastActiveTime = currentTickServerTime;
 
-                        // Pending register the client socket to kqueue.
-                        // This is necessary because the EVFILT_READ event is automatically removed after the event is triggered.
-                        // This is also added to the pending queue and registered again in next loop.
-                        kevent_t evClient;
-                        std::memset(&evClient, 0, sizeof(evClient));
-                        evClient.ident  = client.hSocket;
-                        evClient.filter = EVFILT_READ;
-                        evClient.flags  = EV_ADD;
-                        evClient.udata  = reinterpret_cast<void*>(clientIdx);
-                        mEventRegisterPendingQueue.push_back(evClient);
+                        /** I think the kqueue doesn't remove the current kevent from the kqueue.
+                         *  So, I don't need to re-register the client socket to the kqueue.
+                         *  I will check this later.
+                         */
+                        // // Pending register the client socket to kqueue.
+                        // // This is necessary because the EVFILT_READ event is automatically removed after the event is triggered.
+                        // // This is also added to the pending queue and registered again in next loop.
+                        // kevent_t evClient;
+                        // std::memset(&evClient, 0, sizeof(evClient));
+                        // evClient.ident  = client.hSocket;
+                        // evClient.filter = EVFILT_READ;
+                        // evClient.flags  = EV_ADD;
+                        // evClient.udata  = reinterpret_cast<void*>(clientIdx);
+                        // mEventRegisterPendingQueue.push_back(evClient);
                     }
                 }
 
                 // 3. Write event
+                // Send pending messages to the client
                 else if (event.filter == EVFILT_WRITE)
                 {
-                    // TODO: Send message to client
-                    // Is it need to do send as a kqueue event?
+                    // Can a listen socket raise a write event? I'll check this later.
+                    Assert(static_cast<int>(event.ident) == mhListenSocket);
+
+                    // Send message to the client
+                    {
+                        
+                    }
                 }
 
             CONTINUE_NEXT_EVENT_LOOP:;

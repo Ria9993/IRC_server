@@ -4,15 +4,20 @@
 
 /** A memory pool that can allocate fixed number of data
  * 
- * @note: 	Allocate the class through heap allocation rather than stack allocation.
+ * @tparam T 					Type of data to allocate
+ * @tparam MemoryPageCapacity 	Number of pages to allocate
+ * 
+ * @warning	Allocate the class through heap allocation rather than stack allocation.
  * 			It's too big to be allocated on the stack.
-*/
-template <typename T, size_t Capacity>
+ */
+template <typename T, size_t MemoryPageCapacity>
 class FixedMemoryPool
 {
+private:
+	enum { CAPACITY = MemoryPageCapacity * PAGE_SIZE / sizeof(T) }; //< Floor to the sizeof(T)
 public:
 	FixedMemoryPool()
-		: mCapacity(Capacity)
+		: mCapacity(CAPACITY)
 		, mMemoryRaw()
 		, mIndices()
 		, mCursor(0)
@@ -54,7 +59,7 @@ public:
 
 private:
 	size_t  mCapacity;
-	T 		mMemoryRaw[Capacity];
-	size_t  mIndices[Capacity];
+	T 		mMemoryRaw[CAPACITY];
+	size_t  mIndices[CAPACITY];
 	size_t  mCursor;
 };

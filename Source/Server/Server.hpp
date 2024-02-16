@@ -14,28 +14,14 @@
 #include <arpa/inet.h>
 
 #include "Core/Core.hpp"
-#include "Server/IrcErrorCode.hpp"
-#include "Server/Client.hpp"
 #include "Network/SocketTypedef.hpp"
+#include "Server/IrcConstants.hpp"
+#include "Server/IrcErrorCode.hpp"
+#include "Server/MsgBlock.hpp"
+#include "Server/Client.hpp"
 
 namespace irc
 {
-    enum Constants {
-        SVR_PASS_MIN = 4,
-        SVR_PASS_MAX = 32,
-        
-        CLIENT_MAX = 65535,
-        CLIENT_TIMEOUT = 60,
-        KEVENT_OBSERVE_MAX = (PAGE_SIZE / sizeof(kevent_t)),
-        CLIENT_RESERVE_MIN = 1024,
-        MESSAGE_LEN_MAX = 512
-    };
-
-    typedef struct MsgBlock {
-        char msg[MESSAGE_LEN_MAX];
-        size_t msgLen;
-    } MsgBlock_t;
-
     class Server
     {
     public:
@@ -89,15 +75,5 @@ namespace irc
 
         std::vector<ClientControlBlock_t> mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
-
-        /** Memory pool for message blocks.
-         * 
-         * Rather than having individual message buffers for each client,
-         * they allocate and use the message blocks from this memory pool.
-         * 
-         * Optimized by setting the chunk size to match memory page size. */
-        enum { MsgBlockMemoryPoolBlockSize = sizeof(struct __VariableMemoryPoolBlock<MsgBlock_t>) };
-        enum { MsgBlockMemoryPoolChunkSize = PAGE_SIZE / MsgBlockMemoryPoolBlockSize };
-        VariableMemoryPool<MsgBlock_t, MsgBlockMemoryPoolChunkSize> mMsgBlockPool;
     };
 }

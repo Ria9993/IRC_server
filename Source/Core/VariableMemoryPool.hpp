@@ -12,6 +12,9 @@
  * 		  	- data: Data to allocate
  * 
  * @note	It can be optimized by adjusting the byte size of the chunk to the page size.
+ * 	        Use the helper macro function to calculate the chunk size.
+ * 			- @see CALC_VARIABLE_MEMORY_POOL_CHUNK_SIZE_SCALED_BY_PAGE_SIZE(DATA_TYPE, MIN_NUM_DATA_PER_CHUNK)
+ * 
 */
 template <typename T>
 struct __VariableMemoryPoolBlock
@@ -19,20 +22,23 @@ struct __VariableMemoryPoolBlock
 	size_t poolIdx;
 	T data;
 };
+#define VARIABLE_MEMORY_POOL_BLOCK_SIZE(DATA_TYPE) (sizeof(struct __VariableMemoryPoolBlock<DATA_TYPE>))
+#define CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(DATA_TYPE, MIN_NUM_DATA_PER_CHUNK) \
+	((VARIABLE_MEMORY_POOL_BLOCK_SIZE(DATA_TYPE) * MIN_NUM_DATA_PER_CHUNK + PAGE_SIZE - 1) / PAGE_SIZE) //< Ceil to the page size
 
 /** A memory pool that can allocate variable number of data
- * 
- * @note  The variableMemoryPool Implementated using multiple FixedMemoryPool
- * 
- * @tparam T 			Type of data to allocate
- * @tparam ChunkSize 	Chunk size of the memory pool
-*/
-template <typename T, size_t ChunkSize>
+ *
+ * @note  The VariableMemoryPool Implementated using chunks with FixedMemoryPool
+ *
+ * @tparam T 					Type of data to allocate
+ * @tparam MinNumDataPerChunk 	Minimum number of data to allocate per chunk 
+ */
+template <typename T, size_t MinNumDataPerChunk>
 class VariableMemoryPool
 {
 private:
 	typedef struct __VariableMemoryPoolBlock<T> Block;
-
+	enum { ChunkMemoryPageCapacity = CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(T, MinNumDataPerChunk) };
 public:
 	VariableMemoryPool()
 		: mPools()
@@ -48,6 +54,10 @@ public:
 		}
 	}
 
+	/** Allocate a data
+	 * 
+	 * @return  Pointer to the allocated data
+	 */
 	FORCEINLINE T* Allocate()
 	{
 		// Find available pool
@@ -62,7 +72,7 @@ public:
 		}
 
 		// Create new pool if all pools are full
-		FixedMemoryPool<Block, ChunkSize>* newPool = new FixedMemoryPool<Block, ChunkSize>();
+		FixedMemoryPool<Block, ChunkMemoryPageCapacity>* newPool = new FixedMemoryPool<Block, ChunkMemoryPageCapacity>();
 		mPools.push_back(newPool);
 
 		Block* block = newPool->Allocate();
@@ -70,6 +80,10 @@ public:
 		return &block->data;
 	}
 
+	/** Deallocate a data
+	 * 
+	 * @param ptr  Pointer to the data to deallocate
+	 */
 	FORCEINLINE void Deallocate(T* ptr)
 	{
 		if (ptr == NULL)
@@ -80,5 +94,5 @@ public:
 	}
 
 private:
-	std::vector<FixedMemoryPool<Block, ChunkSize>*> mPools;
+	std::vector<FixedMemoryPool<Block, ChunkMemoryPageCapacity>*> mPools;
 };
