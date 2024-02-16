@@ -12,12 +12,6 @@ namespace irc
         char msg[MESSAGE_LEN_MAX];
         size_t msgLen;
 
-        FORCEINLINE MsgBlock()
-        : msgLen(0)
-        {
-            msg[0] = '\0'; //< For implementation convenience.
-        }
-
         /**
          * Overload new and delete operator with memory pool for memory management.
          */

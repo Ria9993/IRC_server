@@ -5,7 +5,7 @@
 #endif
 
 #if defined(__GNUC__)
-    #define NODISCARD __attribute__((nodiscard))
+    #define NODISCARD __attribute__((warn_unused_result))
 #elif defined(_MSC_VER)
 // [[nodiscard]] Visual Studio 2017 version 15.3 and later: (Available with /std:c++17 and later.)
     #if _MSC_VER >= 1911

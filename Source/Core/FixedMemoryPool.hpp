@@ -13,8 +13,6 @@
 template <typename T, size_t MemoryPageCapacity>
 class FixedMemoryPool
 {
-private:
-    enum { CAPACITY = MemoryPageCapacity * PAGE_SIZE / sizeof(T) }; //< Floor to the sizeof(T)
 public:
     FixedMemoryPool()
         : mCapacity(CAPACITY)
@@ -58,6 +56,8 @@ public:
     }
 
 private:
+    enum { CAPACITY = MemoryPageCapacity * PAGE_SIZE / sizeof(T) }; //< Floor to the sizeof(T)
+    
     size_t  mCapacity;
     T       mMemoryRaw[CAPACITY];
     size_t  mIndices[CAPACITY];
