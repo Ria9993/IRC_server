@@ -36,9 +36,6 @@ struct __VariableMemoryPoolBlock
 template <typename T, size_t MinNumDataPerChunk>
 class VariableMemoryPool
 {
-private:
-    typedef struct __VariableMemoryPoolBlock<T> Block;
-    enum { ChunkMemoryPageCapacity = CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(T, MinNumDataPerChunk) };
 public:
     VariableMemoryPool()
         : mPools()
@@ -94,5 +91,7 @@ public:
     }
 
 private:
+    typedef struct __VariableMemoryPoolBlock<T> Block;
+    enum { ChunkMemoryPageCapacity = CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(T, MinNumDataPerChunk) };
     std::vector<FixedMemoryPool<Block, ChunkMemoryPageCapacity>*> mPools;
 };

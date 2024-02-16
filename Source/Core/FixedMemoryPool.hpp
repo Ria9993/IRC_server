@@ -30,6 +30,10 @@ public:
     {
     }
 
+    /** Allocate a data
+     * 
+     * @return  Pointer to the allocated data
+     */
     FORCEINLINE T* Allocate()
     {
         if (mCursor < mCapacity)
@@ -39,6 +43,10 @@ public:
         return NULL;
     }
 
+    /** Deallocate a data
+     * 
+     * @param ptr  Pointer to the data to deallocate
+     */
     FORCEINLINE void Deallocate(T* ptr)
     {
         Assert(ptr >= mMemoryRaw && ptr < mMemoryRaw + mCapacity);
@@ -57,7 +65,7 @@ public:
 
 private:
     enum { CAPACITY = MemoryPageCapacity * PAGE_SIZE / sizeof(T) }; //< Floor to the sizeof(T)
-    
+
     size_t  mCapacity;
     T       mMemoryRaw[CAPACITY];
     size_t  mIndices[CAPACITY];
