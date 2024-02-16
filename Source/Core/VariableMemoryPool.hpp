@@ -38,16 +38,16 @@ class VariableMemoryPool
 {
 public:
     VariableMemoryPool()
-        : mPools()
+        : mChunks()
     {
-        mPools.reserve(16);
+        mChunks.reserve(16);
     }
 
     ~VariableMemoryPool()
     {
-        for (size_t i = 0; i < mPools.size(); ++i)
+        for (size_t i = 0; i < mChunks.size(); ++i)
         {
-            delete mPools[i];
+            delete mChunks[i];
         }
     }
 
@@ -57,23 +57,23 @@ public:
      */
     FORCEINLINE T* Allocate()
     {
+        size_t currChunkIdx = 0;
+
         // Find available pool
-        for (size_t i = 0; i < mPools.size(); ++i)
+        for (currChunkIdx = 0; currChunkIdx < mChunks.size(); currChunkIdx++)
         {
-            if (!mPools[i]->IsCapacityFull())
+            if (!mChunks[currChunkIdx]->IsCapacityFull())
             {
-                Block* block = mPools[i]->Allocate();
-                block->chunkIdx = i;
-                return &block->data;
+                goto ALLLOCATE_NEW_BLOCK;
             }
         }
 
         // Create new pool if all pools are full
-        FixedMemoryPool<Block, ChunkMemoryPageCapacity>* newPool = new FixedMemoryPool<Block, ChunkMemoryPageCapacity>();
-        mPools.push_back(newPool);
+        mChunks.push_back(new FixedMemoryPool<Block, ChunkMemoryPageCapacity>);
 
-        Block* block = newPool->Allocate();
-        block->chunkIdx = mPools.size() - 1;
+    ALLLOCATE_NEW_BLOCK:
+        Block* block = mChunks[currChunkIdx]->Allocate();
+        block->chunkIdx = currChunkIdx;
         return &block->data;
     }
 
@@ -87,11 +87,11 @@ public:
             return;
         
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
-        mPools[block->chunkIdx]->Deallocate(block);
+        mChunks[block->chunkIdx]->Deallocate(block);
     }
 
 private:
     typedef struct __VariableMemoryPoolBlock<T> Block;
     enum { ChunkMemoryPageCapacity = CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(T, MinNumDataPerChunk) };
-    std::vector<FixedMemoryPool<Block, ChunkMemoryPageCapacity>*> mPools;
+    std::vector<FixedMemoryPool<Block, ChunkMemoryPageCapacity>*> mChunks;
 };
