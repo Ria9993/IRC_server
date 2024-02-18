@@ -23,7 +23,13 @@ IRC server written by C++98 standard
   linux/unix의 경우 기본적으로 non-pageable 메모리를 사용하지 않지만  
   만약 사용한다면 더블 버퍼링을 구현하는데 효과적일 것이고,  
   메모리 풀이 연속적으로 할당되어 있으므로 같은 페이지에 속해있는 메시지들은 페이지 lock을 중복으로 걸지 않아도 됨.  
-  또한 non-pageable pool은 각 프로세스마다 제한 크기가 존재하므로 locked page를 줄임으로써 대규모 클라이언트를 처리할 수 있음.  
+  또한 non-pageable pool은 각 프로세스마다 제한 크기가 존재하므로 locked page를 줄임으로써 대규모 클라이언트를 처리할 수 있음.
+
+4. 스마트 포인터
+   C++98 표준이 과제 사항이라 SharedPtr과 WeakPtr을 구현함.  
+   Variadic Template을 사용할 수 없어서 MakeShared를 할 때 최대 인수 4개까지 넣을 수 있도록 템플릿 특수화를 해 둠.  
+   (가변 매크로를 사용하여 구현했었으나 C++에서는 지원하지 않아 롤백)  
+   예전에 보았던 msvc 구현을 떠올려서 placement new를 사용하여 ControlBlock과 Data의 할당/해제를 한 번으로 줄여 구현함.
 
 ## 과제에서 금지되어 구현하지 못한 것
 1. mmap 등을 사용해서 커널이 아닌 유저 버퍼로 곧바로 읽고 쓰는 것
