@@ -6,7 +6,7 @@
 /** A memory pool that can allocate fixed number of data
  * 
  * @details  The FixedMemoryPool is implemented considering the page size(4KB).
- *           Raw memory will be allocated in the page size by new() implementation. 
+ *           Raw memory will be allocated according to the page by new() default allocator.
  *
  * @tparam T                    Type of data to allocate
  * @tparam MemoryPageCapacity   Number of pages to allocate. (see details)

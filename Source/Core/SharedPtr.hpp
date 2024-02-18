@@ -22,7 +22,7 @@ namespace
  * @warning "Never" change the order of the data[sizeof(T)] member.
  *          This feature is implemented using the c++ standard that
  *          the address of the first member in structure is same as the address of the structure itself.
- *          (@see MakeShared() implementation)
+ *          (see MakeShared() implementation)
  * */
 template <typename T>
 struct ControlBlock
