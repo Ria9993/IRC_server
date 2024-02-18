@@ -227,7 +227,7 @@ namespace irc
                         int nTotalRecvBytes = 0;
                         int nRecvBytes;
                         do {
-                            MsgBlock* newRecvMsgBlock = new MsgBlock;
+                            MsgBlock* newRecvMsgBlock = new MsgBlock();
                             STATIC_ASSERT(sizeof(newRecvMsgBlock->Msg) == MESSAGE_LEN_MAX);
                             nRecvBytes = recv(client.hSocket, newRecvMsgBlock->Msg, MESSAGE_LEN_MAX, 0);
                             if (UNLIKELY(nRecvBytes == -1))

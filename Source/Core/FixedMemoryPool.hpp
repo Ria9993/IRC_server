@@ -32,32 +32,18 @@ public:
 
     ~FixedMemoryPool()
     {
+        // Release data that is not deallocated
         for (size_t i = 0; i < mCapacity; ++i)
         {
             T* ptr = (T*)(mMemoryRaw + i * sizeof(T));
             ptr->~T(); //< Call the destructor
         }
+        
         delete[] mMemoryRaw;
     }
 
-    /** Allocate a data with default constructor */
+    /** Allocate a data */
     NODISCARD FORCEINLINE T* Allocate()
-    {
-        T* ptr = AllocateWithoutConstructor();
-        if (ptr != NULL)
-        {
-            ptr = new(ptr) T(); //< Call the default constructor
-        }
-
-        return ptr;
-    }
-    
-    /** Allocate a data without calling the constructor
-     * 
-     * @warning The data should be called the constructor manually after returned.
-     *          (e.g. new (ptr) T(args))
-     */
-    NODISCARD FORCEINLINE T* AllocateWithoutConstructor()
     {
         if (mCursor < mCapacity)
         {
@@ -78,8 +64,6 @@ public:
 
         if (ptr != NULL)
         {
-            ptr->~T(); //< Call the destructor
-
             const size_t idx = ptr - (T*)mMemoryRaw;
             mIndices[--mCursor] = idx;
         }

@@ -10,7 +10,7 @@
  *
  * @note  The VariableMemoryPool Implementated using chunks with FixedMemoryPool
  *
- * @tparam T                    Type of data to allocate. (Default constructor should be available)
+ * @tparam T                    Type of data to allocate.
  * @tparam MinNumDataPerChunk   Minimum number of data to allocate per chunk 
  */
 template <typename T, size_t MinNumDataPerChunk>
@@ -31,29 +31,11 @@ public:
         }
     }
 
-    /** Allocate a data with default constructor
+    /** Allocate a data
      * 
      * @return  Pointer to the allocated data
      */
-    NODISCARD FORCEINLINE T* Allocate()
-    {
-        T* ptr = AllocateWithoutConstructor();
-        if (ptr != NULL)
-        {
-            ptr = new(ptr) T(); //< Call the default constructor
-        }
-
-        return ptr;
-    }
-
-    /** Allocate a data without calling the constructor
-     *
-     * @warning The data should be called the constructor manually after returned.
-     *          (e.g. new (ptr) T(args))
-     *  
-     * @return  Pointer to the allocated data
-     */
-    NODISCARD inline T* AllocateWithoutConstructor()
+    NODISCARD inline T* Allocate()
     {
         size_t currChunkIdx = 0;
 
@@ -70,7 +52,7 @@ public:
         mChunks.push_back(new FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>);
 
     ALLLOCATE_NEW_BLOCK:
-        Block* block = mChunks[currChunkIdx]->AllocateWithoutConstructor();
+        Block* block = mChunks[currChunkIdx]->Allocate();
         block->chunkIdx = currChunkIdx;
         return reinterpret_cast<T*>(&block->data);
     }
