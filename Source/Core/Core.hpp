@@ -13,3 +13,4 @@ enum GLOBAL_CONSTANTS {
 #include "Core/FixedMemoryPool.hpp"
 #include "Core/VariableMemoryPool.hpp"
 #include "Core/TemplateSfine.hpp"
+#include "Core/SharedPtr.hpp"
