@@ -115,6 +115,7 @@ public:
     {
         mControlBlock->StrongRefCount = 1;
         mControlBlock->WeakRefCount = 0;
+        mControlBlock->bExpired = false;
     }
 
     FORCEINLINE SharedPtr(const SharedPtr<T>& rhs)
