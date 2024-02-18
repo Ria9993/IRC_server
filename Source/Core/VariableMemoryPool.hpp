@@ -40,7 +40,7 @@ public:
         T* ptr = AllocateWithoutConstructor();
         if (ptr != NULL)
         {
-            ptr = new(reinterpret_cast<void*>(ptr)) T();
+            ptr = new(ptr) T(); //< Call the default constructor
         }
 
         return ptr;

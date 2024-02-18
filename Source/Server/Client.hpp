@@ -5,12 +5,11 @@
 #include <ctime>
 #include "Core/Core.hpp"
 #include "Network/SocketTypedef.hpp"
+#include "Server/MsgBlock.hpp"
 
 
 namespace irc
-{
-    typedef struct _MsgBlock MsgBlock;
-    
+{    
     typedef struct _ClientControlBlock ClientControlBlock;
     typedef struct _ClientControlBlock
     {

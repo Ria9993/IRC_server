@@ -40,31 +40,22 @@ public:
         delete[] mMemoryRaw;
     }
 
-    /** Allocate a data with default constructor 
-     * 
-     * @note Doesn't support the constructor with arguments
-     * 
-     * @param args   Arguments to pass to the constructor
-     * @return  Pointer to the allocated data
-     */
+    /** Allocate a data with default constructor */
     NODISCARD FORCEINLINE T* Allocate()
     {
-        if (mCursor < mCapacity)
+        T* ptr = AllocateWithoutConstructor();
+        if (ptr != NULL)
         {
-            const size_t idx = mIndices[mCursor++];
-            const char* ptrRaw = mMemoryRaw + idx * sizeof(T);
-            T* ptr = new ((void*)ptrRaw) T(); //< Call the constructor
-            return ptr;
+            ptr = new(ptr) T(); //< Call the default constructor
         }
-        return NULL;
+
+        return ptr;
     }
     
     /** Allocate a data without calling the constructor
      * 
      * @warning The data should be called the constructor manually after returned.
      *          (e.g. new (ptr) T(args))
-     * 
-     * @return  Pointer to the allocated data
      */
     NODISCARD FORCEINLINE T* AllocateWithoutConstructor()
     {
