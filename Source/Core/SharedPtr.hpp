@@ -4,7 +4,7 @@
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 
-/** Forward declaration */
+// Forward declaration
 template <typename T>
 class SharedPtr;
 
@@ -68,10 +68,6 @@ FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(r
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
 FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<ControlBlock<T>*>(new (&(new struct ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
-
-/** Not available in c++ preprocessor (C99 Feature) */
-// #define MAKE_SHARED(T, ...) SharedPtr<T>(new (&(new struct ControlBlock<T>)->data) T(__VA_ARGS__))
-
 
 /** Shared pointer custom implementation for C++98 standard
  * 
