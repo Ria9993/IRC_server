@@ -31,3 +31,6 @@
 *.out
 *.app
 ircserv
+
+# Doxygen
+/doxygen

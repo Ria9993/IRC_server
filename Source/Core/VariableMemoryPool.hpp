@@ -47,7 +47,10 @@ public:
     }
 
     /** Allocate a data without calling the constructor
-     * 
+     *
+     * @warning The data should be called the constructor manually after returned.
+     *          (e.g. new (ptr) T(args))
+     *  
      * @return  Pointer to the allocated data
      */
     NODISCARD inline T* AllocateWithoutConstructor()
