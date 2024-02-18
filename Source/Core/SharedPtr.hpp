@@ -8,6 +8,9 @@
 template <typename T>
 class SharedPtr;
 
+template <typename T>
+class WeakPtr;
+
 namespace
 {
 /** Do not use this class directly. Use MakeShared function.
