@@ -10,19 +10,20 @@ class SharedPtr;
 
 namespace
 {
-/** Do not use this class directly. Use MakeShared function. */
+/** Do not use this class directly. Use MakeShared function.
+ * 
+ * @details We will use placement new/delete
+ *          The ControlBlock should not be deleted even after data's destructor is called.
+ *          ControlBlock is deleted when both StrongRefCount and WeakRefCount are become 0. 
+ * 
+ * @warning "Never" change the order of the data[sizeof(T)] member.
+ *          This feature is implemented using the c++ standard that
+ *          the address of the first member in structure is same as the address of the structure itself.
+ *          (@see MakeShared() implementation)
+ * */
 template <typename T>
 struct ControlBlock
 {
-    /** We will use placement new/delete
-     *  The ControlBlock should not be deleted even after data's destructor is called.
-     *  ControlBlock is deleted when both StrongRefCount and WeakRefCount are become 0. 
-     * 
-     * @warning "Never" change the order of the members.
-     *          This feature is implemented using the c++ standard that
-     *          the address of the first member in structure is same as the address of the structure itself.
-     *          (@see MakeShared() implementation)
-     * */
     ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
 
     size_t StrongRefCount;
