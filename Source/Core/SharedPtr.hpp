@@ -41,7 +41,7 @@ struct ControlBlock
 
 /** Macro to create a shared pointer with a new object.
  * 
- * @param   T   Type of the object to be created.
+ * @param   T   Type of the object to be created. (Not support Array type. e.g. int[], char[])
  * @param   ... Arguments to be passed to the constructor of the object. (up to 4 arguments)
  * 
  * @return  A new shared pointer to the object.
@@ -101,7 +101,7 @@ FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedP
  *  B.reset(); //< Release and resource will be deallocated.
  * @endcode
  * 
- * @tparam  T   Type of the object to be managed by the shared pointer.
+ * @tparam  T   Type of the object to be managed by the shared pointer. (Not support Array type. e.g. int[], char[])
  * 
  * @warning Not thread-safe
  */
