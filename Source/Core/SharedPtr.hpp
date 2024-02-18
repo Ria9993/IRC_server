@@ -77,7 +77,7 @@ FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedP
  * 
  * @details Example usage:
  * @code
- *  SharedPtr<int> A = MAKE_SHARED(int, 5); //< Create a new resource useing MAKE_SHARED() macro.
+ *  SharedPtr<int> A = MakeShared<int>(5); //< Create a new resource using MakeShared function
  *  SharedPtr<int> B = A;
  *  WeakPtr<int>   C = B;
  * 
