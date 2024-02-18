@@ -1,22 +1,17 @@
 NAME = ircserv
 
-# SRCS = $(wildcard Source/Core/*.cpp) \
-# 		$(wildcard Source/Server/*.cpp) \
-# 		$(wildcard Source/Network/*.cpp)
-
-# INCS = $(wildcard Source/Core/*.hpp) \
-# 		$(wildcard Source/Server/*.hpp) \
-# 		$(wildcard Source/Network/*.hpp)
-
-# INCPATH = -I Source/Core/ \
-# 		-I Source/Server/ \
-# 		-I Source/Network/
-
 # easy managing module folders
 SRCS = $(wildcard Source/*/*.cpp) Source/main.cpp
 INCS = $(wildcard Source/*/*.hpp)
 INCPATH = -I Source/
+LIBPATH =
 
+# Kqueue support for Linux (libkqueue-dev package required)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    INCPATH += -I/usr/include/kqueue/
+    LIBPATH = -L/usr/lib/x86_64-linux-gnu/ -lkqueue
+endif
 
 OBJS = $(SRCS:.cpp=.o)
 
@@ -27,7 +22,7 @@ FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g3 -O2
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(FLAGS) $(INCPATH) -o $(NAME) $(OBJS)
+	$(CC) $(FLAGS) $(INCPATH) -o $(NAME) $(OBJS) -lkqueue
 
 %.o: %.cpp $(INCS)
 	$(CC) $(FLAGS) $(INCPATH) -c $< -o $@

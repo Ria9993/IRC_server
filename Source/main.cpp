@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include "Core/Core.hpp"
 #include "Server/Server.hpp"
 
