@@ -72,6 +72,14 @@
 #endif
 
 #if defined(__GNUC__)
+    #define ALIGNOF(x) __alignof__(x)
+#elif defined(_MSC_VER)
+    #define ALIGNOF(x) __alignof(x)
+#else
+    #error "This compiler is not supported"
+#endif
+
+#if defined(__GNUC__)
     #define NORETURN __attribute__((noreturn))
 #elif defined(_MSC_VER)
     #define NORETURN __declspec(noreturn)
