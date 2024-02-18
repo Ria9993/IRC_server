@@ -188,7 +188,7 @@ namespace irc
                         }
 
                         // Add client to the client list
-                        ClientControlBlock_t newClient;
+                        ClientControlBlock newClient;
                         const size_t clientIdx = mClients.size();
                         newClient.hSocket = clientSocket;
                         newClient.lastActiveTime = currentTickServerTime;
@@ -214,7 +214,7 @@ namespace irc
                     {
                         // Find client index from udata
                         const size_t clientIdx = reinterpret_cast<size_t>(event.udata);
-                        ClientControlBlock_t& client = mClients[clientIdx];
+                        ClientControlBlock& client = mClients[clientIdx];
                         Assert(clientIdx < mClients.size());
 
                         // Receive up to [MESSAGE_LEN_MAX] bytes in the MsgBlock allocated by the mMesssagePool
@@ -223,7 +223,7 @@ namespace irc
                         int nTotalRecvBytes = 0;
                         int nRecvBytes;
                         do {
-                            MsgBlock_t* newRecvMsgBlock = new MsgBlock_t;
+                            MsgBlock* newRecvMsgBlock = new MsgBlock;
                             STATIC_ASSERT(sizeof(newRecvMsgBlock->msg) == MESSAGE_LEN_MAX);
                             nRecvBytes = recv(client.hSocket, newRecvMsgBlock->msg, MESSAGE_LEN_MAX, 0);
                             if (UNLIKELY(nRecvBytes == -1))

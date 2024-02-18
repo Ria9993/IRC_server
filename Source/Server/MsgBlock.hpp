@@ -5,26 +5,38 @@
 
 namespace irc
 {
-    typedef struct MsgBlock MsgBlock_t;
+    typedef struct _MsgBlock MsgBlock;
 
-    typedef struct MsgBlock {
+    typedef struct _MsgBlock
+    {
     public:
         char msg[MESSAGE_LEN_MAX];
         size_t msgLen;
 
-        /**
-         * Overload new and delete operator with memory pool for memory management.
-         */
+        _MsgBlock()
+            : msg()
+            , msgLen(0)
+        {
+            msg[0] = '\0'; //< For implementation convenience and debugging
+        }
+
+        /** Overload new and delete operator with memory pool for memory management. */
     public:
         NODISCARD FORCEINLINE void* operator new (size_t size)
         {
-            Assert(size == sizeof(MsgBlock_t));
+            Assert(size == sizeof(MsgBlock));
             return reinterpret_cast<void*>(sMemoryPool.Allocate());
+        }
+
+        NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
+        {
+            Assert(size == sizeof(MsgBlock));
+            return ptr;
         }
         
         FORCEINLINE void  operator delete (void* ptr)
         {
-            sMemoryPool.Deallocate(reinterpret_cast<MsgBlock_t*>(ptr));
+            sMemoryPool.Deallocate(reinterpret_cast<MsgBlock*>(ptr));
         }
 
     private:
@@ -36,6 +48,6 @@ namespace irc
         
     private:
         enum { MIN_NUM_MSG_BLOCK_PER_CHUNK = 512 };
-        static VariableMemoryPool<MsgBlock_t, MIN_NUM_MSG_BLOCK_PER_CHUNK> sMemoryPool;
-    } MsgBlock_t;
+        static VariableMemoryPool<MsgBlock, MIN_NUM_MSG_BLOCK_PER_CHUNK> sMemoryPool;
+    } MsgBlock;
 }

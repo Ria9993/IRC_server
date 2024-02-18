@@ -2,5 +2,5 @@
 
 namespace irc
 {
-    VariableMemoryPool<MsgBlock_t, MsgBlock_t::MIN_NUM_MSG_BLOCK_PER_CHUNK> MsgBlock_t::sMemoryPool;
+    VariableMemoryPool<MsgBlock, MsgBlock::MIN_NUM_MSG_BLOCK_PER_CHUNK> MsgBlock::sMemoryPool;
 }

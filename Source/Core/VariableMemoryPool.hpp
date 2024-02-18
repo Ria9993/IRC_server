@@ -2,35 +2,15 @@
 
 #include <vector>
 #include <cstddef>
+#include <new>
 #include "Core/Core.hpp"
 #include "Core/FixedMemoryPool.hpp"
-
-/** A block of data in the memory pool
- * 
- * @details  VariableMemoryPool uses this structure to manage the data
- *          - chunkIdx: Index of the pool that allocated this block
- *          - data: Data to allocate
- * 
- * @note    It can be optimized by adjusting the byte size of the chunk to the page size.
- *          Use the helper macro function to calculate the chunk size.
- *          - @see CALC_VARIABLE_MEMORY_POOL_CHUNK_SIZE_SCALED_BY_PAGE_SIZE(DATA_TYPE, MIN_NUM_DATA_PER_CHUNK)
- * 
-*/
-template <typename T>
-struct __VariableMemoryPoolBlock
-{
-    size_t chunkIdx;
-    T data;
-};
-#define VARIABLE_MEMORY_POOL_BLOCK_SIZE(DATA_TYPE) (sizeof(struct __VariableMemoryPoolBlock<DATA_TYPE>))
-#define CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(DATA_TYPE, MIN_NUM_DATA_PER_CHUNK) \
-    ((VARIABLE_MEMORY_POOL_BLOCK_SIZE(DATA_TYPE) * MIN_NUM_DATA_PER_CHUNK + PAGE_SIZE - 1) / PAGE_SIZE) //< Ceil to the page size
 
 /** A memory pool that can allocate variable number of data
  *
  * @note  The VariableMemoryPool Implementated using chunks with FixedMemoryPool
  *
- * @tparam T                    Type of data to allocate
+ * @tparam T                    Type of data to allocate. (Default constructor should be available)
  * @tparam MinNumDataPerChunk   Minimum number of data to allocate per chunk 
  */
 template <typename T, size_t MinNumDataPerChunk>
@@ -51,11 +31,26 @@ public:
         }
     }
 
-    /** Allocate a data
+    /** Allocate a data with default constructor
      * 
      * @return  Pointer to the allocated data
      */
-    FORCEINLINE T* Allocate()
+    NODISCARD FORCEINLINE T* Allocate()
+    {
+        T* ptr = AllocateWithoutConstructor();
+        if (ptr != NULL)
+        {
+            ptr = new(reinterpret_cast<void*>(ptr)) T();
+        }
+
+        return ptr;
+    }
+
+    /** Allocate a data without calling the constructor
+     * 
+     * @return  Pointer to the allocated data
+     */
+    NODISCARD inline T* AllocateWithoutConstructor()
     {
         size_t currChunkIdx = 0;
 
@@ -69,12 +64,12 @@ public:
         }
 
         // Create new pool if all pools are full
-        mChunks.push_back(new FixedMemoryPool<Block, ChunkMemoryPageCapacity>);
+        mChunks.push_back(new FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>);
 
     ALLLOCATE_NEW_BLOCK:
-        Block* block = mChunks[currChunkIdx]->Allocate();
+        Block* block = mChunks[currChunkIdx]->AllocateWithoutConstructor();
         block->chunkIdx = currChunkIdx;
-        return &block->data;
+        return reinterpret_cast<T*>(&block->data);
     }
 
     /** Deallocate a data
@@ -91,7 +86,16 @@ public:
     }
 
 private:
-    typedef struct __VariableMemoryPoolBlock<T> Block;
-    enum { ChunkMemoryPageCapacity = CALC_VARIABLE_MEMORY_POOL_CHUNK_MEMORY_PAGE_CAPACITY(T, MinNumDataPerChunk) };
-    std::vector<FixedMemoryPool<Block, ChunkMemoryPageCapacity>*> mChunks;
+    typedef struct _Block
+    {
+    public:
+        size_t chunkIdx; //< Index of the chunk that allocated this block
+        ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
+        
+        // Block() = default;
+    } Block;
+
+    enum { BLOCK_SIZE = sizeof(Block) };
+    enum { CHUNK_MEMORY_PAGE_CAPACITY = (BLOCK_SIZE * MinNumDataPerChunk + PAGE_SIZE - 1) / PAGE_SIZE }; //< Ceil to the page size
+    std::vector<FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>*> mChunks;
 };

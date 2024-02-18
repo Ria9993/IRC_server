@@ -73,7 +73,7 @@ namespace irc
         int         mhKqueue;
         std::vector<kevent_t> mEventRegisterPendingQueue;
 
-        std::vector<ClientControlBlock_t> mClients;
+        std::vector<ClientControlBlock> mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
     };
 }
