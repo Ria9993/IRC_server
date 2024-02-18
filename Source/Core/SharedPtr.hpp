@@ -132,12 +132,12 @@ public:
 
     FORCEINLINE ~SharedPtr()
     {
-        this->reset();
+        this->Reset();
     }
 
     FORCEINLINE SharedPtr<T>& operator=(const SharedPtr<T>& rhs)
     {
-        this->reset();
+        this->Reset();
 
         mControlBlock = rhs.mControlBlock;
         if (mControlBlock != NULL)
@@ -148,7 +148,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE T* get() const
+    FORCEINLINE T* Get() const
     {
         if (mControlBlock != NULL)
         {
@@ -157,7 +157,7 @@ public:
         return NULL;
     }
 
-    FORCEINLINE void reset()
+    FORCEINLINE void Reset()
     {
         if (mControlBlock != NULL)
         {
@@ -180,7 +180,7 @@ public:
         mControlBlock = NULL;
     }
 
-    FORCEINLINE size_t use_count() const
+    FORCEINLINE size_t UseCount() const
     {
         if (mControlBlock != NULL)
         {
@@ -189,7 +189,7 @@ public:
         return 0;
     }
 
-    FORCEINLINE void swap(SharedPtr<T>& rhs)
+    FORCEINLINE void Swap(SharedPtr<T>& rhs)
     {
         struct ControlBlock<T>* temp = mControlBlock;
         mControlBlock = rhs.mControlBlock;
@@ -237,12 +237,12 @@ public:
 
     FORCEINLINE ~WeakPtr()
     {
-        this->reset();
+        this->Reset();
     }
 
     FORCEINLINE WeakPtr<T>& operator=(const WeakPtr<T>& rhs)
     {
-        this->reset();
+        this->Reset();
 
         mControlBlock = rhs.mControlBlock;
         if (mControlBlock != NULL)
@@ -253,7 +253,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE SharedPtr<T> lock() const
+    FORCEINLINE SharedPtr<T> Lock() const
     {
         if (mControlBlock != NULL)
         {
@@ -265,7 +265,7 @@ public:
         return SharedPtr<T>();
     }
 
-    FORCEINLINE bool expired() const
+    FORCEINLINE bool Expired() const
     {
         if (mControlBlock != NULL)
         {
@@ -274,7 +274,7 @@ public:
         return true;
     }
 
-    FORCEINLINE void reset()
+    FORCEINLINE void Reset()
     {
         if (mControlBlock != NULL)
         {
@@ -295,7 +295,7 @@ public:
         mControlBlock = NULL;
     }
 
-    FORCEINLINE size_t use_count() const
+    FORCEINLINE size_t UseCount() const
     {
         if (mControlBlock != NULL)
         {
@@ -304,7 +304,7 @@ public:
         return 0;
     }
 
-    FORCEINLINE void swap(WeakPtr<T>& rhs)
+    FORCEINLINE void Swap(WeakPtr<T>& rhs)
     {
         struct ControlBlock<T>* temp = mControlBlock;
         mControlBlock = rhs.mControlBlock;
