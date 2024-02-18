@@ -166,7 +166,9 @@ namespace irc
                 // 2. Read event
                 else if (event.filter == EVFILT_READ)
                 {
-                    // Connection request from client
+                    /**
+                     * Request to accept the new client connection.
+                     */
                     if (static_cast<int>(event.ident) == mhListenSocket)
                     {
                         // Accept client
@@ -191,7 +193,7 @@ namespace irc
                         ClientControlBlock newClient;
                         const size_t clientIdx = mClients.size();
                         newClient.hSocket = clientSocket;
-                        newClient.lastActiveTime = currentTickServerTime;
+                        newClient.LastActiveTime = currentTickServerTime;
                         mClients.push_back(newClient);
 
                         // Register client socket to kqueue.
@@ -209,7 +211,9 @@ namespace irc
                         }
                     }
 
-                    // Receive message from client
+                    /**
+                     * Receive message from client
+                     */
                     else
                     {
                         // Find client index from udata
@@ -224,8 +228,8 @@ namespace irc
                         int nRecvBytes;
                         do {
                             MsgBlock* newRecvMsgBlock = new MsgBlock;
-                            STATIC_ASSERT(sizeof(newRecvMsgBlock->msg) == MESSAGE_LEN_MAX);
-                            nRecvBytes = recv(client.hSocket, newRecvMsgBlock->msg, MESSAGE_LEN_MAX, 0);
+                            STATIC_ASSERT(sizeof(newRecvMsgBlock->Msg) == MESSAGE_LEN_MAX);
+                            nRecvBytes = recv(client.hSocket, newRecvMsgBlock->Msg, MESSAGE_LEN_MAX, 0);
                             if (UNLIKELY(nRecvBytes == -1))
                             {
                                 logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
@@ -242,8 +246,8 @@ namespace irc
                             }
 
                             // Append the message block to the client's queue
-                            newRecvMsgBlock->msgLen = nRecvBytes;
-                            client.msgBlockPendingQueue.push_back(newRecvMsgBlock);
+                            newRecvMsgBlock->MsgLen = nRecvBytes;
+                            client.MsgBlockPendingQueue.push_back(newRecvMsgBlock);
 
                             nTotalRecvBytes += nRecvBytes;
 
@@ -260,7 +264,7 @@ namespace irc
                         // This is then processed asynchronously in the main loop.
                         clientIndicesWithPendingMsg.push_back(clientIdx);
 
-                        client.lastActiveTime = currentTickServerTime;
+                        client.LastActiveTime = currentTickServerTime;
 
                         /** I think the kqueue doesn't remove the current kevent from the kqueue.
                          *  So, I don't need to re-register the client socket to the kqueue.
@@ -288,7 +292,8 @@ namespace irc
 
                     // Send message to the client
                     {
-                        
+                        MsgBlock* newSendBuff = new MsgBlock;
+
                     }
                 }
 

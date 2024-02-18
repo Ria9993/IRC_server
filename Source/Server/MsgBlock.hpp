@@ -10,14 +10,14 @@ namespace irc
     typedef struct _MsgBlock
     {
     public:
-        char msg[MESSAGE_LEN_MAX];
-        size_t msgLen;
+        char Msg[MESSAGE_LEN_MAX];
+        size_t MsgLen;
 
-        _MsgBlock()
-            : msg()
-            , msgLen(0)
+        FORCEINLINE _MsgBlock()
+            : Msg()
+            , MsgLen(0)
         {
-            msg[0] = '\0'; //< For implementation convenience and debugging
+            Msg[0] = '\0'; //< For implementation convenience and debugging
         }
 
         /** Overload new and delete operator with memory pool for memory management. */

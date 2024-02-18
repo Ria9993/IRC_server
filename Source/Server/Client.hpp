@@ -14,42 +14,42 @@ namespace irc
     typedef struct _ClientControlBlock
     {
         int hSocket;
-        sockaddr_in_t addr;
+        sockaddr_in_t Addr;
 
-        std::string nickname;
-        std::string username;
-        std::string realname;
-        std::string hostname;
+        std::string Nickname;
+        std::string Username;
+        std::string Realname;
+        std::string Hostname;
 
         bool bRegistered;
 
-        time_t lastActiveTime;
+        time_t LastActiveTime;
         bool bExpired;
 
         /** Queue of received messages pending to be processed
          *  
          * It should be deallocated and returned to the memory pool after processing. */
-        std::vector<MsgBlock*> msgBlockPendingQueue;
+        std::vector<MsgBlock*> MsgBlockPendingQueue;
 
         FORCEINLINE _ClientControlBlock()
             : hSocket(-1)
-            , addr()
-            , nickname()
-            , username()
-            , realname()
-            , hostname()
+            , Addr()
+            , Nickname()
+            , Username()
+            , Realname()
+            , Hostname()
             , bRegistered(false)
-            , lastActiveTime(0)
+            , LastActiveTime(0)
             , bExpired(false)
-            , msgBlockPendingQueue()
+            , MsgBlockPendingQueue()
         {
         }
 
         inline ~_ClientControlBlock()
         {
-            for (size_t i = 0; i < msgBlockPendingQueue.size(); ++i)
+            for (size_t i = 0; i < MsgBlockPendingQueue.size(); ++i)
             {
-                delete msgBlockPendingQueue[i];
+                delete MsgBlockPendingQueue[i];
             }
         }
 
