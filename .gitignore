@@ -32,10 +32,9 @@
 *.app
 ircserv
 
-# Doxygen
-doxygen/
-html/
-latex/
+# Doxygen output
+# Doxygen/html/
+# Doxygen/latex/
 
 # vscode
 .vscode/c_cpp_properties.json
