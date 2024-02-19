@@ -116,6 +116,28 @@ if (bIsAligned && bIsMarked == false)
 16. `delete` 이후 곧바로 `NULL`을 대입합니다.
 
 17. 되도록 추상화 하지 않은 raw한 api를 사용합니다.
+
+18. 내부구현에 대한 코드는 `private`, `protected`로 선언하거나 `namespace::detail` 등으로 숨깁니다.
+```cpp
+  namespace detail
+  {
+      template <typename T>
+      void InternalFunction()
+      {
+          // Something
+      }
+  }
+  
+  template <typename T>
+  class MyClass
+  {
+  public:
+      void PublicFunction()
+      {
+          detail::InternalFunction();
+      }
+  };
+```
 ***
 
 ### Formatting
