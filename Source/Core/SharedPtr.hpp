@@ -148,6 +148,28 @@ public:
         return *this;
     }
 
+    FORCEINLINE T& operator*() const
+    {
+        Assert(mControlBlock != NULL);
+        return *reinterpret_cast<T*>(mControlBlock->data);
+    }
+
+    FORCEINLINE T* operator->() const
+    {
+        Assert(mControlBlock != NULL);
+        return reinterpret_cast<T*>(mControlBlock->data);
+    }
+
+    FORCEINLINE bool operator==(const SharedPtr<T>& rhs) const
+    {
+        return mControlBlock == rhs.mControlBlock;
+    }
+
+    FORCEINLINE bool operator!=(const SharedPtr<T>& rhs) const
+    {
+        return mControlBlock != rhs.mControlBlock;
+    }
+
     FORCEINLINE T* Get() const
     {
         if (mControlBlock != NULL)
@@ -253,6 +275,29 @@ public:
         return *this;
     }
 
+    FORCEINLINE WeakPtr<T>& operator=(const SharedPtr<T>& sharedPtr)
+    {
+        this->Reset();
+
+        mControlBlock = sharedPtr.mControlBlock;
+        if (mControlBlock != NULL)
+        {
+            mControlBlock->WeakRefCount += 1;
+        }
+
+        return *this;
+    }
+
+    FORCEINLINE bool operator==(const WeakPtr<T>& rhs) const
+    {
+        return mControlBlock == rhs.mControlBlock;
+    }
+
+    FORCEINLINE bool operator!=(const WeakPtr<T>& rhs) const
+    {
+        return mControlBlock != rhs.mControlBlock;
+    }
+
     FORCEINLINE SharedPtr<T> Lock() const
     {
         if (mControlBlock != NULL)
@@ -284,9 +329,6 @@ public:
             {
                 if (mControlBlock->StrongRefCount == 0)
                 {
-                    T* ptrData = reinterpret_cast<T*>(&mControlBlock->data);
-                    ptrData->~T();
-
                     delete mControlBlock;
                 }
             }
