@@ -22,7 +22,7 @@ FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g3 -O2
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(FLAGS) $(INCPATH) -o $(NAME) $(OBJS) -lkqueue
+	$(CC) $(FLAGS) $(INCPATH) -o $(NAME) $(OBJS) $(LIBPATH)
 
 %.o: %.cpp $(INCS)
 	$(CC) $(FLAGS) $(INCPATH) -c $< -o $@

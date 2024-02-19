@@ -33,7 +33,9 @@
 ircserv
 
 # Doxygen
-/doxygen
+doxygen/
+html/
+latex/
 
 # vscode
 .vscode/c_cpp_properties.json
