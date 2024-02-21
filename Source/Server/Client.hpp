@@ -14,7 +14,7 @@ namespace irc
 
     /** The control block of the client for managing the client connection and its information.
      * 
-     * @note    The client control block is managed by the memory pool.
+     * @details    The client control block is managed by the memory pool.
      */
     struct ClientControlBlock
     {
@@ -56,8 +56,12 @@ namespace irc
             }
         }
 
-        /** Overload new and delete operator with memory pool for memory management. */
     public:
+        /** @name new/delete operators
+         * 
+         * Overload new and delete operator with memory pool for memory management.
+         */
+        //@{
         NODISCARD FORCEINLINE void* operator new (size_t size)
         {
             Assert(size == sizeof(ClientControlBlock));
@@ -74,13 +78,18 @@ namespace irc
         {
             sMemoryPool.Deallocate(reinterpret_cast<ClientControlBlock*>(ptr));
         }
+        //@}
 
     private:
-        /** Unavailable by memory pool implementation */  
+        /** @name new[]/delete[] operators
+         * 
+         * Use new/delete operator instead.
+         */
+        //@{
         UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
 
-        /** Unavailable by memory pool implementation */
         UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
+        //@}
     
     private:
         enum { MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK = 512 };

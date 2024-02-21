@@ -292,9 +292,9 @@ namespace irc
 
                     // Send message to the client
                     {
-                        UNUSED MsgBlock* newSendBuff = new MsgBlock;
+                        MsgBlock* newSendBuff = new MsgBlock;
 
-                        // TODO: Continue from here
+                        
                     }
                 }
 

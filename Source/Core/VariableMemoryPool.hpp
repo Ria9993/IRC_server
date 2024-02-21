@@ -71,14 +71,14 @@ public:
     }
 
 private:
-    typedef struct _Block
+    struct Block
     {
     public:
         size_t chunkIdx; //< Index of the chunk that allocated this block
         ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
         
         // Block() = default;
-    } Block;
+    };
 
     enum { BLOCK_SIZE = sizeof(Block) };
     enum { CHUNK_MEMORY_PAGE_CAPACITY = (BLOCK_SIZE * MinNumDataPerChunk + PAGE_SIZE - 1) / PAGE_SIZE }; //< Ceil to the page size

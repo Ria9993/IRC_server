@@ -7,6 +7,10 @@ namespace irc
 {
     struct MsgBlock;
 
+    /** The message block for managing the fixed size message data. [MESSAGE_LEN_MAX]
+     * 
+     * @details    The message block is managed by the memory pool.
+     */
     struct MsgBlock
     {
     public:
@@ -20,8 +24,12 @@ namespace irc
             Msg[0] = '\0'; //< For implementation convenience and debugging
         }
 
-        /** Overload new and delete operator with memory pool for memory management. */
     public:
+        /** @name new/delete operators
+         * 
+         * Overload new and delete operator with memory pool for memory management.
+         */
+        //@{
         NODISCARD FORCEINLINE void* operator new (size_t size)
         {
             Assert(size == sizeof(MsgBlock));
@@ -38,13 +46,18 @@ namespace irc
         {
             sMemoryPool.Deallocate(reinterpret_cast<MsgBlock*>(ptr));
         }
+        //@}
 
     private:
-        /** Unavailable by memory pool implementation */  
+        /** @name new[]/delete[] operators
+         * 
+         * Use new/delete operator instead.
+         */
+        //@{
         UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
 
-        /** Unavailable by memory pool implementation */
         UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
+        //@}
         
     private:
         enum { MIN_NUM_MSG_BLOCK_PER_CHUNK = 512 };

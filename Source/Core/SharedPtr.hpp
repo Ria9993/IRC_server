@@ -43,7 +43,9 @@ struct ControlBlock
 } // namespace detail
 
 
-/** Macro to create a shared pointer with a new object.
+/** @name MakeShared
+ * 
+ * @brief   Function to create a shared pointer with a new object.
  * 
  * @param   T   Type of the object to be created. (Not support Array type. e.g. int[], char[])
  * @param   ... Arguments to be passed to the constructor of the object. (up to 4 arguments)
@@ -56,8 +58,9 @@ struct ControlBlock
  *  SharedPtr<int> A = MakeShared<int>(5);
  * @endcode
  * 
- * @see     SharedPtr, detail::ControlBlock
+ * @see     SharedPtr
  */
+//@{
 template <typename T>
 FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 
@@ -72,6 +75,7 @@ FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(r
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
 FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
+//@}
 
 /** Shared pointer custom implementation for C++98 standard
  * 
@@ -100,6 +104,8 @@ FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedP
  *  A.reset(); //< Release the resource
  *  B.reset(); //< Release and resource will be deallocated.
  * @endcode
+ * 
+ * @see     MakeShared
  * 
  * @tparam  T   Type of the object to be managed by the shared pointer. (Not support Array type. e.g. int[], char[])
  * 

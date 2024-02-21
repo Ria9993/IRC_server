@@ -36,8 +36,8 @@ namespace irc
 
         /** Initialize and start the server.
          *  
-         * @details the kqueue and listen socket, etc resources.
-         *          register the listen socket to the kqueue And then call the eventLoop() to start server.
+         * @details Initialize the kqueue and resources and register the listen socket to the kqueue.
+         *          And then call the eventLoop() to start server.
          * 
          * @warning All non-static methods must be called after this function is called.
          * @note    Blocking until the server is terminated.
@@ -51,8 +51,11 @@ namespace irc
         /** Do not use directly. Use CreateServer() instead. */
         Server(const unsigned short port, const std::string& password);
         
+        /** @name Unavailable members */
+        //@{
         UNUSED Server(const Server& rhs);
         UNUSED Server &operator=(const Server& rhs);
+        //@}
 
         /** Main event loop. Manage recv/send message events and process the messages. */
         EIrcErrorCode eventLoop();
@@ -69,16 +72,16 @@ namespace irc
         short       mServerPort;
         std::string mServerPassword;
 
-        /** @name   Kqueue group
-         * 
-         * @details The udata member of kevent is the mClients index of the corresponding client.
-         *          - .udata = clientIdx
-         */
-        ///@{
-        int         mhKqueue;
         int         mhListenSocket;
+
+        /** @name   Kevent members 
+         * 
+         * @note    The udata member of kevent is the mClients index of the corresponding client. (Except for the listen socket)
+         */
+        //@{
+        int         mhKqueue;
         std::vector<kevent_t> mEventRegisterPendingQueue;
-        ///@}
+        //@}
 
         std::vector< SharedPtr< ClientControlBlock > > mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
