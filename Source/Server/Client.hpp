@@ -11,6 +11,11 @@
 namespace irc
 {    
     struct ClientControlBlock;
+
+    /** The control block of the client for managing the client connection and its information.
+     * 
+     * @note    The client control block is managed by the memory pool.
+     */
     struct ClientControlBlock
     {
         int hSocket;
@@ -26,10 +31,8 @@ namespace irc
         time_t LastActiveTime;
         bool bExpired;
 
-        /** Queue of received messages pending to be processed
-         *  
-         * It should be deallocated and returned to the memory pool after processing. */
-        std::vector<MsgBlock*> MsgBlockPendingQueue;
+        /** Queue of received messages pending to be processed. */
+        std::vector< SharedPtr< MsgBlock* > > MsgBlockPendingQueue;
 
         FORCEINLINE ClientControlBlock()
             : hSocket(-1)

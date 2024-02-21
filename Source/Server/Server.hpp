@@ -29,8 +29,8 @@ namespace irc
          * 
          * @param outPtrServer      [out] Pointer to receive the server instance.
          * @param port              Port number to listen.
-         * @param password          Password to access the server.
-         * @return EIrcErrorCode    Error code.
+         * @param password          Password to access the server. [Length: 1 ~ M
+         * @return EIrcErrorCode    Error code. 
          */
         static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
 
@@ -54,7 +54,7 @@ namespace irc
         UNUSED Server(const Server& rhs);
         UNUSED Server &operator=(const Server& rhs);
 
-        /** Main event loop */
+        /** Main event loop. Manage recv/send message events and process the messages. */
         EIrcErrorCode eventLoop();
 
         /** Parse and process the message */
@@ -69,11 +69,18 @@ namespace irc
         short       mServerPort;
         std::string mServerPassword;
 
-        int         mhListenSocket;
+        /** @name   Kqueue group
+         * 
+         * @details The udata member of kevent is the mClients index of the corresponding client.
+         *          - .udata = clientIdx
+         */
+        ///@{
         int         mhKqueue;
+        int         mhListenSocket;
         std::vector<kevent_t> mEventRegisterPendingQueue;
+        ///@}
 
-        std::vector<ClientControlBlock> mClients;
+        std::vector< SharedPtr< ClientControlBlock > > mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
     };
 }
