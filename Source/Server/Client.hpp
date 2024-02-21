@@ -10,8 +10,8 @@
 
 namespace irc
 {    
-    typedef struct _ClientControlBlock ClientControlBlock;
-    typedef struct _ClientControlBlock
+    struct ClientControlBlock;
+    struct ClientControlBlock
     {
         int hSocket;
         sockaddr_in_t Addr;
@@ -31,7 +31,7 @@ namespace irc
          * It should be deallocated and returned to the memory pool after processing. */
         std::vector<MsgBlock*> MsgBlockPendingQueue;
 
-        FORCEINLINE _ClientControlBlock()
+        FORCEINLINE ClientControlBlock()
             : hSocket(-1)
             , Addr()
             , Nickname()
@@ -45,7 +45,7 @@ namespace irc
         {
         }
 
-        inline ~_ClientControlBlock()
+        inline ~ClientControlBlock()
         {
             for (size_t i = 0; i < MsgBlockPendingQueue.size(); ++i)
             {
@@ -57,19 +57,19 @@ namespace irc
     public:
         NODISCARD FORCEINLINE void* operator new (size_t size)
         {
-            Assert(size == sizeof(_ClientControlBlock));
+            Assert(size == sizeof(ClientControlBlock));
             return reinterpret_cast<void*>(sMemoryPool.Allocate());
         }
 
         NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
         {
-            Assert(size == sizeof(_ClientControlBlock));
+            Assert(size == sizeof(ClientControlBlock));
             return ptr;
         }
         
         FORCEINLINE void  operator delete (void* ptr)
         {
-            sMemoryPool.Deallocate(reinterpret_cast<_ClientControlBlock*>(ptr));
+            sMemoryPool.Deallocate(reinterpret_cast<ClientControlBlock*>(ptr));
         }
 
     private:
@@ -82,5 +82,5 @@ namespace irc
     private:
         enum { MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK = 512 };
         static VariableMemoryPool<ClientControlBlock, MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK> sMemoryPool;
-    } ClientControlBlock;
+    };
 }

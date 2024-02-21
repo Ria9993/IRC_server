@@ -5,15 +5,15 @@
 
 namespace irc
 {
-    typedef struct _MsgBlock MsgBlock;
+    struct MsgBlock;
 
-    typedef struct _MsgBlock
+    struct MsgBlock
     {
     public:
         char Msg[MESSAGE_LEN_MAX];
         size_t MsgLen;
 
-        FORCEINLINE _MsgBlock()
+        FORCEINLINE MsgBlock()
             : Msg()
             , MsgLen(0)
         {
@@ -49,5 +49,5 @@ namespace irc
     private:
         enum { MIN_NUM_MSG_BLOCK_PER_CHUNK = 512 };
         static VariableMemoryPool<MsgBlock, MIN_NUM_MSG_BLOCK_PER_CHUNK> sMemoryPool;
-    } MsgBlock;
+    };
 }
