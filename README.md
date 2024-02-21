@@ -192,6 +192,11 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 7. 한 줄이 너무 길어져도 각 매개변수에 주석을 달기 위함이 아닌 한 다음 줄로 넘기지 않습니다.
 
 8. `#define`을 활용한 `include guard` 대신 `#pragma once`를 사용합니다.
+
+9. 템플릿 전달인자가 중첩되는 경우 `<`,`>` 와 자료형 사이에 공백을 추가합니다.
+```cpp
+  std::vector< std::vector< int > > vec;
+```
 ***
 
 ### Naming
