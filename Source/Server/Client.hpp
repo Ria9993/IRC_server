@@ -61,7 +61,7 @@ namespace irc
          * 
          * Overload new and delete operator with memory pool for memory management.
          */
-        //@{
+        ///@{
         NODISCARD FORCEINLINE void* operator new (size_t size)
         {
             Assert(size == sizeof(ClientControlBlock));
@@ -78,18 +78,18 @@ namespace irc
         {
             sMemoryPool.Deallocate(reinterpret_cast<ClientControlBlock*>(ptr));
         }
-        //@}
+        ///@}
 
     private:
         /** @name new[]/delete[] operators
          * 
          * Use new/delete operator instead.
          */
-        //@{
+        ///@{
         UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
 
         UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
-        //@}
+        ///@}
     
     private:
         enum { MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK = 512 };

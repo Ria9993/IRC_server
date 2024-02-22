@@ -60,7 +60,7 @@ struct ControlBlock
  * 
  * @see     SharedPtr
  */
-//@{
+///@{
 template <typename T>
 FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 
@@ -75,7 +75,7 @@ FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(r
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
 FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
-//@}
+///@}
 
 /** Shared pointer custom implementation for C++98 standard
  * 

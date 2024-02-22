@@ -52,10 +52,10 @@ namespace irc
         Server(const unsigned short port, const std::string& password);
         
         /** @name Unavailable members */
-        //@{
+        ///@{
         UNUSED Server(const Server& rhs);
         UNUSED Server &operator=(const Server& rhs);
-        //@}
+        ///@}
 
         /** Main event loop. Manage recv/send message events and process the messages. */
         EIrcErrorCode eventLoop();
@@ -78,10 +78,10 @@ namespace irc
          * 
          * @note    The udata member of kevent is the mClients index of the corresponding client. (Except for the listen socket)
          */
-        //@{
+        ///@{
         int         mhKqueue;
         std::vector<kevent_t> mEventRegisterPendingQueue;
-        //@}
+        ///@}
 
         std::vector< SharedPtr< ClientControlBlock > > mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;

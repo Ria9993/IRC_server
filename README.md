@@ -256,13 +256,16 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 ***
 
 ### Comment / Documentation
-해당 프로젝트는 `doxygen`을 사용하여 문서화합니다.  
+해당 프로젝트는 `Javadoc`의 주석 스타일을 따릅니다.  
+프로젝트는 `doxygen`을 사용하여 문서화 됩니다.  
 
-1. 외부에 노출되는 함수나 클래스, 변수에 대한 주석은 `doxygen`을 사용하여 작성합니다.  
+1. 외부에 노출되는 함수나 클래스, 변수에 대한 주석은 아래와 같이 작성합니다.  
+   (JavaDoc에 따라 첫 번째 줄은 간단한 설명(`@brief`) 입니다.)
 ```cpp
   /** This is a brief description of the function.
    * 
    * @details This is a detailed description of the function.
+   *          It can span multiple lines.
    * 
    * @param   param1 Description of param1.
    * @param   param2 Description of param2.
@@ -275,10 +278,10 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
   int Function(int param1, int param2);
 ```
 
-2. 간단한 함수나 변수의 선언에 대한 주석은 `/**`, `*/`를 사용하여 작성합니다.
+2. 함수나 변수의 선언에 대한 주석은 `/**`, `*/`를 사용하여 바로 위에 작성합니다.
 ```cpp
-  /** 
-   * Parse the message and process it.
+  /** Parse the message and process it.
+   * 
    * At the end of processing, deallocate the message to the memory pool it was allocated. 
    */
   bool ProcessMessage(int clientIdx);
