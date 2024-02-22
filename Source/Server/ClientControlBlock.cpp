@@ -1,4 +1,4 @@
-#include "Server/Client.hpp"
+#include "Server/ClientControlBlock.hpp"
 
 namespace irc
 {

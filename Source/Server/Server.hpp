@@ -77,14 +77,15 @@ namespace irc
 
         /** @name   Kevent members 
          * 
-         * @note    The udata member of kevent is the mClients index of the corresponding client. (Except for the listen socket)
+         * @note    The udata member of kevent is the address of the corresponding client's control block.  
+         *          (Except for the listen socket)
          */
         ///@{
         int         mhKqueue;
         std::vector<kevent_t> mEventRegisterPendingQueue;
         ///@}
 
-        std::vector< SharedPtr< ClientControlBlock > > mClients;
+        std::vector< ClientControlBlock* > mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
     };
 }
