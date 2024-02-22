@@ -7,7 +7,7 @@ namespace irc
 {
     struct MsgBlock;
 
-    /** The message block for managing the fixed size message data. [MESSAGE_LEN_MAX]
+    /** The message block for managing the fixed Constants::MESSAGE_LEN_MAX size message data.
      * 
      * @details    The message block is managed by the memory pool.
      */
