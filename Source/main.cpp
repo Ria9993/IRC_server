@@ -25,6 +25,9 @@ int main(int argc, char** argv)
             const char* password = argv[2];
             irc::Server* server = NULL;
             irc::EIrcErrorCode err = irc::Server::CreateServer(&server, port, password);
+            irc::Server* ptr = server;
+
+            *server = *ptr;
             if (server == NULL)
             {
                 std::cerr << irc::GetIrcErrorMessage(err) << std::endl;

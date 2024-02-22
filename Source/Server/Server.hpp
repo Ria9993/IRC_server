@@ -48,16 +48,16 @@ namespace irc
         ~Server();
 
     private:
-        /** Do not use directly. Use CreateServer() instead. */
+        /** Should be called by CreateServer() */
         Server(const unsigned short port, const std::string& password);
         
-        /** @name Unavailable members */
-        ///@{
-        UNUSED Server(const Server& rhs);
+        /** @internal Copy constructor is not allowed. */
         UNUSED Server &operator=(const Server& rhs);
-        ///@}
 
-        /** Main event loop. Manage recv/send message events and process the messages. */
+        /** Main event loop.
+         * 
+         *  manage recv/send message events and process the messages.
+         **/
         EIrcErrorCode eventLoop();
 
         /** Parse and process the message */

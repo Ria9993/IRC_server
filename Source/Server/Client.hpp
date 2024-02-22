@@ -52,7 +52,7 @@ namespace irc
         {
             for (size_t i = 0; i < MsgBlockPendingQueue.size(); ++i)
             {
-                delete MsgBlockPendingQueue[i];
+                MsgBlockPendingQueue[i].Reset();
             }
         }
 

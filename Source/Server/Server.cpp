@@ -10,13 +10,6 @@ namespace irc
         // mhListenSocket
     }
 
-    Server::Server(UNUSED const Server& rhs)
-        : mServerPort()
-        , mServerPassword()
-    {
-        Assert(false);
-    }
-
     Server &Server::operator=(UNUSED const Server& rhs)
     {
         Assert(false);
