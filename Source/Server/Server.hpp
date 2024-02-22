@@ -29,7 +29,8 @@ namespace irc
          * 
          * @param outPtrServer      [out] Pointer to receive the server instance.
          * @param port              Port number to listen.
-         * @param password          Password to access the server. [Length: 1 ~ M
+         * @param password          Password to access the server.
+         *                          see Constants::SVR_PASS_MIN, Constants::SVR_PASS_MAX
          * @return EIrcErrorCode    Error code. 
          */
         static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
