@@ -980,6 +980,7 @@ html.dark-mode div.contents .dotgraph iframe
 }
 
 h2.groupheader {
+    font-size: 150%;
     border-bottom: 0px;
     color: var(--page-foreground-color);
     box-shadow: 

@@ -6,7 +6,7 @@
 #define ERROR_CODE_TUPLE_LIST                                                            \
     ERROR_CODE_X(IRC_SUCCESS, 0, "Success")                                              \
                                                                                          \
-    /** Related CreateServer() */                                                        \
+    /** @name Related CreateServer() */                                                  \
     /**@{*/                                                                              \
     ERROR_CODE_X(IRC_INVALID_PORT, 100, "Invalid port number")                           \
     ERROR_CODE_X(IRC_PASSWORD_TOO_SHORT, 101, "Password is too short")                   \
@@ -14,7 +14,7 @@
     ERROR_CODE_X(IRC_INVALID_PASSWORD, 103, "Invalid password")                          \
     /**@}*/                                                                              \
                                                                                          \
-    /** Related SocketAPI */                                                             \
+    /** @name Related SocketAPI */                                                       \
     /**@{*/                                                                              \
     ERROR_CODE_X(IRC_FAILED_TO_CREATE_SOCKET, 200, "Failed to create socket")            \
     ERROR_CODE_X(IRC_FAILED_TO_BIND_SOCKET, 201, "Failed to bind socket")                \
@@ -29,7 +29,7 @@
     ERROR_CODE_X(IRC_ERROR_LISTEN_SOCKET, 210, "Listen socket error in eventLoop")       \
     /**@}*/                                                                              \
                                                                                          \
-    /** Related kqueue and kevent */                                                     \
+    /** @name Related kqueue and kevent */                                               \
     /**@{*/                                                                              \
     ERROR_CODE_X(IRC_FAILED_TO_CREATE_KQUEUE, 300, "Failed to create kqueue")            \
     ERROR_CODE_X(IRC_FAILED_TO_ADD_KEVENT, 301, "Failed to add kqueue")                  \
@@ -41,15 +41,16 @@
 namespace irc
 {
     /** Error Codes Enum */
-    typedef enum {
+    typedef enum
+    {
 #define ERROR_CODE_X(code, number, message) code = number,
         ERROR_CODE_TUPLE_LIST
-        IRC_ERROR_CODE_MAX
+            IRC_ERROR_CODE_MAX
 #undef ERROR_CODE_X
     } EIrcErrorCode;
 
     /** Get the error message from the error code.
-     * 
+     *
      * @param errorCode     Error code.
      * @return const char*  Error message.
      */
@@ -57,7 +58,9 @@ namespace irc
     {
         switch (errorCode)
         {
-#define ERROR_CODE_X(code, number, message) case code: return message;
+#define ERROR_CODE_X(code, number, message) \
+    case code:                              \
+        return message;
             ERROR_CODE_TUPLE_LIST
 #undef ERROR_CODE_X
         default:
