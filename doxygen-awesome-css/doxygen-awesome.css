@@ -906,6 +906,11 @@ div.contents, div.header .title  {
     margin: calc(var(--spacing-medium) + .2em) auto var(--spacing-medium) auto;
 }
 
+div.groupHeader {
+    font-weight: normal;
+    font-size: 140%;
+}
+
 div.header .summary {
     margin: var(--spacing-medium) auto 0 auto;
 }
