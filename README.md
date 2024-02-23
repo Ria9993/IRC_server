@@ -141,9 +141,9 @@ if (bIsAligned && bIsMarked == false)
 ***
 
 ### Formatting
-0. 들여쓰기는 `Tab`이 아닌 `Space`를 사용합니다. (4칸) 
+1. 들여쓰기는 `Tab`이 아닌 `Space`를 사용합니다. (4칸) 
 
-1. 중괄호를 열고 닫을 때는 언제나 새로운 줄에 작성합니다. (`struct`, `enum` 예외)
+2. 중괄호를 열고 닫을 때는 언제나 새로운 줄에 작성합니다. (`struct`, `enum` 예외)
 ```cpp
   while (true)
   {
@@ -151,7 +151,7 @@ if (bIsAligned && bIsMarked == false)
   }
 ```
 
-2. 중괄호 안에 코드가 한 줄만 있더라도 중괄호를 작성합니다.
+3. 중괄호 안에 코드가 한 줄만 있더라도 중괄호를 작성합니다.
 ```cpp
   if (expression)
   {
@@ -159,20 +159,20 @@ if (bIsAligned && bIsMarked == false)
   }
 ```
 
-3. 변수는 한 줄에 한 변수만 선언합니다.
+4. 변수는 한 줄에 한 변수만 선언합니다.
 ```cpp
   int x;
   int y;
   bool bExitFlag;
 ```
 
-4. 포인터(`*`)나 레퍼런스 기호(`&`)는 자료형에 붙입니다.
+5. 포인터(`*`)나 레퍼런스 기호(`&`)는 자료형에 붙입니다.
 ```cpp
   int& mCount;
   int* mCount;
 ```
 
-5. 생성자의 `Initialize List`는 한 줄에 하나의 변수만 초기화 하도록 작성합니다.
+6. 생성자의 `Initialize List`는 한 줄에 하나의 변수만 초기화 하도록 작성합니다.
 ```cpp
 Human::Human(std::string name)
   : mHeight(175)
@@ -182,18 +182,18 @@ Human::Human(std::string name)
 }
 ```
 
-6. `Iterator`에 대한 증감문은 전위 연산자를 사용합니다.
+7. `Iterator`에 대한 증감문은 전위 연산자를 사용합니다.
 ```cpp
 for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 {
 }
 ```
 
-7. 한 줄이 너무 길어져도 각 매개변수에 주석을 달기 위함이 아닌 한 다음 줄로 넘기지 않습니다.
+8. 한 줄이 너무 길어져도 각 매개변수에 주석을 달기 위함이 아닌 한 다음 줄로 넘기지 않습니다.
 
-8. `#define`을 활용한 `include guard` 대신 `#pragma once`를 사용합니다.
+9. `#define`을 활용한 `include guard` 대신 `#pragma once`를 사용합니다.
 
-9. 템플릿 전달인자가 중첩되는 경우 `<`,`>` 와 자료형 사이에 공백을 추가합니다.
+10. 템플릿 전달인자가 중첩되는 경우 `<`,`>` 와 자료형 사이에 공백을 추가합니다.
 ```cpp
   std::vector< std::vector< int > > vec;
 ```
@@ -273,6 +273,8 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
    * @note    This is a note.
    * @warning This is a warning.
    * @todo    This is a todo.
+   * @see     SomeOtherFunction(), SomeOtherClass
+   * @bug     This is a bug.
    * @return  Description of the return value.
    */
   int Function(int param1, int param2);
@@ -313,6 +315,25 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 4. `//<`는 해당 줄의 주석이 다음 줄의 코드에 대한 주석임을 나타냅니다.
 ```cpp
   int x; //< This is a comment.
+```
+
+5. 연관된 함수나 변수는 그룹화하여 주석을 작성합니다.
+   `///@{`와 `///@}`를 사용하여 그룹을 나타냅니다.
+```cpp
+  /** @name GroupName
+   *  @brief This is a group of functions.
+   * 
+   *  This is a detailed description of the group.
+   *  It can span multiple lines.
+   */
+  ///@{
+  int Function1();
+  
+  /** This is a detailed description of the function. */
+  int Function2();
+  
+  size_t mSize;
+  ///@}
 ```
 
 ### Optimization (Optional)
