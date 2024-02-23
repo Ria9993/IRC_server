@@ -18,7 +18,7 @@
 #include "Server/IrcConstants.hpp"
 #include "Server/IrcErrorCode.hpp"
 #include "Server/MsgBlock.hpp"
-#include "Server/Client.hpp"
+#include "Server/ClientControlBlock.hpp"
 
 namespace irc
 {
@@ -80,10 +80,10 @@ namespace irc
          * @note    The udata member of kevent is the address of the corresponding client's control block.  
          *          (Except for the listen socket)
          */
-        ///@{
+        //@{
         int         mhKqueue;
         std::vector<kevent_t> mEventRegisterPendingQueue;
-        ///@}
+        //@}
 
         std::vector< ClientControlBlock* > mClients;
         std::map<std::string, size_t> mNicknameToClientIdxMap;
