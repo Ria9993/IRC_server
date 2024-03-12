@@ -122,17 +122,20 @@ public:
     {
     }
 
-    FORCEINLINE SharedPtr(detail::ControlBlock<T>* controlBlock)
-        : mControlBlock(controlBlock)
-    {
-        mControlBlock->StrongRefCount = 1;
-        mControlBlock->WeakRefCount = 0;
-        mControlBlock->bExpired = false;
-    }
-
     FORCEINLINE SharedPtr(const SharedPtr<T>& rhs)
         : mControlBlock(rhs.mControlBlock)
     {
+        if (mControlBlock != NULL)
+        {
+            mControlBlock->StrongRefCount += 1;
+        }
+    }
+
+    FORCEINLINE SharedPtr(detail::ControlBlock<T>* controlBlock)
+        : mControlBlock(controlBlock)
+    {
+        Assert(mControlBlock != NULL);
+
         if (mControlBlock != NULL)
         {
             mControlBlock->StrongRefCount += 1;
@@ -225,6 +228,21 @@ public:
         detail::ControlBlock<T>* temp = mControlBlock;
         mControlBlock = rhs.mControlBlock;
         rhs.mControlBlock = temp;
+    }
+
+    /** Get the control block of the shared pointer.
+     * 
+     * @warning Don't use without a knowledge of the internal implementation.
+     */
+    FORCEINLINE detail::ControlBlock<T>* GetControlBlock() const
+    {
+        if (mControlBlock->StrongRefCount == 1)
+        {
+            Assert(false);
+            return NULL;
+        }
+
+        return mControlBlock;
     }
 
 private:

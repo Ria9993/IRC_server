@@ -183,20 +183,20 @@ namespace irc
                         }
 
                         // Add client to the client list
-                        ClientControlBlock newClient;
+                        SharedPtr<ClientControlBlock> newClient = MakeShared<ClientControlBlock>();
                         const size_t clientIdx = mClients.size();
-                        newClient.hSocket = clientSocket;
-                        newClient.LastActiveTime = currentTickServerTime;
+                        newClient->hSocket = clientSocket;
+                        newClient->LastActiveTime = currentTickServerTime;
                         mClients.push_back(newClient);
 
                         // Register client socket to kqueue.
-                        // Pass the index to identify the client in the udata field.
+                        // Pass the pointer of the newClient to the udata member of kevent.
                         kevent_t evClient;
                         std::memset(&evClient, 0, sizeof(evClient));
                         evClient.ident  = clientSocket;
                         evClient.filter = EVFILT_READ | EVFILT_WRITE;
                         evClient.flags  = EV_ADD;
-                        evClient.udata  = reinterpret_cast<void*>(clientIdx);
+                        evClient.udata  = reinterpret_cast<void*>(newClient.GetControlBlock());
                         if (UNLIKELY(kevent(mhKqueue, &evClient, 1, NULL, 0, NULL) == -1))
                         {
                             logErrorCode(IRC_FAILED_TO_ADD_KEVENT);
@@ -210,7 +210,7 @@ namespace irc
                     else
                     {
                         // Find client index from udata
-                        const size_t clientIdx = reinterpret_cast<size_t>(event.udata);
+                        SharedPtr<ClientControlBlock>* ptrToSharedPtrClient = reinterpret_cast< SharedPtr< ClientControlBlock >* >(event.udata);
                         ClientControlBlock& client = mClients[clientIdx];
                         Assert(clientIdx < mClients.size());
 
