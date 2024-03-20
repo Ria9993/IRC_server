@@ -49,14 +49,6 @@ namespace irc
         {
         }
 
-        inline ~ClientControlBlock()
-        {
-            for (size_t i = 0; i < MsgBlockPendingQueue.size(); ++i)
-            {
-                MsgBlockPendingQueue[i].Release();
-            }
-        }
-
     public:
         /** @name new/delete operators
          * 
