@@ -59,8 +59,7 @@ private:
     /** Main event loop.
      *
      *  @details
-     * [한국어]
-     *  # 소켓 이벤트 처리
+     *  # [한국어] 소켓 이벤트 처리
      *      서버의 메인 이벤트 루프는 모든 소켓 이벤트를 비동기적으로 처리합니다.
      *      ## Error event
      *          에러 이벤트가 발생한 경우, 해당 소켓을 닫고, 클라이언트라면 연결을 해제합니다.
@@ -84,8 +83,7 @@ private:
      *      전송할 메시지가 생긴 경우, 해당 클라이언트 소켓에 대한 kevent에 WRITE 이벤트 필터를 활성화합니다.
      *      비동기적으로 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.
      *
-     *  [English]
-     *  # Socket event processing
+     *  # [English] Socket event processing
      *      The main event loop of the server processes all socket events asynchronously.
      *      ## Error event
      *          If an error event occurs, close the socket and, if it is a client, disconnect the connection.
