@@ -1,5 +1,6 @@
 #include "Server/Server.hpp"
 #include "Network/TcpIpDefines.hpp"
+#include "Network/Utils.hpp"
 
 namespace IRC
 {
@@ -118,11 +119,11 @@ EIrcErrorCode Server::eventLoop()
     {
         // Receive observed events as non-blocking from kqueue
         observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &timespecInf);
-        mEventRegisterPendingQueue.clear();
         if (UNLIKELY(observedEventNum == -1))
         {
             return IRC_FAILED_TO_WAIT_KEVENT;
         }
+        mEventRegisterPendingQueue.clear();
 
         // If there is no event, process the pending messages from the client 
         if (observedEventNum == 0)
@@ -190,6 +191,7 @@ EIrcErrorCode Server::eventLoop()
                         // Add client to the client list
                         ClientControlBlock* newClient = new ClientControlBlock;
                         newClient->hSocket = clientSocket;
+                        newClient->Addr = clientAddr;
                         newClient->LastActiveTime = currentTickServerTime;
                         mClients.push_back(newClient);
 
@@ -202,6 +204,8 @@ EIrcErrorCode Server::eventLoop()
                         evClient.flags  = EV_ADD;
                         evClient.udata  = reinterpret_cast<void*>(newClient);
                         mEventRegisterPendingQueue.push_back(evClient);
+
+                        logMessage("New client connected. IP: " + InetAddrToString(clientAddr));
                     }
                 }
 
@@ -225,9 +229,7 @@ EIrcErrorCode Server::eventLoop()
                         if (UNLIKELY(nRecvBytes == -1))
                         {
                             logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-
                             disconnectClient(currClient);
-                            
                             goto CONTINUE_NEXT_EVENT_LOOP;
                         }
                         else if (nRecvBytes == 0)
@@ -246,7 +248,8 @@ EIrcErrorCode Server::eventLoop()
                     // Client disconnected
                     if (nTotalRecvBytes == 0)
                     {
-                        // TODO: Disconnect client
+                        logMessage("Client disconnected. IP: " + std::string(inet_ntoa(currClient->Addr.sin_addr)) + ", Nick: " + currClient->Nickname);
+                        disconnectClient(currClient);
                         goto CONTINUE_NEXT_EVENT_LOOP;
                     }
 

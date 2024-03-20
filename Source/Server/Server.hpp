@@ -127,6 +127,12 @@ private:
         std::cerr << ANSI_BRED << "[LOG][ERROR]" << GetIrcErrorMessage(errorCode) << std::endl << ANSI_RESET;
     }
 
+    /** Log the message */
+    FORCEINLINE void logMessage(const std::string& message) const
+    {
+        std::cout << ANSI_CYN << "[LOG][MESSAGE]" << message << std::endl << ANSI_RESET;
+    }
+
 private:
     short       mServerPort;
     std::string mServerPassword;
