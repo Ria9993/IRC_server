@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdlib>
+
 #include "Core/Core.hpp"
+using namespace IRCCore;
+
 #include "Server/Server.hpp"
 
 // Usage :   ./<executable> <port> <password>
@@ -23,16 +26,16 @@ int main(int argc, char** argv)
         {
             const short port = std::atoi(argv[1]); 
             const char* password = argv[2];
-            irc::Server* server = NULL;
-            irc::EIrcErrorCode err = irc::Server::CreateServer(&server, port, password);
+            IRC::Server* server = NULL;
+            IRC::EIrcErrorCode err = IRC::Server::CreateServer(&server, port, password);
             
             if (server == NULL)
             {
-                std::cerr << irc::GetIrcErrorMessage(err) << std::endl;
+                std::cerr << IRC::GetIrcErrorMessage(err) << std::endl;
                 return 1;
             }
     
-            if (server->Startup() != irc::IRC_SUCCESS)
+            if (server->Startup() != IRC::IRC_SUCCESS)
             {
                 std::cerr << "Failed to start server" << std::endl;
                 delete server;

@@ -39,7 +39,7 @@
     ERROR_CODE_X(IRC_FAILED_TO_OBSERVE_KEVENT, 304, "Failed to observe kevent")          \
     /**@}*/
 
-namespace irc
+namespace IRC
 {
     /** Error Codes Enum */
     typedef enum

@@ -1,10 +1,13 @@
 #pragma once
 
+namespace IRCCore
+{
 enum GLOBAL_CONSTANTS {
     CACHE_LINE_SIZE = 64,
     PAGE_SIZE = 4096,
     QUAD_PAGE_SIZE = PAGE_SIZE * 4
 };
+} // namespace IRCCore
 
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
@@ -17,3 +20,4 @@ enum GLOBAL_CONSTANTS {
 #include "Core/WeakPtr.hpp"
 #include "Core/UniquePtr.hpp"
 #include "Core/FixedWidthType.hpp"
+

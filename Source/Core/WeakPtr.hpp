@@ -1,6 +1,10 @@
 #pragma once
 
+    
 #include "Core/SharedPtr.hpp"
+
+namespace IRCCore
+{
 
 /** Weak pointer custom implementation for C++98 standard
  * 
@@ -136,3 +140,5 @@ public:
 private:
     detail::ControlBlock<T>* mControlBlock;
 };
+
+} // namespace IRCCore

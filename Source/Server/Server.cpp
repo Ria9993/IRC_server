@@ -1,8 +1,9 @@
 #include "Server/Server.hpp"
 #include "Network/TcpIpDefines.hpp"
 
-namespace irc
+namespace IRC
 {
+
 Server::~Server()
 {
     // TODO:
@@ -26,11 +27,11 @@ EIrcErrorCode Server::CreateServer(Server** outPtrServer, const unsigned short p
     {
         return IRC_INVALID_PORT;
     }
-    else if (password.size() < irc::SVR_PASS_MIN)
+    else if (password.size() < IRC::SVR_PASS_MIN)
     {
         return IRC_PASSWORD_TOO_SHORT;
     }
-    else if (password.size() > irc::SVR_PASS_MAX)
+    else if (password.size() > IRC::SVR_PASS_MAX)
     {
         return IRC_PASSWORD_TOO_LONG;
     }
@@ -283,6 +284,8 @@ EIrcErrorCode Server::processMessage(ClientControlBlock* client)
 {
     (void)client;
     // TODO: Implement
+
+    return IRC_SUCCESS;
 }
 
 EIrcErrorCode Server::disconnectClient(ClientControlBlock* client)
@@ -298,6 +301,8 @@ EIrcErrorCode Server::disconnectClient(ClientControlBlock* client)
     client->bExpired = true;
 
     // TODO: Remove client from the channels
+
+    return IRC_SUCCESS;
 }
 
 } // namespace irc

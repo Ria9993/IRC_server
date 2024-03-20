@@ -3,6 +3,9 @@
 #include "Core/AttributeDefines.hpp"
 #include "Core/MacroDefines.hpp"
 
+namespace IRCCore
+{
+
 template <typename T>
 class UniquePtr;
 
@@ -168,3 +171,5 @@ private:
 
     T* mPtr;
 };
+
+} // namespace IRCCore

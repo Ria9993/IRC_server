@@ -3,6 +3,9 @@
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 
+namespace IRCCore
+{
+
 // Forward declaration
 template <typename T>
 class SharedPtr;
@@ -247,3 +250,5 @@ public:
 private:
     detail::ControlBlock<T>* mControlBlock;
 };
+
+} // namespace IRCCore

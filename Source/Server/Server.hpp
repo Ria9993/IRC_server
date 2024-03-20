@@ -14,13 +14,15 @@
 #include <arpa/inet.h>
 
 #include "Core/Core.hpp"
+using namespace IRCCore;
+
 #include "Network/SocketTypedef.hpp"
 #include "Server/IrcConstants.hpp"
 #include "Server/IrcErrorCode.hpp"
 #include "Server/MsgBlock.hpp"
 #include "Server/ClientControlBlock.hpp"
 
-namespace irc
+namespace IRC
 {
 
 class Server

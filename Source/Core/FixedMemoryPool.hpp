@@ -3,6 +3,9 @@
 #include <new>
 #include "Core/Core.hpp"
 
+namespace IRCCore
+{
+
 /** A memory pool that can allocate fixed number of data
  * 
  * @details  The FixedMemoryPool is implemented considering the page size(4KB).
@@ -80,3 +83,5 @@ private:
     size_t  mCursor;
     char*   mMemoryRaw;
 };
+
+} // namespace IRCCore

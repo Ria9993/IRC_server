@@ -3,8 +3,12 @@
 #include <vector>
 #include <cstddef>
 #include <new>
+
 #include "Core/Core.hpp"
 #include "Core/FixedMemoryPool.hpp"
+
+namespace IRCCore
+{
 
 /** A memory pool that can allocate variable number of data
  *
@@ -84,3 +88,5 @@ private:
     enum { CHUNK_MEMORY_PAGE_CAPACITY = (BLOCK_SIZE * MinNumDataPerChunk + PAGE_SIZE - 1) / PAGE_SIZE }; //< Ceil to the page size
     std::vector<FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>*> mChunks;
 };
+
+} // namespace IRCCore
