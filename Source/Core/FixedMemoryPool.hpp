@@ -11,8 +11,6 @@
  * @tparam T                    Type of data to allocate
  * @tparam MemoryPageCapacity   Number of pages to allocate. (see details)
  * 
- * @warning Allocate the class through heap allocation rather than stack allocation.
- *          It's too big to be allocated on the stack.
  */
 template <typename T, size_t MemoryPageCapacity>
 class FixedMemoryPool

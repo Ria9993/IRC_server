@@ -62,7 +62,7 @@ namespace irc
         EIrcErrorCode eventLoop();
 
         /** Parse and process the message */
-        void ProcessMessage(size_t clientIdx);
+        void ProcessMessage(ClientControlBlock* client);
 
         FORCEINLINE void logErrorCode(EIrcErrorCode errorCode) const
         {
@@ -85,7 +85,13 @@ namespace irc
         std::vector<kevent_t> mEventRegisterPendingQueue;
         ///@}
 
-        std::vector< SharedPtr< ClientControlBlock > > mClients;
+        /** Client control blocks
+         * 
+         *  @details    Informations of the connected clients.
+         *              When the client is disconnected, the memory must be released.
+        */
+        std::vector<ClientControlBlock*> mClients;
+
         std::map<std::string, size_t> mNicknameToClientIdxMap;
     };
 }

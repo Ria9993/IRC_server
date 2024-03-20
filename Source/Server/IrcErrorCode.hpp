@@ -5,6 +5,7 @@
 /** Tuple of error code, error number, and error message. */
 #define ERROR_CODE_TUPLE_LIST                                                            \
     ERROR_CODE_X(IRC_SUCCESS, 0, "Success")                                              \
+    ERROR_CODE_X(IRC_FAILED_UNREACHABLE_CODE, 5, "Failed to reach the unreachable code") \
                                                                                          \
     /** @name Related CreateServer() */                                                  \
     /**@{*/                                                                              \

@@ -19,6 +19,7 @@ namespace irc
     struct ClientControlBlock
     {
         int hSocket;
+
         sockaddr_in_t Addr;
 
         std::string Nickname;
@@ -32,7 +33,7 @@ namespace irc
         bool bExpired;
 
         /** Queue of received messages pending to be processed. */
-        std::vector< SharedPtr< MsgBlock* > > MsgBlockPendingQueue;
+        std::vector< UniquePtr< MsgBlock > > MsgBlockPendingQueue;
 
         FORCEINLINE ClientControlBlock()
             : hSocket(-1)
@@ -52,7 +53,7 @@ namespace irc
         {
             for (size_t i = 0; i < MsgBlockPendingQueue.size(); ++i)
             {
-                MsgBlockPendingQueue[i].Reset();
+                MsgBlockPendingQueue[i].Release();
             }
         }
 
