@@ -15,3 +15,5 @@ enum GLOBAL_CONSTANTS {
 #include "Core/TemplateSfine.hpp"
 #include "Core/SharedPtr.hpp"
 #include "Core/WeakPtr.hpp"
+#include "Core/UniquePtr.hpp"
+#include "Core/FixedWidthType.hpp"
