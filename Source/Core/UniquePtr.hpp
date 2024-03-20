@@ -70,7 +70,7 @@ NODISCARD FORCEINLINE detail::MoveUniquePtr<T> MakeUnique(A1 a1, A2 a2, A3 a3, A
  * 
  * @details rvalue reference is not available in c++98.
  *          Therefore, MoveUniquePtr is used to transfer the ownership of the pointer.
- * 
+ *  
  * @tparam  T   Type of the object to be managed by the unique pointer.
  * 
  * @see     MoveUniquePtr

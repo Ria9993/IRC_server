@@ -59,7 +59,8 @@ private:
     /** Main event loop.
      *
      *  @details
-     *  # [한국어] 소켓 이벤트 처리
+     *  <pre>
+     *   # [한국어] 소켓 이벤트 처리
      *      서버의 메인 이벤트 루프는 모든 소켓 이벤트를 비동기적으로 처리합니다.
      *      ## Error event
      *          에러 이벤트가 발생한 경우, 해당 소켓을 닫고, 클라이언트라면 연결을 해제합니다.
@@ -106,7 +107,7 @@ private:
      *      By default, the kevent for the client socket is disabled for the WRITE event filter.
      *      When a message to send is generated, enable the WRITE event filter for the kevent of the corresponding client socket.
      *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.
-     *
+     *  </pre>
      **/
     EIrcErrorCode eventLoop();
 

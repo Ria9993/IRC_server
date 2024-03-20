@@ -70,23 +70,23 @@ template <typename T, typename A1, typename A2>
 NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2))); }
 
 template <typename T, typename A1, typename A2, typename A3>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3))); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T> *>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3))); }
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T> *>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
 ///@}
 
 /** Shared pointer custom implementation for C++98 standard
- * 
+ *
  * @details Example usage:
  * @code
  *  SharedPtr<int> A = MakeShared<int>(5); //< Create a new resource using MakeShared function
  *  SharedPtr<int> B = A;
  *  WeakPtr<int>   C = B;
- * 
+ *
  *  std::cout << *A.get() << std::endl; //< 5
  *  std::cout << *B.get() << std::endl; //< 5
- *  
+ *
  *  if (C.expired())
  *  {
  *     std::cout << "C is expired" << std::endl;
@@ -97,17 +97,17 @@ NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { retu
  *     // If the C is expired while executing the lock() method, the locked_C.get() will be NULL.
  *     SharedPtr<int> locked_C = C.lock();
  *     std::cout << *locked_C.get() << std::endl; //< 5
- * 
+ *
  *  } //< The locked_C will be released after the scope ends.
- * 
+ *
  *  A.reset(); //< Release the resource
  *  B.reset(); //< Release and resource will be deallocated.
  * @endcode
- * 
+ *
  * @see     MakeShared
- * 
+ *
  * @tparam  T   Type of the object to be managed by the shared pointer. (Not support Array type. e.g. int[], char[])
- * 
+ *
  * @warning Not thread-safe
  */
 template <typename T>
