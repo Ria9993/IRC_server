@@ -11,7 +11,7 @@ enum Constants {
     
     CLIENT_MAX = 65535,
     CLIENT_TIMEOUT = 60,
-    KEVENT_OBSERVE_MAX = (PAGE_SIZE / sizeof(kevent_t)),
+    KEVENT_OBSERVE_MAX = 1024,
     CLIENT_RESERVE_MIN = 1024,
     MESSAGE_LEN_MAX = 512
 };

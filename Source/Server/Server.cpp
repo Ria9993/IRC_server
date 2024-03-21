@@ -12,7 +12,7 @@ Server::~Server()
     // mhListenSocket
 }
 
-Server &Server::operator=(UNUSED const Server& rhs)
+Server& Server::operator=(UNUSED const Server& rhs)
 {
     Assert(false);
     return *this;
@@ -106,9 +106,9 @@ EIrcErrorCode Server::Startup()
 
 EIrcErrorCode Server::eventLoop()
 {
-    struct timespec timespecInf;
-    timespecInf.tv_sec  = 0;
-    timespecInf.tv_nsec = 0;
+    struct timespec timespecZero;
+    timespecZero.tv_sec  = 0;
+    timespecZero.tv_nsec = 0;
 
     ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
     int observedEventNum = 0;
@@ -118,7 +118,7 @@ EIrcErrorCode Server::eventLoop()
     while (true)
     {
         // Receive observed events as non-blocking from kqueue
-        observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &timespecInf);
+        observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &timespecZero);
         if (UNLIKELY(observedEventNum == -1))
         {
             return IRC_FAILED_TO_WAIT_KEVENT;
@@ -304,6 +304,18 @@ EIrcErrorCode Server::disconnectClient(ClientControlBlock* client)
     client->bExpired = true;
 
     // TODO: Remove client from the channels
+
+    // Deregister the client from the kqueue
+    kevent_t evClient;
+    std::memset(&evClient, 0, sizeof(evClient));
+    evClient.ident  = client->hSocket;
+    evClient.filter = EVFILT_READ | EVFILT_WRITE;
+    evClient.flags  = EV_DELETE;
+    if (UNLIKELY(kevent(mhKqueue, &evClient, 1, NULL, 0, NULL) == -1))
+    {
+        logErrorCode(IRC_FAILED_TO_DEL_KEVENT);
+        return IRC_FAILED_TO_DEL_KEVENT;
+    }
 
     return IRC_SUCCESS;
 }
