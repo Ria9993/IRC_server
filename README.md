@@ -55,7 +55,7 @@ IRC server written by C++98 standard
 
 2. 표준 `assert`와 `static_assert` 대신 별도로 구현한 `Assert(exp)`, `STATIC_ASSERT(exp)`를 사용합니다.
 
-3. 재사용하지 않는 코드일 경우 함수로 작성하는 것을 되도록 지양합니다.
+3. 재사용하지 않는 코드일 경우 함수로 작성하는 것을 최대한 지양합니다.
 
 4. `const`를 최대한 사용합니다.
 
@@ -138,6 +138,8 @@ if (bIsAligned && bIsMarked == false)
       }
   };
 ```
+19. `NULL`을 사용할 일이 없다면 `&`(레퍼런스)를 사용합니다.
+
 ***
 
 ### Formatting
@@ -197,6 +199,19 @@ for (std::vector<int>::iterator It = vec.begin(); It != vec.end(); ++It)
 ```cpp
   std::vector< std::vector< int > > vec;
 ```
+
+11. `namespace`는 들여쓰기를 하지 않습니다.
+```cpp
+namespace MyNamespace
+{
+
+class MyClass
+{
+};
+
+}
+```
+
 ***
 
 ### Naming
