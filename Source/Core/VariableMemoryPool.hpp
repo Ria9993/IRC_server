@@ -46,7 +46,7 @@ public:
         // Find available pool
         for (currChunkIdx = 0; currChunkIdx < mChunks.size(); currChunkIdx++)
         {
-            if (!mChunks[currChunkIdx]->IsCapacityFull())
+            if (mChunks[currChunkIdx]->IsCapacityFull() == false)
             {
                 goto ALLLOCATE_NEW_BLOCK;
             }
@@ -87,6 +87,9 @@ private:
     enum { BLOCK_SIZE = sizeof(Block) };
     enum { CHUNK_MEMORY_PAGE_CAPACITY = (BLOCK_SIZE * MinNumDataPerChunk + PAGE_SIZE - 1) / PAGE_SIZE }; //< Ceil to the page size
     std::vector<FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>*> mChunks;
+
+public:
+    friend class FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>;
 };
 
 } // namespace IRCCore

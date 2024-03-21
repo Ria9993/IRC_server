@@ -35,8 +35,11 @@ struct ClientControlBlock
     time_t LastActiveTime;
     bool bExpired;
 
-    /** Queue of received messages pending to be processed. */
-    std::vector< UniquePtr< MsgBlock > > MsgBlockPendingQueue;
+    /** Queue of received messages pending to be processed.
+     * 
+     * @details When the message block is processed, it should be deallocated.
+     */
+    std::vector<MsgBlock*> MsgBlockPendingQueue;
 
     FORCEINLINE ClientControlBlock()
         : hSocket(-1)

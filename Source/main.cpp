@@ -37,7 +37,8 @@ int main(int argc, char** argv)
     
             if (server->Startup() != IRC::IRC_SUCCESS)
             {
-                std::cerr << "Failed to start server" << std::endl;
+                std::cerr << "Server is terminated by error." << std::endl;
+                std::cerr << "Error code: " << IRC::GetIrcErrorMessage(err) << std::endl;
                 delete server;
                 return 1;
             }

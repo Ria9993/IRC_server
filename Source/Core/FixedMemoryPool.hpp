@@ -49,7 +49,7 @@ public:
         if (mCursor < mCapacity)
         {
             const size_t idx = mIndices[mCursor++];
-            const char* ptrRaw = mMemoryRaw + idx * sizeof(T);
+            const char* ptrRaw = mMemoryRaw + (idx * sizeof(T));
             return (T*)ptrRaw;
         }
         return NULL;

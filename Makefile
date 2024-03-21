@@ -17,7 +17,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 CC = c++
 
-FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g3 -O2
+FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g3
 
 all: $(NAME)
 

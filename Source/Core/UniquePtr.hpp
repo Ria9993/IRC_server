@@ -47,7 +47,7 @@ private:
  * @details Support only up to 4 arguments because variadic template is not available in c++98.
  *          Example usage:
  * @code
- * UniquePtr<int> A = MakeUnique<int>(5);
+ * UniquePtr<int> A(MakeUnique<int>(5)); // A is a unique pointer to a new int object.
  * @endcode
  * 
  * @see    UniquePtr 

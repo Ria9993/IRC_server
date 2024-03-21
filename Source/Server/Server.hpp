@@ -130,7 +130,7 @@ private:
     /** Log the message */
     FORCEINLINE void logMessage(const std::string& message) const
     {
-        std::cout << ANSI_CYN << "[LOG][MESSAGE]" << message << std::endl << ANSI_RESET;
+        std::cout << ANSI_CYN << "[LOG]" << message << std::endl << ANSI_RESET;
     }
 
 private:

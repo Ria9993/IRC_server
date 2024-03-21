@@ -51,6 +51,8 @@ Server::Server(const unsigned short port, const std::string& password)
 
 EIrcErrorCode Server::Startup()
 {
+    logMessage("Server started. Port: " + std::to_string(mServerPort) + ", Password: " + mServerPassword);
+
     // Create listen socket as non-blocking and bind to the port
     mhListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (mhListenSocket == -1)
@@ -101,7 +103,9 @@ EIrcErrorCode Server::Startup()
         return IRC_FAILED_TO_ADD_KEVENT;
     }
 
-    return IRC_SUCCESS;
+    // Start the event loop
+    EIrcErrorCode result = eventLoop();
+    return result;
 }
 
 EIrcErrorCode Server::eventLoop()
@@ -140,28 +144,34 @@ EIrcErrorCode Server::eventLoop()
         const time_t currentTickServerTime = std::time(NULL);
         for (int eventIdx = 0; eventIdx < observedEventNum; eventIdx++)
         {
-            kevent_t& event = observedEvents[eventIdx];
-            
+            kevent_t& currEvent = observedEvents[eventIdx];
+
             // 1. Error event
-            if (UNLIKELY(event.flags & EV_ERROR))
+            if (UNLIKELY(currEvent.flags & EV_ERROR))
             {
-                if (UNLIKELY(static_cast<int>(event.ident) == mhListenSocket))
+                if (UNLIKELY(static_cast<int>(currEvent.ident) == mhListenSocket))
                 {
-                    return IRC_FAILED_TO_OBSERVE_KEVENT;
+                    logErrorCode(IRC_ERROR_LISTEN_SOCKET_EVENT);
+                    return IRC_ERROR_LISTEN_SOCKET_EVENT;
                 }
 
                 // Client socket error
                 else
                 {
-                    disconnectClient(reinterpret_cast<ClientControlBlock*>(event.udata));
+                    logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
+                    EIrcErrorCode err = disconnectClient(reinterpret_cast<ClientControlBlock*>(currEvent.udata));
+                    if (UNLIKELY(err != IRC_SUCCESS))
+                    {
+                        return err;
+                    }
                 }
             }
 
             // 2. Read event
-            else if (event.filter == EVFILT_READ)
+            else if (currEvent.filter == EVFILT_READ)
             {
                 // Request to accept the new client connection.
-                if (static_cast<int>(event.ident) == mhListenSocket)
+                if (static_cast<int>(currEvent.ident) == mhListenSocket)
                 {
                     // Accept client until there is no client to accept
                     while (true)
@@ -172,11 +182,6 @@ EIrcErrorCode Server::eventLoop()
                         const int       clientSocket  = accept(mhListenSocket, reinterpret_cast<sockaddr_t*>(&clientAddr), &clientAddrLen);
                         if (clientSocket == -1)
                         {
-                            if (LIKELY(errno == EWOULDBLOCK || errno == EAGAIN))
-                            {
-                                break;
-                            }
-                            logErrorCode(IRC_FAILED_TO_ACCEPT_SOCKET);
                             goto CONTINUE_NEXT_EVENT_LOOP;
                         }
 
@@ -213,23 +218,27 @@ EIrcErrorCode Server::eventLoop()
                 else
                 {
                     // Find client index from udata
-                    ClientControlBlock* currClient = reinterpret_cast<ClientControlBlock*>(event.udata);
+                    ClientControlBlock* currClient = reinterpret_cast<ClientControlBlock*>(currEvent.udata);
                     Assert(currClient != NULL);
-                    Assert(currClient->hSocket == static_cast<int>(event.ident));
+                    Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
 
                     // Receive up to [MESSAGE_LEN_MAX] bytes in the MsgBlock allocated by the mMesssagePool
                     // And add them to the client's message pending queue.
                     int nTotalRecvBytes = 0;
                     int nRecvBytes;
                     do {
-                        UniquePtr<MsgBlock> newRecvMsgBlock = MakeUnique<MsgBlock>();
+                        MsgBlock* newRecvMsgBlock = new MsgBlock();
                         STATIC_ASSERT(sizeof(newRecvMsgBlock->Msg) == MESSAGE_LEN_MAX);
 
                         nRecvBytes = recv(currClient->hSocket, newRecvMsgBlock->Msg, MESSAGE_LEN_MAX, 0);
                         if (UNLIKELY(nRecvBytes == -1))
                         {
                             logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                            disconnectClient(currClient);
+                            EIrcErrorCode err = disconnectClient(currClient);
+                            if (UNLIKELY(err != IRC_SUCCESS))
+                            {
+                                return err;
+                            }
                             goto CONTINUE_NEXT_EVENT_LOOP;
                         }
                         else if (nRecvBytes == 0)
@@ -249,7 +258,11 @@ EIrcErrorCode Server::eventLoop()
                     if (nTotalRecvBytes == 0)
                     {
                         logMessage("Client disconnected. IP: " + std::string(inet_ntoa(currClient->Addr.sin_addr)) + ", Nick: " + currClient->Nickname);
-                        disconnectClient(currClient);
+                        EIrcErrorCode err = disconnectClient(currClient);
+                        if (UNLIKELY(err != IRC_SUCCESS))
+                        {
+                            return err;
+                        }
                         goto CONTINUE_NEXT_EVENT_LOOP;
                     }
 
@@ -262,15 +275,17 @@ EIrcErrorCode Server::eventLoop()
 
             // 3. Write event
             // Send pending messages to the client
-            else if (event.filter == EVFILT_WRITE)
+            else if (currEvent.filter == EVFILT_WRITE)
             {
                 // TODO: Can a listen socket raise a write event? I'll check this later.
-                Assert(static_cast<int>(event.ident) == mhListenSocket);
+                Assert(static_cast<int>(currEvent.ident) == mhListenSocket);
 
                 // Send message to the client
                 {
                     // TODO:
                 }
+
+                // TODO: If all messages are sent, EVFILTER_WRITE filter should be disabled.
             }
 
         CONTINUE_NEXT_EVENT_LOOP:;
@@ -295,6 +310,7 @@ EIrcErrorCode Server::disconnectClient(ClientControlBlock* client)
 {
     Assert(client != NULL);
 
+    // close() on a socket will delete the corresponding kevent from the kqueue.
     if (UNLIKELY(close(client->hSocket) == -1))
     {
         logErrorCode(IRC_FAILED_TO_CLOSE_SOCKET);
@@ -304,18 +320,6 @@ EIrcErrorCode Server::disconnectClient(ClientControlBlock* client)
     client->bExpired = true;
 
     // TODO: Remove client from the channels
-
-    // Deregister the client from the kqueue
-    kevent_t evClient;
-    std::memset(&evClient, 0, sizeof(evClient));
-    evClient.ident  = client->hSocket;
-    evClient.filter = EVFILT_READ | EVFILT_WRITE;
-    evClient.flags  = EV_DELETE;
-    if (UNLIKELY(kevent(mhKqueue, &evClient, 1, NULL, 0, NULL) == -1))
-    {
-        logErrorCode(IRC_FAILED_TO_DEL_KEVENT);
-        return IRC_FAILED_TO_DEL_KEVENT;
-    }
 
     return IRC_SUCCESS;
 }

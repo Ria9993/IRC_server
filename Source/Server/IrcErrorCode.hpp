@@ -37,6 +37,8 @@
     ERROR_CODE_X(IRC_FAILED_TO_DEL_KEVENT, 302, "Failed to del kqueue")                  \
     ERROR_CODE_X(IRC_FAILED_TO_WAIT_KEVENT, 303, "Failed to wait kevent")                \
     ERROR_CODE_X(IRC_FAILED_TO_OBSERVE_KEVENT, 304, "Failed to observe kevent")          \
+    ERROR_CODE_X(IRC_ERROR_LISTEN_SOCKET_EVENT, 305, "Listen socket event error")        \
+    ERROR_CODE_X(IRC_ERROR_CLIENT_SOCKET_EVENT, 306, "Client socket event error")        \
     /**@}*/
 
 namespace IRC
