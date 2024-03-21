@@ -134,7 +134,7 @@ EIrcErrorCode Server::eventLoop()
         {
             for (size_t i = 0; i < ClientListWithPendingMsg.size(); i++)
             {
-                ClientControlBlock* currClient = ClientListWithPendingMsg[i];
+                ClientControlBlock& currClient = *ClientListWithPendingMsg[i];
                 processMessage(currClient);
             }
             continue;
@@ -159,7 +159,7 @@ EIrcErrorCode Server::eventLoop()
                 else
                 {
                     logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
-                    EIrcErrorCode err = disconnectClient(reinterpret_cast<ClientControlBlock*>(currEvent.udata));
+                    EIrcErrorCode err = disconnectClient(reinterpret_cast<ClientControlBlock&>(currEvent.udata));
                     if (UNLIKELY(err != IRC_SUCCESS))
                     {
                         return err;
@@ -227,14 +227,14 @@ EIrcErrorCode Server::eventLoop()
                     int nTotalRecvBytes = 0;
                     int nRecvBytes;
                     do {
-                        MsgBlock* newRecvMsgBlock = new MsgBlock();
+                        SharedPtr<MsgBlock> newRecvMsgBlock = MakeShared<MsgBlock>();
                         STATIC_ASSERT(sizeof(newRecvMsgBlock->Msg) == MESSAGE_LEN_MAX);
 
                         nRecvBytes = recv(currClient->hSocket, newRecvMsgBlock->Msg, MESSAGE_LEN_MAX, 0);
                         if (UNLIKELY(nRecvBytes == -1))
                         {
                             logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                            EIrcErrorCode err = disconnectClient(currClient);
+                            EIrcErrorCode err = disconnectClient(*currClient);
                             if (UNLIKELY(err != IRC_SUCCESS))
                             {
                                 return err;
@@ -258,7 +258,7 @@ EIrcErrorCode Server::eventLoop()
                     if (nTotalRecvBytes == 0)
                     {
                         logMessage("Client disconnected. IP: " + std::string(inet_ntoa(currClient->Addr.sin_addr)) + ", Nick: " + currClient->Nickname);
-                        EIrcErrorCode err = disconnectClient(currClient);
+                        EIrcErrorCode err = disconnectClient(*currClient);
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
                             return err;
@@ -298,26 +298,27 @@ EIrcErrorCode Server::eventLoop()
     return IRC_FAILED_UNREACHABLE_CODE;
 }
 
-EIrcErrorCode Server::processMessage(ClientControlBlock* client)
+EIrcErrorCode Server::processMessage(ClientControlBlock& client)
 {
-    (void)client;
+    Assert(client.bExpired == false);
+
     // TODO: Implement
 
     return IRC_SUCCESS;
 }
 
-EIrcErrorCode Server::disconnectClient(ClientControlBlock* client)
+EIrcErrorCode Server::disconnectClient(ClientControlBlock& client)
 {
-    Assert(client != NULL);
+    Assert(client.bExpired == false);
 
     // close() on a socket will delete the corresponding kevent from the kqueue.
-    if (UNLIKELY(close(client->hSocket) == -1))
+    if (UNLIKELY(close(client.hSocket) == -1))
     {
         logErrorCode(IRC_FAILED_TO_CLOSE_SOCKET);
         return IRC_FAILED_TO_CLOSE_SOCKET;
     }
 
-    client->bExpired = true;
+    client.bExpired = true;
 
     // TODO: Remove client from the channels
 

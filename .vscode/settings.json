@@ -61,7 +61,9 @@
 		"utility": "cpp",
 		"vector": "cpp",
 		"__tree": "cpp",
-		"map": "cpp"
+		"map": "cpp",
+		"deque": "cpp",
+		"regex": "cpp"
 	},
 	"C_Cpp.vcFormat.indent.preserveComments": true
 }

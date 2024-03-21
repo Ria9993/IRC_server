@@ -23,6 +23,7 @@ class VariableMemoryPool
 public:
     VariableMemoryPool()
         : mChunks()
+        , mChunkCursor(0)
     {
         mChunks.reserve(16);
     }
@@ -41,12 +42,10 @@ public:
      */
     NODISCARD inline T* Allocate()
     {
-        size_t currChunkIdx = 0;
-
         // Find available pool
-        for (currChunkIdx = 0; currChunkIdx < mChunks.size(); currChunkIdx++)
+        for (; mChunkCursor < mChunks.size(); mChunkCursor++)
         {
-            if (mChunks[currChunkIdx]->IsCapacityFull() == false)
+            if (mChunks[mChunkCursor]->IsCapacityFull() == false)
             {
                 goto ALLLOCATE_NEW_BLOCK;
             }
@@ -56,8 +55,8 @@ public:
         mChunks.push_back(new FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>);
 
     ALLLOCATE_NEW_BLOCK:
-        Block* block = mChunks[currChunkIdx]->Allocate();
-        block->chunkIdx = currChunkIdx;
+        Block* block = mChunks[mChunkCursor]->Allocate();
+        block->chunkIdx = mChunkCursor;
         return reinterpret_cast<T*>(&block->data);
     }
 
@@ -72,6 +71,9 @@ public:
         
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
         mChunks[block->chunkIdx]->Deallocate(block);
+
+        // Update the cursor to the chunk that has empty space
+        mChunkCursor = block->chunkIdx;
     }
 
 private:
@@ -86,7 +88,10 @@ private:
 
     enum { BLOCK_SIZE = sizeof(Block) };
     enum { CHUNK_MEMORY_PAGE_CAPACITY = (BLOCK_SIZE * MinNumDataPerChunk + PAGE_SIZE - 1) / PAGE_SIZE }; //< Ceil to the page size
-    std::vector<FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>*> mChunks;
+    std::vector< FixedMemoryPool< Block, CHUNK_MEMORY_PAGE_CAPACITY >* > mChunks;
+
+    /** Index of the first chunk among the chunks with empty space */
+    size_t mChunkCursor;
 
 public:
     friend class FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>;

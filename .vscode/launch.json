@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/ircserv",
-            "args": ["1234", "abcd"],
+            "args": ["12345", "abcd"],
             "cwd": "${workspaceFolder}"
         }
     ]

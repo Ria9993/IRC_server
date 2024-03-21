@@ -39,7 +39,7 @@ struct ClientControlBlock
      * 
      * @details When the message block is processed, it should be deallocated.
      */
-    std::vector<MsgBlock*> MsgBlockPendingQueue;
+    std::vector< SharedPtr< MsgBlock > > MsgBlockPendingQueue;
 
     FORCEINLINE ClientControlBlock()
         : hSocket(-1)
@@ -91,7 +91,7 @@ private:
     ///@}
 
 private:
-    enum { MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK = 512 };
-    static VariableMemoryPool<ClientControlBlock, MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK> sMemoryPool;
+    enum { MIN_NUM_PER_MEMORY_POOL_CHUNK = 64 };
+    static VariableMemoryPool<ClientControlBlock, MIN_NUM_PER_MEMORY_POOL_CHUNK> sMemoryPool;
 };
 } // namespace IRC

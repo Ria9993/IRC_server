@@ -62,7 +62,7 @@ private:
     ///@}
     
 private:
-    enum { MIN_NUM_MSG_BLOCK_PER_CHUNK = 512 };
-    static VariableMemoryPool<MsgBlock, MIN_NUM_MSG_BLOCK_PER_CHUNK> sMemoryPool;
+    enum { MIN_NUM_PER_MEMORY_POOL_CHUNK = 64 };
+    static VariableMemoryPool<MsgBlock, MIN_NUM_PER_MEMORY_POOL_CHUNK> sMemoryPool;
 };
 } // namespace IRC

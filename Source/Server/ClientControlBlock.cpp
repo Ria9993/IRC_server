@@ -2,5 +2,5 @@
 
 namespace IRC
 {
-VariableMemoryPool<ClientControlBlock, ClientControlBlock::MIN_NUM_CLIENT_CONTROL_BLOCK_PER_CHUNK> ClientControlBlock::sMemoryPool;
+VariableMemoryPool<ClientControlBlock, ClientControlBlock::MIN_NUM_PER_MEMORY_POOL_CHUNK> ClientControlBlock::sMemoryPool;
 }

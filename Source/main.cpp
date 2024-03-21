@@ -35,7 +35,8 @@ int main(int argc, char** argv)
                 return 1;
             }
     
-            if (server->Startup() != IRC::IRC_SUCCESS)
+            err = server->Startup();
+            if (err != IRC::IRC_SUCCESS)
             {
                 std::cerr << "Server is terminated by error." << std::endl;
                 std::cerr << "Error code: " << IRC::GetIrcErrorMessage(err) << std::endl;
@@ -47,7 +48,6 @@ int main(int argc, char** argv)
             delete server;
             return 0;
         }
-#ifndef NDEBUG
         catch (std::exception& e)
         {
             std::cerr << ANSI_RED << "[Error]: " << e.what() << std::endl << ANSI_RESET;
@@ -57,8 +57,6 @@ int main(int argc, char** argv)
             std::cerr << ANSI_RED << "[Error] Non-standard exception" << std::endl << ANSI_RESET;
         }
         std::cerr << "[Restarting server...]" << std::endl;
-        continue;
-#endif
     }
 
     return 0;

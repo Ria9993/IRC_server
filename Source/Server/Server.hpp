@@ -112,14 +112,14 @@ private:
     EIrcErrorCode eventLoop();
 
     /** Parse and process the message */
-    EIrcErrorCode processMessage(ClientControlBlock* client);
+    EIrcErrorCode processMessage(ClientControlBlock& client);
 
     /** Disconnect the client.
      * 
      * @details Close the socket and mark the client's expired flag instead of memory release and remove from the client list.\n
      *          Use Assert to debug if there is a place that references the client while the expired flag is true.
     */
-    EIrcErrorCode disconnectClient(ClientControlBlock* client);
+    EIrcErrorCode disconnectClient(ClientControlBlock& client);
 
     /** Log the error code */ 
     FORCEINLINE void logErrorCode(EIrcErrorCode errorCode) const

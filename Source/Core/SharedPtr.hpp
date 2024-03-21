@@ -3,15 +3,20 @@
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 
+
 namespace IRCCore
 {
 
 // Forward declaration
+template <typename T, size_t MinNumDataPerChunk>
+class VariableMemoryPool;
+
 template <typename T>
 class SharedPtr;
 
 template <typename T>
 class WeakPtr;
+
 
 namespace detail
 {
@@ -41,8 +46,47 @@ struct ControlBlock
         , bExpired(false)
     {
     }
+
+public:
+    /** @name new/delete operators
+     * 
+     * Overload new and delete operator with memory pool for memory management.
+     */
+    ///@{
+    NODISCARD FORCEINLINE void* operator new (size_t size)
+    {
+        Assert(size == sizeof(ControlBlock));
+        return reinterpret_cast<void*>(sMemoryPool.Allocate());
+    }
+
+    NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
+    {
+        Assert(size == sizeof(ControlBlock));
+        return ptr;
+    }
+    
+    FORCEINLINE void  operator delete (void* ptr)
+    {
+        sMemoryPool.Deallocate(reinterpret_cast<ControlBlock*>(ptr));
+    }
+
+    FORCEINLINE void  operator delete (void* ptr, void* place)
+    {
+        (void)place;
+        (void)ptr;
+    }
+    ///@}
+
+private:
+    enum { MIN_NUM_PER_MEMORY_POOL_CHUNK = 64 };
+    static VariableMemoryPool< ControlBlock< T >, MIN_NUM_PER_MEMORY_POOL_CHUNK > sMemoryPool;
 };
+
+template <typename T>
+VariableMemoryPool< ControlBlock< T >, ControlBlock< T >::MIN_NUM_PER_MEMORY_POOL_CHUNK > ControlBlock< T >::sMemoryPool;
+
 } // namespace detail
+
 
 
 /** @name MakeShared
@@ -64,19 +108,19 @@ struct ControlBlock
  */
 ///@{
 template <typename T>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(new ((new detail::ControlBlock<T>)->data) T()); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T()); }
 
 template <typename T, typename A1>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1) { return SharedPtr<T>(new ((new detail::ControlBlock<T>)->data) T(a1)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1)); }
 
 template <typename T, typename A1, typename A2>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2) { return SharedPtr<T>(new ((new detail::ControlBlock<T>)->data) T(a1, a2)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2) { return SharedPtr<T>(new ((&new detail::ControlBlock<T>)->data) T(a1, a2)); }
 
 template <typename T, typename A1, typename A2, typename A3>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(new ((new detail::ControlBlock<T>)->data) T(a1, a2, a3)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3)); }
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(new ((new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4)); }
 ///@}
 
 /** Shared pointer custom implementation for C++98 standard
