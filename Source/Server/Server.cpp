@@ -110,19 +110,19 @@ EIrcErrorCode Server::Startup()
 
 EIrcErrorCode Server::eventLoop()
 {
-    struct timespec timespecZero;
-    timespecZero.tv_sec  = 0;
-    timespecZero.tv_nsec = 0;
+    struct timespec timeoutZero;
+    timeoutZero.tv_sec  = 0;
+    timeoutZero.tv_nsec = 0;
 
     ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
     int observedEventNum = 0;
 
-    std::vector<ClientControlBlock*> ClientListWithPendingMsg;
+    std::vector<ClientControlBlock*> clientsWithPendingMsgQueue;
 
     while (true)
     {
         // Receive observed events as non-blocking from kqueue
-        observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &timespecZero);
+        observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
         if (UNLIKELY(observedEventNum == -1))
         {
             return IRC_FAILED_TO_WAIT_KEVENT;
@@ -132,9 +132,9 @@ EIrcErrorCode Server::eventLoop()
         // If there is no event, process the pending messages from the client 
         if (observedEventNum == 0)
         {
-            for (size_t i = 0; i < ClientListWithPendingMsg.size(); i++)
+            for (size_t i = 0; i < clientsWithPendingMsgQueue.size(); i++)
             {
-                ClientControlBlock& currClient = *ClientListWithPendingMsg[i];
+                ClientControlBlock& currClient = *clientsWithPendingMsgQueue[i];
                 processMessage(currClient);
             }
             continue;
@@ -261,7 +261,7 @@ EIrcErrorCode Server::eventLoop()
                     recvMsgBlock->MsgLen += nRecvBytes;
 
                     // Indicate that there is a message to process for the client
-                    ClientListWithPendingMsg.push_back(currClient);
+                    clientsWithPendingMsgQueue.push_back(currClient);
 
                     // Update the last active time of the client
                     currClient->LastActiveTime = currentTickServerTime;
@@ -296,6 +296,11 @@ EIrcErrorCode Server::eventLoop()
 EIrcErrorCode Server::processMessage(ClientControlBlock& client)
 {
     Assert(client.bExpired == false);
+
+    if (client.MsgBlockPendingQueue.empty())
+    {
+        return IRC_SUCCESS;
+    }
 
     // TODO: Implement
 
