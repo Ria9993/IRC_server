@@ -9,6 +9,7 @@ enum GLOBAL_CONSTANTS {
 };
 } // namespace IRCCore
 
+#include "Core/Log.hpp"
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 #include "Core/AnsiColorDefines.hpp"

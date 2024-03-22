@@ -50,6 +50,9 @@ public:
         {
             const size_t idx = mIndices[mCursor++];
             const char* ptrRaw = mMemoryRaw + (idx * sizeof(T));
+
+            CoreLog("[FixedMemoryPool] Allocate: " + ValToStringByHex(ptrRaw) + " idx: " + ValToString(idx));
+
             return (T*)ptrRaw;
         }
         return NULL;
@@ -67,6 +70,8 @@ public:
         {
             const size_t idx = ptr - (T*)mMemoryRaw;
             mIndices[--mCursor] = idx;
+
+            CoreLog("[FixedMemoryPool] Deallocate: " + ValToStringByHex(ptr) + " idx: " + ValToString(idx));
         }
     }
 

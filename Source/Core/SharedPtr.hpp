@@ -34,7 +34,7 @@ namespace detail
 template <typename T>
 struct ControlBlock
 {
-    ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
+    ALIGNAS(ALIGNOF(T)) T data;
 
     size_t StrongRefCount;
     size_t WeakRefCount;
@@ -108,7 +108,7 @@ VariableMemoryPool< ControlBlock< T >, ControlBlock< T >::MIN_NUM_PER_MEMORY_POO
  */
 ///@{
 template <typename T>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T()); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 
 template <typename T, typename A1>
 NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1)); }
@@ -221,13 +221,13 @@ public:
     FORCEINLINE T& operator*() const
     {
         Assert(mControlBlock != NULL);
-        return *reinterpret_cast<T*>(mControlBlock->data);
+        return *reinterpret_cast<T*>(&mControlBlock->data);
     }
 
     FORCEINLINE T* operator->() const
     {
         Assert(mControlBlock != NULL);
-        return reinterpret_cast<T*>(mControlBlock->data);
+        return reinterpret_cast<T*>(&mControlBlock->data);
     }
 
     FORCEINLINE bool operator==(const SharedPtr<T>& rhs) const
@@ -244,7 +244,7 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            return reinterpret_cast<T*>(mControlBlock->data);
+            return reinterpret_cast<T*>(&mControlBlock->data);
         }
         return NULL;
     }

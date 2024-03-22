@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstddef>
 #include <new>
+#include <string>
 
 #include "Core/Core.hpp"
 #include "Core/FixedMemoryPool.hpp"
@@ -53,9 +54,12 @@ public:
 
         // Create new pool if all pools are full
         mChunks.push_back(new FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>);
+        CoreLog("[VariableMemoryPool] New Chunk Created. Total Chunks: " + ValToString(mChunks.size()));
 
     ALLLOCATE_NEW_BLOCK:
+        CoreLog("[VariableMemoryPool] Allocate: ChunkIdx: " + ValToString(mChunkCursor));
         Block* block = mChunks[mChunkCursor]->Allocate();
+        Assert(block != NULL);
         block->chunkIdx = mChunkCursor;
         return reinterpret_cast<T*>(&block->data);
     }

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdio>
+#include <sstream>
 #include "Network/SocketTypedef.hpp"
 
 std::string InetAddrToString(const struct sockaddr_in& addr)

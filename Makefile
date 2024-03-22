@@ -17,7 +17,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 CC = c++
 
-FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g3
+FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g -DIRCCORE_LOG_ENABLE
 
 all: $(NAME)
 
