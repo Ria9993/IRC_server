@@ -74,16 +74,19 @@ private:
      *  # 이벤트 등록
      *      새로 등록할 이벤트는 이벤트 등록 대기열에 추가하며, 다음 이벤트 루프에서 실제로 등록됩니다.
      *
-     *  # 메시지 처리
+     *  # 메시지 수신
+     *      클라이언트가 가진 마지막 메시지 블록에 남은 공간이 있다면 해당 공간에, 없다면 새로운 메시지 블록 공간에 가능한 byte만큼 recv합니다.\n      
      *      수신받은 메시지는 TCP 속도저하를 방지하기 위해 해당하는 클라이언트의 메시지 처리 대기열에 추가하며, 즉시 처리되지 않습니다.\n
      *      메시지 처리 대기열은 이벤트가 발생하지 않는 여유러운 시점에 처리됩니다.\n
-     *      또한 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 클라이언트의 컨트롤 블록 주소를 ClientListWithPendingMsg 목록에 추가해야합니다.
-     *
+     *      또한 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 ClientListWithPendingMsg 목록에 추가해야합니다.
+     *        
      *  # 메시지 전송
      *      서버에서 클라이언트로 메시지를 보내는 경우, 모든 메시지는 메시지 전송 대기열에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.\n
      *      기본적으로 클라이언트 소켓에 대한 kevent는 WRITE 이벤트에 대한 필터가 비활성화 됩니다.\n
      *      전송할 메시지가 생긴 경우, 해당 클라이언트 소켓에 대한 kevent에 WRITE 이벤트 필터를 활성화합니다.\n
-     *      비동기적으로 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.
+     *      비동기적으로 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.\n
+     *      \n
+     *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용하고 각 소켓은 얼마나 전송했는지에 대한 카운트를 저장합니다.
      *
      *  # [English] Socket event processing
      *      The main event loop of the server processes all socket events asynchronously.
@@ -98,16 +101,19 @@ private:
      *  # Event registration
      *      The new events to be registered are added to the event registration pending queue and are actually registered in the next event loop.
      *
-     *  # Message processing
+     *  # Message receiving
+     *      If there is space left in the last message block of the client, receive as many bytes as possible in that space, or if not, in a new message block space.\n
      *      Received messages are added to the message processing queue to prevent TCP congestion and are not processed immediately.\n
      *      The message processing queue is processed at a leisurely time when no events occur.\n
-     *      Also, to indicate that there are messages to be processed for the corresponding client, you must add the address of the client's control block to the ClientListWithPendingMsg list.
+     *      Also, to indicate that there are messages to be processed for the corresponding client, you must add the client to the ClientListWithPendingMsg list.
      *
      *  # Message sending
      *      When the server sends a message to the client, all messages are added to the message send queue and are processed asynchronously through kqueue.\n
      *      By default, the kevent for the client socket is disabled for the WRITE event filter.\n
      *      When a message to send is generated, enable the WRITE event filter for the kevent of the corresponding client socket.\n
-     *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.
+     *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.\n
+     *      \n
+     *      Also, when sending the same message to multiple clients, use a single message block with SharedPtr and each socket stores a count of how many messages have been sent.
      **/
     EIrcErrorCode eventLoop();
 
@@ -121,18 +127,18 @@ private:
     */
     EIrcErrorCode disconnectClient(ClientControlBlock& client);
 
+    /** @name Log functions */
+    ///@{
     /** Log the error code */ 
-    FORCEINLINE void logErrorCode(EIrcErrorCode errorCode) const
-    {
-        std::cerr << ANSI_BRED << "[LOG][ERROR]" << GetIrcErrorMessage(errorCode) << std::endl << ANSI_RESET;
-    }
+    void logErrorCode(EIrcErrorCode errorCode) const;
 
     /** Log the message */
-    FORCEINLINE void logMessage(const std::string& message) const
-    {
-        std::cout << ANSI_CYN << "[LOG]" << message << std::endl << ANSI_RESET;
-    }
+    void logMessage(const std::string& message) const;
 
+    /** Log the verbose message */
+    void logVerbose(const std::string& message) const;
+    ///@}
+    
 private:
     short       mServerPort;
     std::string mServerPassword;

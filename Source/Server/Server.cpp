@@ -222,42 +222,32 @@ EIrcErrorCode Server::eventLoop()
                     Assert(currClient != NULL);
                     Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
 
-                    // Receive up to [MESSAGE_LEN_MAX] bytes in the MsgBlock allocated by the mMesssagePool
-                    // And add them to the client's message pending queue.
-                    int nTotalRecvBytes = 0;
-                    int nRecvBytes;
-                    do {
-                        SharedPtr<MsgBlock> newRecvMsgBlock = MakeShared<MsgBlock>();
-                        STATIC_ASSERT(sizeof(newRecvMsgBlock->Msg) == MESSAGE_LEN_MAX);
-
-                        nRecvBytes = recv(currClient->hSocket, newRecvMsgBlock->Msg, MESSAGE_LEN_MAX, 0);
-                        if (UNLIKELY(nRecvBytes == -1))
-                        {
-                            logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                            EIrcErrorCode err = disconnectClient(*currClient);
-                            if (UNLIKELY(err != IRC_SUCCESS))
-                            {
-                                return err;
-                            }
-                            goto CONTINUE_NEXT_EVENT_LOOP;
-                        }
-                        else if (nRecvBytes == 0)
-                        {
-                            break;
-                        }
-
-                        // Append the message block to the client's queue
-                        newRecvMsgBlock->MsgLen = nRecvBytes;
-                        currClient->MsgBlockPendingQueue.push_back(newRecvMsgBlock);
-
-                        nTotalRecvBytes += nRecvBytes;
-
-                    } while (nRecvBytes == MESSAGE_LEN_MAX);
-
-                    // Client disconnected
-                    if (nTotalRecvBytes == 0)
+                    // If there is space left in the last message block of the client, receive as many bytes as possible in that space,
+                    // or if not, in a new message block space.
+                    if (currClient->MsgBlockPendingQueue.empty() || currClient->MsgBlockPendingQueue.back()->MsgLen == MESSAGE_LEN_MAX)
                     {
-                        logMessage("Client disconnected. IP: " + std::string(inet_ntoa(currClient->Addr.sin_addr)) + ", Nick: " + currClient->Nickname);
+                        currClient->MsgBlockPendingQueue.push_back(MakeShared<MsgBlock>());
+                    }
+                    
+                    SharedPtr<MsgBlock> recvMsgBlock = currClient->MsgBlockPendingQueue.back();
+                    STATIC_ASSERT(sizeof(recvMsgBlock->Msg) == MESSAGE_LEN_MAX);
+                    Assert(recvMsgBlock->MsgLen < MESSAGE_LEN_MAX);
+
+                    const int nRecvBytes = recv(currClient->hSocket, &recvMsgBlock->Msg[recvMsgBlock->MsgLen], MESSAGE_LEN_MAX - recvMsgBlock->MsgLen, 0);
+                    if (UNLIKELY(nRecvBytes == -1))
+                    {
+                        logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
+                        EIrcErrorCode err = disconnectClient(*currClient);
+                        if (UNLIKELY(err != IRC_SUCCESS))
+                        {
+                            return err;
+                        }
+                        goto CONTINUE_NEXT_EVENT_LOOP;
+                    }
+                    // Client disconnected
+                    else if (nRecvBytes == 0)
+                    {
+                        logMessage("Client disconnected. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname);
                         EIrcErrorCode err = disconnectClient(*currClient);
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
@@ -266,9 +256,14 @@ EIrcErrorCode Server::eventLoop()
                         goto CONTINUE_NEXT_EVENT_LOOP;
                     }
 
+                    logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
+                    
+                    recvMsgBlock->MsgLen += nRecvBytes;
+
                     // Indicate that there is a message to process for the client
                     ClientListWithPendingMsg.push_back(currClient);
 
+                    // Update the last active time of the client
                     currClient->LastActiveTime = currentTickServerTime;
                 }
             }
@@ -323,6 +318,21 @@ EIrcErrorCode Server::disconnectClient(ClientControlBlock& client)
     // TODO: Remove client from the channels
 
     return IRC_SUCCESS;
+}
+
+void Server::logErrorCode(EIrcErrorCode errorCode) const
+{
+    std::cerr << ANSI_BRED << "[LOG][ERROR]" << GetIrcErrorMessage(errorCode) << std::endl << ANSI_RESET;
+}
+
+void Server::logMessage(const std::string& message) const
+{
+    std::cout << ANSI_CYN << "[LOG]" << message << std::endl << ANSI_RESET;
+}
+
+void Server::logVerbose(const std::string& message) const
+{
+    std::cout << ANSI_WHT << "[LOG][VERBOSE]" << message << std::endl << ANSI_RESET;
 }
 
 } // namespace irc
