@@ -117,7 +117,7 @@ EIrcErrorCode Server::eventLoop()
     ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
     int observedEventNum = 0;
 
-    std::vector<ClientControlBlock*> clientsWithPendingMsgQueue;
+    std::vector< SharedPtr< ClientControlBlock > > clientsWithPendingMsgQueue;
 
     while (true)
     {
@@ -134,8 +134,7 @@ EIrcErrorCode Server::eventLoop()
         {
             for (size_t i = 0; i < clientsWithPendingMsgQueue.size(); i++)
             {
-                ClientControlBlock& currClient = *clientsWithPendingMsgQueue[i];
-                processMessage(currClient);
+                processMessage(clientsWithPendingMsgQueue[i]);
             }
             continue;
         }
@@ -159,7 +158,8 @@ EIrcErrorCode Server::eventLoop()
                 else
                 {
                     logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
-                    EIrcErrorCode err = disconnectClient(reinterpret_cast<ClientControlBlock&>(currEvent.udata));
+                    SharedPtr<ClientControlBlock> client = GetClientFromKeventUdata(currEvent);
+                    EIrcErrorCode err = disconnectClient(client);
                     if (UNLIKELY(err != IRC_SUCCESS))
                     {
                         return err;
@@ -194,20 +194,21 @@ EIrcErrorCode Server::eventLoop()
                         }
 
                         // Add client to the client list
-                        ClientControlBlock* newClient = new ClientControlBlock;
+                        SharedPtr<ClientControlBlock> newClient = MakeShared<ClientControlBlock>();
                         newClient->hSocket = clientSocket;
                         newClient->Addr = clientAddr;
                         newClient->LastActiveTime = currentTickServerTime;
                         mClients.push_back(newClient);
 
                         // Add to the kqueue register pending queue.
-                        // Pass the pointer of the newClient to the udata member of kevent.
+                        // Pass the controlBlock of SharedPtr to the udata member of kevent.
+                        // @see SharedPtr::GetControlBlock
                         kevent_t evClient;
                         std::memset(&evClient, 0, sizeof(evClient));
                         evClient.ident  = clientSocket;
                         evClient.filter = EVFILT_READ | EVFILT_WRITE;
                         evClient.flags  = EV_ADD;
-                        evClient.udata  = reinterpret_cast<void*>(newClient);
+                        evClient.udata  = reinterpret_cast<void*>(newClient.GetControlBlock());
                         mEventRegisterPendingQueue.push_back(evClient);
 
                         logMessage("New client connected. IP: " + InetAddrToString(clientAddr));
@@ -217,8 +218,11 @@ EIrcErrorCode Server::eventLoop()
                 // Receive message from client
                 else
                 {
-                    // Find client index from udata
-                    ClientControlBlock* currClient = reinterpret_cast<ClientControlBlock*>(currEvent.udata);
+                    // Get the controlBlock of SharedPtr to the client from udata  
+                    // and recover the SharedPtr from the controlBlock.  
+                    // @see SharedPtr::GetControlBlock()  
+                    //      GetClientFromKeventUdata()
+                    SharedPtr<ClientControlBlock> currClient = GetClientFromKeventUdata(currEvent);
                     Assert(currClient != NULL);
                     Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
 
@@ -237,7 +241,7 @@ EIrcErrorCode Server::eventLoop()
                     if (UNLIKELY(nRecvBytes == -1))
                     {
                         logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                        EIrcErrorCode err = disconnectClient(*currClient);
+                        EIrcErrorCode err = disconnectClient(currClient);
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
                             return err;
@@ -248,7 +252,7 @@ EIrcErrorCode Server::eventLoop()
                     else if (nRecvBytes == 0)
                     {
                         logMessage("Client disconnected. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname);
-                        EIrcErrorCode err = disconnectClient(*currClient);
+                        EIrcErrorCode err = disconnectClient(currClient);
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
                             return err;
@@ -293,11 +297,14 @@ EIrcErrorCode Server::eventLoop()
     return IRC_FAILED_UNREACHABLE_CODE;
 }
 
-EIrcErrorCode Server::processMessage(ClientControlBlock& client)
+EIrcErrorCode Server::processMessage(SharedPtr<ClientControlBlock> client)
 {
-    Assert(client.bExpired == false);
+    // if (client->bExpired)
+    // {
+    // }
+    Assert(client->bExpired == false);
 
-    if (client.MsgBlockPendingQueue.empty())
+    if (client->MsgBlockPendingQueue.empty())
     {
         return IRC_SUCCESS;
     }
@@ -307,18 +314,18 @@ EIrcErrorCode Server::processMessage(ClientControlBlock& client)
     return IRC_SUCCESS;
 }
 
-EIrcErrorCode Server::disconnectClient(ClientControlBlock& client)
+EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
 {
-    Assert(client.bExpired == false);
+    Assert(client->bExpired == false);
 
     // close() on a socket will delete the corresponding kevent from the kqueue.
-    if (UNLIKELY(close(client.hSocket) == -1))
+    if (UNLIKELY(close(client->hSocket) == -1))
     {
         logErrorCode(IRC_FAILED_TO_CLOSE_SOCKET);
         return IRC_FAILED_TO_CLOSE_SOCKET;
     }
 
-    client.bExpired = true;
+    client->bExpired = true;
 
     // TODO: Remove client from the channels
 

@@ -189,14 +189,27 @@ public:
         }
     }
 
+    /** Create a shared pointer from the control block.
+     * 
+     * @warning Don't use without a knowledge of the internal implementation.  
+     * @see SharedPtr::GetControlBlock
+     */
     FORCEINLINE SharedPtr(detail::ControlBlock<T>* controlBlock)
         : mControlBlock(controlBlock)
     {
         Assert(mControlBlock != NULL);
+        Assert(mControlBlock->bExpired == false);
 
         if (mControlBlock != NULL)
         {
-            mControlBlock->StrongRefCount += 1;
+            if (mControlBlock->bExpired)
+            {
+                mControlBlock = NULL;
+            }
+            else
+            {
+                mControlBlock->StrongRefCount += 1;
+            }
         }
     }
 
@@ -233,6 +246,16 @@ public:
     FORCEINLINE bool operator==(const SharedPtr<T>& rhs) const
     {
         return mControlBlock == rhs.mControlBlock;
+    }
+
+    FORCEINLINE bool operator==(const T* rhs) const
+    {
+        return Get() == rhs;
+    }
+
+    FORCEINLINE bool operator!=(const T* rhs) const
+    {
+        return Get() != rhs;
     }
 
     FORCEINLINE bool operator!=(const SharedPtr<T>& rhs) const
@@ -290,16 +313,22 @@ public:
 
     /** Get the control block of the shared pointer.
      * 
-     * @warning Don't use without a knowledge of the internal implementation.
+     * @warning
+     * Don't use without a knowledge of the internal implementation.  
+     * 
+     * @details
+     * ## [한국어]
+     * SharedPtr는 SharedPtr이나 WeakPtr 서로에 대한 복사만 가능하다.  
+     * SharedPtr::Get() 등을 통해 직접적으로 데이터의 포인터를 얻은 뒤 해당 주소로 SharedPtr을 생성한다면  
+     * 기존과 같은 데이터를 공유하는 것이 아닌 완전히 새로운 데이터와 ControlBlock를 생성하게 된다.  
+     * 
+     * 하지만, 데이터의 주소가 아닌 ControlBlock의 주소를 얻은 뒤 이를 통해 SharedPtr을 생성한다면  
+     * 기존의 데이터와 ControlBlock을 공유할 수 있다.  
+     * 특수한 경우에만 사용해야 하며, ControlBlock의 주소를 얻고 이를 통해 SharedPtr을 생성할 때 까지  
+     * 해당 ControlBlock이 삭제되지 않도록 주의해야 한다.  
      */
     FORCEINLINE detail::ControlBlock<T>* GetControlBlock() const
     {
-        if (mControlBlock->StrongRefCount == 1)
-        {
-            Assert(false);
-            return NULL;
-        }
-
         return mControlBlock;
     }
 
