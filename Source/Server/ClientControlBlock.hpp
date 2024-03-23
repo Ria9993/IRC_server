@@ -33,6 +33,12 @@ struct ClientControlBlock
     bool bRegistered;
 
     time_t LastActiveTime;
+
+    /** Indicates whether the client connection is expired.
+     *  
+     *  The server doesn't release the client control block
+     *  for remaining events or messages immediately after the connection is closed.
+    */
     bool bExpired;
 
     /** Queue of received messages to process. */
