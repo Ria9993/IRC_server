@@ -82,12 +82,12 @@ private:
      *      또한 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 clientsMsgProcessQueue 목록에 추가해야합니다.
      *        
      *  ## 메시지 전송
-     *      서버에서 클라이언트로 메시지를 보내는 경우, 모든 메시지는 메시지 전송 대기열에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.  
+     *      서버에서 클라이언트로 메시지를 보내는 경우, 송신될 메시지는 각 클라이언트의 ClientControlBlock::MsgBlockSendQueue 에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.  
      *      기본적으로 클라이언트 소켓에 대한 kevent는 WRITE 이벤트에 대한 필터가 비활성화 됩니다.  
      *      전송할 메시지가 생긴 경우, 해당 클라이언트 소켓에 대한 kevent에 WRITE 이벤트 필터를 활성화합니다.  
      *      비동기적으로 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.
      * 
-     *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용하고 각 소켓은 얼마나 전송했는지에 대한 카운트를 저장합니다.  
+     *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용합니다.
      *
      *  # [English] Socket event processing
      *      The main event loop of the server processes all socket events asynchronously.
@@ -110,12 +110,12 @@ private:
      *      Also, to indicate that there are messages to be processed for the corresponding client, you must add the client to the clientsMsgProcessQueue list.
      *
      *  ## Message sending
-     *      When the server sends a message to the client, all messages are added to the message send queue and are processed asynchronously through kqueue.  
+     *      When the server sends a message to the client, the message to be sent is added to the ClientControlBlock::MsgBlockSendQueue of each client and processed asynchronously through kqueue.
      *      By default, the kevent for the client socket is disabled for the WRITE event filter.  
      *      When a message to send is generated, enable the WRITE event filter for the kevent of the corresponding client socket.  
      *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.  
      *  
-     *      Also, when sending the same message to multiple clients, use a single message block with SharedPtr and each socket stores a count of how many messages have been sent.
+     *      Also, when sending the same message to multiple clients, use a single message block with SharedPtr to share.
      **/
     EIrcErrorCode eventLoop();
 

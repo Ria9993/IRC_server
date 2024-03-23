@@ -35,12 +35,16 @@ struct ClientControlBlock
     time_t LastActiveTime;
     bool bExpired;
 
-    /** Queue of received messages to process.
-     * 
-     * @details When the message block is processed, it should be released.
-     */
+    /** Queue of received messages to process. */
     std::vector< SharedPtr< MsgBlock > > MsgBlockRecvQueue;
-    size_t MsgBlockCursor;
+    
+    /** Indicates the next offset to parse in the message block at the front of the message recv queue */
+    size_t RecvMsgBlockCursor;
+    
+    /** Queue of messages to send. */
+    std::vector< SharedPtr< MsgBlock > > MsgBlockSendQueue;
+
+    /** Indicates the next offset to send in the message block at the front of the message send queue */
     size_t SendMsgBlockCursor;
 
     FORCEINLINE ClientControlBlock()
@@ -54,6 +58,9 @@ struct ClientControlBlock
         , LastActiveTime(0)
         , bExpired(false)
         , MsgBlockRecvQueue()
+        , RecvMsgBlockCursor(0)
+        , MsgBlockSendQueue()
+        , SendMsgBlockCursor(0)
     {
     }
 
