@@ -142,8 +142,10 @@ private:
     ///@}
 
     /** Get SharedPtr to the ClientControlBlock from the kevent udata. */
-    FORCEINLINE SharedPtr<ClientControlBlock> GetClientFromKeventUdata(kevent_t& event) const
+    FORCEINLINE SharedPtr<ClientControlBlock> getClientFromKeventUdata(kevent_t& event) const
     {
+        // @see SharedPtr::GetControlBlock()
+        //      mhKqueue
         return SharedPtr<ClientControlBlock>(reinterpret_cast< detail::ControlBlock< ClientControlBlock >* >(event.udata));
     }
     
@@ -157,7 +159,7 @@ private:
      * 
      * @details The udata member of kevent is the controlBlock of the SharedPtr to the corresponding ClientControlBlock. (Except for the listen socket)  
      * @see     SharedPtr::GetControlBlock()  
-     *          GetClientFromKeventUdata()
+     *          getClientFromKeventUdata()
      */
     ///@{
     int                     mhKqueue;

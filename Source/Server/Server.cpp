@@ -158,7 +158,7 @@ EIrcErrorCode Server::eventLoop()
                 else
                 {
                     logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
-                    SharedPtr<ClientControlBlock> client = GetClientFromKeventUdata(currEvent);
+                    SharedPtr<ClientControlBlock> client = getClientFromKeventUdata(currEvent);
                     EIrcErrorCode err = disconnectClient(client);
                     if (UNLIKELY(err != IRC_SUCCESS))
                     {
@@ -221,8 +221,8 @@ EIrcErrorCode Server::eventLoop()
                     // Get the controlBlock of SharedPtr to the client from udata  
                     // and recover the SharedPtr from the controlBlock.  
                     // @see SharedPtr::GetControlBlock()  
-                    //      GetClientFromKeventUdata()
-                    SharedPtr<ClientControlBlock> currClient = GetClientFromKeventUdata(currEvent);
+                    //      getClientFromKeventUdata()
+                    SharedPtr<ClientControlBlock> currClient = getClientFromKeventUdata(currEvent);
                     Assert(currClient != NULL);
                     Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
 
