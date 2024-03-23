@@ -18,10 +18,12 @@ struct MsgBlock
 public:
     char Msg[MESSAGE_LEN_MAX];
     size_t MsgLen;
+    size_t Cursor;
 
     FORCEINLINE MsgBlock()
         : Msg()
         , MsgLen(0)
+        , Cursor(0)
     {
         Msg[0] = '\0'; //< For implementation convenience and debugging
     }
@@ -53,7 +55,7 @@ public:
 private:
     /** @name new[]/delete[] operators
      * 
-     * Use new/delete operator instead.
+     * @warning Use new/delete operator instead.
      */
     ///@{
     UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);

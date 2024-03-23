@@ -46,7 +46,7 @@ Server::Server(const unsigned short port, const std::string& password)
     , mServerPassword(password)
 {
     mClients.reserve(CLIENT_RESERVE_MIN);
-    mEventRegisterPendingQueue.reserve(CLIENT_MAX);
+    mEventRegistrationPendingQueue.reserve(CLIENT_MAX);
 }
 
 EIrcErrorCode Server::Startup()
@@ -117,17 +117,18 @@ EIrcErrorCode Server::eventLoop()
     ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
     int observedEventNum = 0;
 
+    // The list of clients with pending messages to process
     std::vector< SharedPtr< ClientControlBlock > > clientsWithPendingMsgQueue;
 
     while (true)
     {
         // Receive observed events as non-blocking from kqueue
-        observedEventNum = kevent(mhKqueue, mEventRegisterPendingQueue.data(), mEventRegisterPendingQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
+        observedEventNum = kevent(mhKqueue, mEventRegistrationPendingQueue.data(), mEventRegistrationPendingQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
         if (UNLIKELY(observedEventNum == -1))
         {
             return IRC_FAILED_TO_WAIT_KEVENT;
         }
-        mEventRegisterPendingQueue.clear();
+        mEventRegistrationPendingQueue.clear();
 
         // If there is no event, process the pending messages from the client 
         if (observedEventNum == 0)
@@ -200,16 +201,16 @@ EIrcErrorCode Server::eventLoop()
                         newClient->LastActiveTime = currentTickServerTime;
                         mClients.push_back(newClient);
 
-                        // Add to the kqueue register pending queue.
-                        // Pass the controlBlock of SharedPtr to the udata member of kevent.
-                        // @see SharedPtr::GetControlBlock
+                        // Add to the kqueue registration pending queue.
+                        // With pass the controlBlock of SharedPtr to the udata member of kevent.
+                        // See mhKqueue for details.
                         kevent_t evClient;
                         std::memset(&evClient, 0, sizeof(evClient));
                         evClient.ident  = clientSocket;
                         evClient.filter = EVFILT_READ | EVFILT_WRITE;
                         evClient.flags  = EV_ADD;
                         evClient.udata  = reinterpret_cast<void*>(newClient.GetControlBlock());
-                        mEventRegisterPendingQueue.push_back(evClient);
+                        mEventRegistrationPendingQueue.push_back(evClient);
 
                         logMessage("New client connected. IP: " + InetAddrToString(clientAddr));
                     }
@@ -218,10 +219,9 @@ EIrcErrorCode Server::eventLoop()
                 // Receive message from client
                 else
                 {
-                    // Get the controlBlock of SharedPtr to the client from udata  
+                    // Get the Client control block of SharedPtr to the client from udata  
                     // and recover the SharedPtr from the controlBlock.  
-                    // @see SharedPtr::GetControlBlock()  
-                    //      getClientFromKeventUdata()
+                    // See mhKqueue for details.
                     SharedPtr<ClientControlBlock> currClient = getClientFromKeventUdata(currEvent);
                     Assert(currClient != NULL);
                     Assert(currClient->hSocket == static_cast<int>(currEvent.ident));

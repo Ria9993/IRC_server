@@ -163,7 +163,7 @@ private:
      */
     ///@{
     int                     mhKqueue;
-    std::vector<kevent_t>   mEventRegisterPendingQueue;
+    std::vector<kevent_t>   mEventRegistrationPendingQueue;
     ///@}
 
     /** Client control blocks
