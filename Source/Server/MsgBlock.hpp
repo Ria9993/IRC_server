@@ -18,12 +18,10 @@ struct MsgBlock
 public:
     char Msg[MESSAGE_LEN_MAX];
     size_t MsgLen;
-    size_t Cursor;
 
     FORCEINLINE MsgBlock()
         : Msg()
         , MsgLen(0)
-        , Cursor(0)
     {
         Msg[0] = '\0'; //< For implementation convenience and debugging
     }

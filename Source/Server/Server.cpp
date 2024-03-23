@@ -46,7 +46,7 @@ Server::Server(const unsigned short port, const std::string& password)
     , mServerPassword(password)
 {
     mClients.reserve(CLIENT_RESERVE_MIN);
-    mEventRegistrationPendingQueue.reserve(CLIENT_MAX);
+    mEventRegistrationQueue.reserve(CLIENT_MAX);
 }
 
 EIrcErrorCode Server::Startup()
@@ -117,25 +117,25 @@ EIrcErrorCode Server::eventLoop()
     ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
     int observedEventNum = 0;
 
-    // The list of clients with pending messages to process
-    std::vector< SharedPtr< ClientControlBlock > > clientsWithPendingMsgQueue;
+    // The list of clients with receive messages to process
+    std::vector< SharedPtr< ClientControlBlock > > clientsMsgProcessQueue;
 
     while (true)
     {
         // Receive observed events as non-blocking from kqueue
-        observedEventNum = kevent(mhKqueue, mEventRegistrationPendingQueue.data(), mEventRegistrationPendingQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
+        observedEventNum = kevent(mhKqueue, mEventRegistrationQueue.data(), mEventRegistrationQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
         if (UNLIKELY(observedEventNum == -1))
         {
             return IRC_FAILED_TO_WAIT_KEVENT;
         }
-        mEventRegistrationPendingQueue.clear();
+        mEventRegistrationQueue.clear();
 
-        // If there is no event, process the pending messages from the client 
+        // If there is no event, process the received messages from the clients
         if (observedEventNum == 0)
         {
-            for (size_t i = 0; i < clientsWithPendingMsgQueue.size(); i++)
+            for (size_t i = 0; i < clientsMsgProcessQueue.size(); i++)
             {
-                processMessage(clientsWithPendingMsgQueue[i]);
+                processMessage(clientsMsgProcessQueue[i]);
             }
             continue;
         }
@@ -201,7 +201,7 @@ EIrcErrorCode Server::eventLoop()
                         newClient->LastActiveTime = currentTickServerTime;
                         mClients.push_back(newClient);
 
-                        // Add to the kqueue registration pending queue.
+                        // Add to the kqueue registration queue.
                         // With pass the controlBlock of SharedPtr to the udata member of kevent.
                         // See mhKqueue for details.
                         kevent_t evClient;
@@ -210,7 +210,7 @@ EIrcErrorCode Server::eventLoop()
                         evClient.filter = EVFILT_READ | EVFILT_WRITE;
                         evClient.flags  = EV_ADD;
                         evClient.udata  = reinterpret_cast<void*>(newClient.GetControlBlock());
-                        mEventRegistrationPendingQueue.push_back(evClient);
+                        mEventRegistrationQueue.push_back(evClient);
 
                         logMessage("New client connected. IP: " + InetAddrToString(clientAddr));
                     }
@@ -228,12 +228,12 @@ EIrcErrorCode Server::eventLoop()
 
                     // If there is space left in the last message block of the client, receive as many bytes as possible in that space,
                     // or if not, in a new message block space.
-                    if (currClient->MsgBlockPendingQueue.empty() || currClient->MsgBlockPendingQueue.back()->MsgLen == MESSAGE_LEN_MAX)
+                    if (currClient->MsgBlockRecvQueue.empty() || currClient->MsgBlockRecvQueue.back()->MsgLen == MESSAGE_LEN_MAX)
                     {
-                        currClient->MsgBlockPendingQueue.push_back(MakeShared<MsgBlock>());
+                        currClient->MsgBlockRecvQueue.push_back(MakeShared<MsgBlock>());
                     }
                     
-                    SharedPtr<MsgBlock> recvMsgBlock = currClient->MsgBlockPendingQueue.back();
+                    SharedPtr<MsgBlock> recvMsgBlock = currClient->MsgBlockRecvQueue.back();
                     STATIC_ASSERT(sizeof(recvMsgBlock->Msg) == MESSAGE_LEN_MAX);
                     Assert(recvMsgBlock->MsgLen < MESSAGE_LEN_MAX);
 
@@ -265,7 +265,7 @@ EIrcErrorCode Server::eventLoop()
                     recvMsgBlock->MsgLen += nRecvBytes;
 
                     // Indicate that there is a message to process for the client
-                    clientsWithPendingMsgQueue.push_back(currClient);
+                    clientsMsgProcessQueue.push_back(currClient);
 
                     // Update the last active time of the client
                     currClient->LastActiveTime = currentTickServerTime;
@@ -273,7 +273,7 @@ EIrcErrorCode Server::eventLoop()
             }
 
             // 3. Write event
-            // Send pending messages to the client
+            // Send messages to the client
             else if (currEvent.filter == EVFILT_WRITE)
             {
                 // TODO: Can a listen socket raise a write event? I'll check this later.
@@ -304,7 +304,7 @@ EIrcErrorCode Server::processMessage(SharedPtr<ClientControlBlock> client)
     // }
     Assert(client->bExpired == false);
 
-    if (client->MsgBlockPendingQueue.empty())
+    if (client->MsgBlockRecvQueue.empty())
     {
         return IRC_SUCCESS;
     }

@@ -35,11 +35,13 @@ struct ClientControlBlock
     time_t LastActiveTime;
     bool bExpired;
 
-    /** Queue of received messages pending to be processed.
+    /** Queue of received messages to process.
      * 
-     * @details When the message block is processed, it should be deallocated.
+     * @details When the message block is processed, it should be released.
      */
-    std::vector< SharedPtr< MsgBlock > > MsgBlockPendingQueue;
+    std::vector< SharedPtr< MsgBlock > > MsgBlockRecvQueue;
+    size_t MsgBlockCursor;
+    size_t SendMsgBlockCursor;
 
     FORCEINLINE ClientControlBlock()
         : hSocket(-1)
@@ -51,7 +53,7 @@ struct ClientControlBlock
         , bRegistered(false)
         , LastActiveTime(0)
         , bExpired(false)
-        , MsgBlockPendingQueue()
+        , MsgBlockRecvQueue()
     {
     }
 
