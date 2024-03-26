@@ -118,11 +118,21 @@ EIrcErrorCode Server::eventLoop()
     int observedEventNum = 0;
 
     // The list of clients with receive messages to process
+    // Duplicate is allowed.
     std::vector< SharedPtr< ClientControlBlock > > clientsMsgProcessQueue;
 
     while (true)
     {
-        // Receive observed events as non-blocking from kqueue
+        // Set the timeout of kevent.
+        // If there is no message to process, the timeout is NULL to wait indefinitely.
+        // Else, the timeout is zero to process the received messages from the clients.
+        struct timespec* timeout = NULL;
+        if (!clientsMsgProcessQueue.empty())
+        {
+            timeout = &timeoutZero;
+        }
+
+        // Receive observed events from kqueue
         observedEventNum = kevent(mhKqueue, mEventRegistrationQueue.data(), mEventRegistrationQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
         if (UNLIKELY(observedEventNum == -1))
         {
