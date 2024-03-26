@@ -145,8 +145,23 @@ EIrcErrorCode Server::eventLoop()
         {
             for (size_t i = 0; i < clientsMsgProcessQueue.size(); i++)
             {
-                processMessage(clientsMsgProcessQueue[i]);
+                std::vector< SharedPtr< MsgBlock > > parsedMsgs;
+                EIrcErrorCode err = parseRecvMsgQueueFromClient(clientsMsgProcessQueue[i], parsedMsgs);
+                Assert(err == IRC_SUCCESS);
+                
+                logVerbose("Parsed messages from client. IP: " + InetAddrToString(clientsMsgProcessQueue[i]->Addr) + ", Nick: " + clientsMsgProcessQueue[i]->Nickname + ", Parsed count: " + ValToString(parsedMsgs.size()));
+                
+                // DEBUG log
+                for (size_t j = 0; j < parsedMsgs.size(); j++)
+                {
+                    logVerbose("Parsed message: " + std::string(parsedMsgs[j]->Msg, parsedMsgs[j]->MsgLen));
+                }
+
+                // TODO: Handle the error
+
+                // TODO: Process the parsed messages
             }
+            clientsMsgProcessQueue.clear();
             continue;
         }
 
@@ -271,7 +286,7 @@ EIrcErrorCode Server::eventLoop()
                     }
 
                     logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
-                    
+
                     recvMsgBlock->MsgLen += nRecvBytes;
 
                     // Indicate that there is a message to process for the client
@@ -307,19 +322,128 @@ EIrcErrorCode Server::eventLoop()
     return IRC_FAILED_UNREACHABLE_CODE;
 }
 
-EIrcErrorCode Server::processMessage(SharedPtr<ClientControlBlock> client)
+EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr<MsgBlock> >& outParsedMsgs)
 {
-    // if (client->bExpired)
-    // {
-    // }
-    Assert(client->bExpired == false);
+    // Check the client is expired.
+    // The message block can be exist even if the client is expired.
+    // See disconnectClient() for details.
+    if (client->bExpired)
+    {
+        logVerbose("parseRecvMsgQueueFromClient(): The client of the message is already expired. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
+        return IRC_SUCCESS;
+    }
 
-    if (client->MsgBlockRecvQueue.empty())
+    // Already processed all messages
+    if (client->MsgBlockRecvQueue.empty() || client->RecvMsgBlockCursor >= client->MsgBlockRecvQueue.front()->MsgLen)
     {
         return IRC_SUCCESS;
     }
 
-    // TODO: Implement
+
+    // Reset the cursor if it is out of range
+    logVerbose("[START]parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Cursor: " + ValToString(client->RecvMsgBlockCursor));
+    if (client->RecvMsgBlockCursor >= MESSAGE_LEN_MAX)
+    {
+        client->RecvMsgBlockCursor = 0;
+    }
+
+    // Separate the messages from the message blocks based on "\r\n" separator for convenience.
+    SharedPtr<MsgBlock> separatedMsg = MakeShared<MsgBlock>();
+    size_t parseIdx = client->RecvMsgBlockCursor;
+    size_t lastParsedRecvQueueBlockIdx = 0;
+    for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->MsgBlockRecvQueue.size(); msgBlockQueueIdx++)
+    {
+        // Log the cursor, and parse index
+        logVerbose("parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Cursor: " + ValToString(client->RecvMsgBlockCursor) + ", Parse index: " + ValToString(parseIdx));
+
+        // Log the message block index and the message length
+        logVerbose("parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Message block index: " + ValToString(msgBlockQueueIdx) + ", Message length: " + ValToString(client->MsgBlockRecvQueue[msgBlockQueueIdx]->MsgLen));
+
+        // Log the message block content
+        logVerbose("parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Message block content: " + std::string(client->MsgBlockRecvQueue[msgBlockQueueIdx]->Msg, client->MsgBlockRecvQueue[msgBlockQueueIdx]->MsgLen));
+
+        SharedPtr<MsgBlock> currMsgBlock = client->MsgBlockRecvQueue[msgBlockQueueIdx];
+        Assert(currMsgBlock != NULL);
+        Assert(currMsgBlock->MsgLen > 0);
+        Assert(parseIdx < currMsgBlock->MsgLen || currMsgBlock->MsgLen == 0);
+        Assert(currMsgBlock->MsgLen <= MESSAGE_LEN_MAX);
+
+        for (; parseIdx < currMsgBlock->MsgLen; parseIdx++)
+        {
+            separatedMsg->Msg[separatedMsg->MsgLen] = currMsgBlock->Msg[parseIdx];
+            separatedMsg->MsgLen++;
+
+            // Check the end of the message ("\r\n")
+            if (separatedMsg->MsgLen >= 2)
+            {
+                if (separatedMsg->Msg[separatedMsg->MsgLen - 2] == '\r' && separatedMsg->Msg[separatedMsg->MsgLen - 1] == '\n')
+                {
+                    // Add the separated message to the outParsedMsgs
+                    outParsedMsgs.push_back(separatedMsg);
+
+                    // Make a new message block for the next message
+                    separatedMsg = MakeShared<MsgBlock>();
+
+                    lastParsedRecvQueueBlockIdx = msgBlockQueueIdx;
+
+                    // Set the client's cursor to the next parse index
+                    client->RecvMsgBlockCursor = parseIdx + 1;
+                    
+                    continue;
+                }
+            }
+
+            // Check if the message is too long
+            // The messages must be MESSAGE_LEN_MAX or less
+            if (separatedMsg->MsgLen == MESSAGE_LEN_MAX)
+            {
+                // Skip the invalid message until the separator "\r\n"
+                char lastChar = separatedMsg->Msg[separatedMsg->MsgLen - 1];
+                for (; msgBlockQueueIdx < client->MsgBlockRecvQueue.size(); msgBlockQueueIdx++)
+                {
+                    currMsgBlock = client->MsgBlockRecvQueue[msgBlockQueueIdx];
+
+                    for (; parseIdx < currMsgBlock->MsgLen; parseIdx++)
+                    {
+                        if (lastChar == '\r' && currMsgBlock->Msg[parseIdx] == '\n')
+                        {
+                            lastParsedRecvQueueBlockIdx = msgBlockQueueIdx;
+                            
+                            // Set the client's cursor to the next parse index
+                            client->RecvMsgBlockCursor = parseIdx + 1;
+                            
+                            // Make a new message block for the next message
+                            separatedMsg = MakeShared<MsgBlock>();
+
+                            goto BREAK_SKIP_INVALID_MESSAGE;
+                        }
+
+                        lastChar = currMsgBlock->Msg[parseIdx];
+                    }
+
+                    // Reset the cursor for the next message block
+                    parseIdx = 0;
+                }
+            BREAK_SKIP_INVALID_MESSAGE:;
+            }
+
+        }
+
+        // Reset the index for the next message block
+        parseIdx = 0;
+
+    } // for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->MsgBlockRecvQueue.size(); msgBlockQueueIdx++)
+
+    // TODO: Parse the messages.
+
+    // Remove the fully parsed message blocks from the receive queue
+    if (lastParsedRecvQueueBlockIdx > 0)
+    {
+        client->MsgBlockRecvQueue.erase(client->MsgBlockRecvQueue.begin(), client->MsgBlockRecvQueue.begin() + lastParsedRecvQueueBlockIdx);
+    }
+
+    // Log the cursor after parsing
+    logVerbose("[END]parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Cursor: " + ValToString(client->RecvMsgBlockCursor));
 
     return IRC_SUCCESS;
 }

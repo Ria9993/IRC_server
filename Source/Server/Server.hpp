@@ -96,7 +96,7 @@ public:
      */
     static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
 
-    /** Initialize and start the server.
+    /** Initialize and start the server event loop.
      *  
      * @details Initialize the kqueue and resources and register the listen socket to the kqueue.
      *          And then call the eventLoop() to start server.
@@ -116,10 +116,17 @@ private:
     /** @internal Copy constructor is not allowed. */
     UNUSED Server &operator=(const Server& rhs);
 
+    /** The main event loop of the server. */
     EIrcErrorCode eventLoop();
 
-    /** Parse and process the message */
-    EIrcErrorCode processMessage(SharedPtr<ClientControlBlock> client);
+    /** Parse all parseable messages in the client's ClientControlBlock::MsgBlockRecvQueue 
+     * 
+     * @param client            The client to parse the messages.
+     * @param outParsedMsgs     The vector to receive the parsed messages.
+     *                          If the vector is not empty, the parsed messages are appended to the end of the vector.
+     * @see                     ClientControlBlock::RecvMsgBlockCursor
+     */
+    EIrcErrorCode parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr< MsgBlock > >& outParsedMsgs);
 
     /** Disconnect the client.
      * 
