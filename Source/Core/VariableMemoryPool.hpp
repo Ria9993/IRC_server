@@ -73,6 +73,8 @@ public:
         if (ptr == NULL)
             return;
         
+        CoreLog("[VariableMemoryPool] Deallocate: Ptr: " + ValToString(ptr));
+
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
         mChunks[block->chunkIdx]->Deallocate(block);
 

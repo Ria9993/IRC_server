@@ -41,7 +41,7 @@ struct ControlBlock
     bool   bExpired;
 
     FORCEINLINE ControlBlock()
-        : StrongRefCount(1)
+        : StrongRefCount(0)
         , WeakRefCount(0)
         , bExpired(false)
     {
@@ -111,16 +111,16 @@ template <typename T>
 NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 
 template <typename T, typename A1>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1))); }
 
 template <typename T, typename A1, typename A2>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2) { return SharedPtr<T>(new ((&new detail::ControlBlock<T>)->data) T(a1, a2)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2))); }
 
 template <typename T, typename A1, typename A2, typename A3>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3))); }
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4)); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
 ///@}
 
 /** Shared pointer custom implementation for C++98 standard
@@ -176,6 +176,7 @@ public:
         if (ptr != NULL)
         {
             mControlBlock = new detail::ControlBlock<T>();
+            mControlBlock->StrongRefCount = 1;
             new (&mControlBlock->data) T(*ptr);
         }
     }
@@ -185,7 +186,14 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            mControlBlock->StrongRefCount += 1;
+            if (mControlBlock->bExpired)
+            {
+                mControlBlock = NULL;
+            }
+            else
+            {
+                mControlBlock->StrongRefCount += 1;
+            }
         }
     }
 
@@ -276,10 +284,12 @@ public:
     {
         if (mControlBlock != NULL)
         {
+            CoreLog("SharedPtr Reset(): StrongRefCount: " + ValToString(mControlBlock->StrongRefCount) + " WeakRefCount: " + ValToString(mControlBlock->WeakRefCount));
             Assert(mControlBlock->StrongRefCount > 0);
             mControlBlock->StrongRefCount -= 1;
             if (mControlBlock->StrongRefCount == 0)
             {
+                CoreLog("SharedPtr Reset(): Call Destructor");
                 T* ptrData = reinterpret_cast<T*>(&mControlBlock->data);
                 ptrData->~T();
 
@@ -287,6 +297,7 @@ public:
 
                 if (mControlBlock->WeakRefCount == 0)
                 {
+                    CoreLog("SharedPtr Reset(): Delete ControlBlock");
                     delete mControlBlock;
                 }
             }
