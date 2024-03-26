@@ -35,7 +35,7 @@ namespace IRC
  *          에러 이벤트가 발생한 경우, 해당 소켓을 닫고, 클라이언트라면 연결을 해제합니다.
  *      ### Read event
  *          해당하는 소켓이 리슨 소켓인 경우, 새로운 클라이언트를 추가합니다.  
- *          해당하는 소켓이 클라이언트 소켓인 경우, 클라이언트로부터 메시지를 받아서 처리 대기열에 추가합니다.
+ *          해당하는 소켓이 클라이언트 소켓인 경우, 메시지를 받아서 해당하는 클라이언트의 메시지 처리 대기열에 추가합니다.
  *      ### Write event
  *          해당 소켓의 메시지 전송 대기열에 있는 메시지를 send합니다.
  *
@@ -43,10 +43,11 @@ namespace IRC
  *      새로 등록할 이벤트는 이벤트 등록 대기열에 추가하며, 다음 이벤트 루프에서 실제로 등록됩니다.
  *
  *  ## 메시지 수신
+ *      메시지를 받아서 해당하는 클라이언트의 ClientControlBlock::MsgBlockRecvQueue 에 추가합니다.
  *      클라이언트가 가진 마지막 메시지 블록에 남은 공간이 있다면 해당 공간에, 없다면 새로운 메시지 블록 공간에 가능한 byte만큼 recv합니다.  
- *      수신받은 메시지는 TCP 속도저하를 방지하기 위해 해당하는 클라이언트의 메시지 처리 대기열에 추가하며, 즉시 처리되지 않습니다.  
+ *      수신받은 메시지는 TCP 속도저하를 방지하기 위해 대기열에 추가되며, 즉시 처리되지 않습니다.  
  *      메시지 처리 대기열은 이벤트가 발생하지 않는 여유러운 시점에 처리됩니다.  
- *      또한 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 clientsMsgProcessQueue 목록에 추가해야합니다.
+ *      또한 Recv가 발생한 경우 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 clientsMsgProcessQueue 목록에 추가해야합니다.
  *        
  *  ## 메시지 전송
  *      서버에서 클라이언트로 메시지를 보내는 경우, 송신될 메시지는 각 클라이언트의 ClientControlBlock::MsgBlockSendQueue 에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.  
@@ -62,7 +63,7 @@ namespace IRC
  *          If an error event occurs, close the socket and, if it is a client, disconnect the connection.
  *      ### Read event
  *          If the corresponding socket is a listen socket, add a new client.  
- *          If a client socket, receive messages from the client and add them to the message processing queue.
+ *          If a client socket, receive messages and add them to the message processing queue of the corresponding client.
  *      ### Write event
  *          Send messages in the message send queue of the socket.
  *
@@ -70,10 +71,11 @@ namespace IRC
  *      The new events to be registered are added to the event registration queue and are actually registered in the next event loop.
  *
  *  ## Message receiving
- *      If there is space left in the last message block of the client, receive as many bytes as possible in that space, or if not, in a new message block space.  
- *      Received messages are added to the message processing queue to prevent TCP congestion and are not processed immediately.  
- *      The message processing queue is processed at a leisurely time when no events occur.  
- *      Also, to indicate that there are messages to be processed for the corresponding client, you must add the client to the clientsMsgProcessQueue list.
+ *      Add the received message to the ClientControlBlock::MsgBlockRecvQueue of the corresponding client.
+ *      If there is space left in the last message block of the client, receive as much as possible in that space, otherwise in a new message block space.
+ *      The received message is added to the queue to prevent TCP congestion and is not processed immediately.
+ *      The message processing queue is processed at a convenient time when no events occur.
+ *      Also, when Recv occurs, you must add the corresponding client to the clientsMsgProcessQueue list to indicate that there is a message to process for the client.
  *
  *  ## Message sending
  *      When the server sends a message to the client, the message to be sent is added to the ClientControlBlock::MsgBlockSendQueue of each client and processed asynchronously through kqueue.
