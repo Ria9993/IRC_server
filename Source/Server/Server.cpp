@@ -341,7 +341,6 @@ EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> 
 
 
     // Reset the cursor if it is out of range
-    logVerbose("[START]parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Cursor: " + ValToString(client->RecvMsgBlockCursor));
     if (client->RecvMsgBlockCursor >= MESSAGE_LEN_MAX)
     {
         client->RecvMsgBlockCursor = 0;
@@ -350,18 +349,9 @@ EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> 
     // Separate the messages from the message blocks based on "\r\n" separator for convenience.
     SharedPtr<MsgBlock> separatedMsg = MakeShared<MsgBlock>();
     size_t parseIdx = client->RecvMsgBlockCursor;
-    size_t lastParsedRecvQueueBlockIdx = 0;
+    size_t lastParsedRecvQueueBlockIdx = 0; //< For removing the fully parsed message blocks from the receive queue
     for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->MsgBlockRecvQueue.size(); msgBlockQueueIdx++)
     {
-        // Log the cursor, and parse index
-        logVerbose("parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Cursor: " + ValToString(client->RecvMsgBlockCursor) + ", Parse index: " + ValToString(parseIdx));
-
-        // Log the message block index and the message length
-        logVerbose("parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Message block index: " + ValToString(msgBlockQueueIdx) + ", Message length: " + ValToString(client->MsgBlockRecvQueue[msgBlockQueueIdx]->MsgLen));
-
-        // Log the message block content
-        logVerbose("parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Message block content: " + std::string(client->MsgBlockRecvQueue[msgBlockQueueIdx]->Msg, client->MsgBlockRecvQueue[msgBlockQueueIdx]->MsgLen));
-
         SharedPtr<MsgBlock> currMsgBlock = client->MsgBlockRecvQueue[msgBlockQueueIdx];
         Assert(currMsgBlock != NULL);
         Assert(currMsgBlock->MsgLen > 0);
@@ -378,17 +368,10 @@ EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> 
             {
                 if (separatedMsg->Msg[separatedMsg->MsgLen - 2] == '\r' && separatedMsg->Msg[separatedMsg->MsgLen - 1] == '\n')
                 {
-                    // Add the separated message to the outParsedMsgs
                     outParsedMsgs.push_back(separatedMsg);
-
-                    // Make a new message block for the next message
                     separatedMsg = MakeShared<MsgBlock>();
-
                     lastParsedRecvQueueBlockIdx = msgBlockQueueIdx;
-
-                    // Set the client's cursor to the next parse index
-                    client->RecvMsgBlockCursor = parseIdx + 1;
-                    
+                    client->RecvMsgBlockCursor = parseIdx + 1;   
                     continue;
                 }
             }
@@ -408,11 +391,7 @@ EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> 
                         if (lastChar == '\r' && currMsgBlock->Msg[parseIdx] == '\n')
                         {
                             lastParsedRecvQueueBlockIdx = msgBlockQueueIdx;
-                            
-                            // Set the client's cursor to the next parse index
                             client->RecvMsgBlockCursor = parseIdx + 1;
-                            
-                            // Make a new message block for the next message
                             separatedMsg = MakeShared<MsgBlock>();
 
                             goto BREAK_SKIP_INVALID_MESSAGE;
@@ -421,18 +400,18 @@ EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> 
                         lastChar = currMsgBlock->Msg[parseIdx];
                     }
 
-                    // Reset the cursor for the next message block
                     parseIdx = 0;
                 }
             BREAK_SKIP_INVALID_MESSAGE:;
             }
 
-        }
+        } // for (; parseIdx < currMsgBlock->MsgLen; parseIdx++)
 
         // Reset the index for the next message block
         parseIdx = 0;
 
     } // for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->MsgBlockRecvQueue.size(); msgBlockQueueIdx++)
+
 
     // TODO: Parse the messages.
 
@@ -441,10 +420,7 @@ EIrcErrorCode Server::parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> 
     {
         client->MsgBlockRecvQueue.erase(client->MsgBlockRecvQueue.begin(), client->MsgBlockRecvQueue.begin() + lastParsedRecvQueueBlockIdx);
     }
-
-    // Log the cursor after parsing
-    logVerbose("[END]parseRecvMsgQueueFromClient(): IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Cursor: " + ValToString(client->RecvMsgBlockCursor));
-
+    
     return IRC_SUCCESS;
 }
 
