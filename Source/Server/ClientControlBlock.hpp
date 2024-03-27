@@ -42,13 +42,13 @@ struct ClientControlBlock
     bool bExpired;
 
     /** Queue of received messages to process. */
-    std::vector< SharedPtr< MsgBlock > > MsgBlockRecvQueue;
+    std::vector< SharedPtr< MsgBlock > > RecvMsgBlockQueue;
     
     /** Indicates the next offset to parse in the message block at the front of the message recv queue */
     size_t RecvMsgBlockCursor;
     
     /** Queue of messages to send. */
-    std::vector< SharedPtr< MsgBlock > > MsgBlockSendQueue;
+    std::vector< SharedPtr< MsgBlock > > SendMsgBlockQueue;
 
     /** Indicates the next offset to send in the message block at the front of the message send queue */
     size_t SendMsgBlockCursor;
@@ -63,9 +63,9 @@ struct ClientControlBlock
         , bRegistered(false)
         , LastActiveTime(0)
         , bExpired(false)
-        , MsgBlockRecvQueue()
+        , RecvMsgBlockQueue()
         , RecvMsgBlockCursor(0)
-        , MsgBlockSendQueue()
+        , SendMsgBlockQueue()
         , SendMsgBlockCursor(0)
     {
     }
