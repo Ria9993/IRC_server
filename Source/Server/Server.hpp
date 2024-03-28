@@ -43,14 +43,14 @@ namespace IRC
  *      새로 등록할 이벤트는 이벤트 등록 대기열에 추가하며, 다음 이벤트 루프에서 실제로 등록됩니다.
  *
  *  ## 메시지 수신
- *      메시지를 받아서 해당하는 클라이언트의 ClientControlBlock::RecvMsgBlockQueue 에 추가합니다.
+ *      메시지를 받아서 해당하는 클라이언트의 ClientControlBlock::RecvMsgBlocks 에 추가합니다.
  *      클라이언트가 가진 마지막 메시지 블록에 남은 공간이 있다면 해당 공간에, 없다면 새로운 메시지 블록 공간에 가능한 byte만큼 recv합니다.  
  *      수신받은 메시지는 TCP 속도저하를 방지하기 위해 대기열에 추가되며, 즉시 처리되지 않습니다.  
  *      메시지 처리 대기열은 이벤트가 발생하지 않는 여유러운 시점에 처리됩니다.  
  *      또한 Recv가 발생한 경우 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 clientsWithRecvMsgToProcessQueue 목록에 추가해야합니다.
  *        
  *  ## 메시지 전송
- *      서버에서 클라이언트로 메시지를 보내는 경우, 송신될 메시지는 각 클라이언트의 ClientControlBlock::SendMsgBlockQueue 에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.  
+ *      서버에서 클라이언트로 메시지를 보내는 경우, 송신될 메시지는 각 클라이언트의 ClientControlBlock::MsgSendingQueue 에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.  
  *      기본적으로 클라이언트 소켓에 대한 kevent는 WRITE 이벤트에 대한 필터가 비활성화 됩니다.  
  *      전송할 메시지가 생긴 경우, 해당 클라이언트 소켓에 대한 kevent에 WRITE 이벤트 필터를 활성화합니다.  
  *      비동기적으로 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.
@@ -71,14 +71,14 @@ namespace IRC
  *      The new events to be registered are added to the event registration queue and are actually registered in the next event loop.
  *
  *  ## Message receiving
- *      Add the received message to the ClientControlBlock::RecvMsgBlockQueue of the corresponding client.
+ *      Add the received message to the ClientControlBlock::RecvMsgBlocks of the corresponding client.
  *      If there is space left in the last message block of the client, receive as much as possible in that space, otherwise in a new message block space.
  *      The received message is added to the queue to prevent TCP congestion and is not processed immediately.
  *      The message processing queue is processed at a convenient time when no events occur.
  *      Also, when Recv occurs, you must add the corresponding client to the clientsWithRecvMsgToProcessQueue        list to indicate that there is a message to process for the client.
  *
  *  ## Message sending
- *      When the server sends a message to the client, the message to be sent is added to the ClientControlBlock::SendMsgBlockQueue of each client and processed asynchronously through kqueue.
+ *      When the server sends a message to the client, the message to be sent is added to the ClientControlBlock::MsgSendingQueue of each client and processed asynchronously through kqueue.
  *      By default, the kevent for the client socket is disabled for the WRITE event filter.  
  *      When a message to send is generated, enable the WRITE event filter for the kevent of the corresponding client socket.  
  *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.  
@@ -121,14 +121,14 @@ private:
     /** The main event loop of the server. */
     EIrcErrorCode eventLoop();
 
-    /** Parse all parseable messages in the client's ClientControlBlock::RecvMsgBlockQueue 
+    /** Separate all separatable messages in the client's ClientControlBlock::RecvMsgBlocks 
      * 
-     * @param client            The client to parse the messages.
-     * @param outParsedMsgs     The vector to receive the parsed messages.
-     *                          If the vector is not empty, the parsed messages are appended to the end of the vector.
+     * @param client            The client to separate the messages.
+     * @param outParsedMsgs     The vector to receive the separated messages.
+     *                          If the vector is not empty, the separated messages are appended to the end of the vector.
      * @see                     ClientControlBlock::RecvMsgBlockCursor
      */
-    EIrcErrorCode parseRecvMsgQueueFromClient(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr< MsgBlock > >& outParsedMsgs);
+    EIrcErrorCode separateMsgsFromClientRecvMsgQueue(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr< MsgBlock > >& outParsedMsgs);
 
     /** Disconnect the client.
      * 

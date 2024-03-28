@@ -36,22 +36,32 @@ struct ClientControlBlock
 
     /** Indicates whether the client connection is expired.
      *  
-     *  The server doesn't release the client control block
-     *  for remaining events or messages immediately after the connection is closed.
+     *  @details    The server doesn't release the client control block
+     *              for remaining events or messages immediately after the connection is closed.
     */
     bool bExpired;
 
-    /** Queue of received messages to process. */
-    std::vector< SharedPtr< MsgBlock > > RecvMsgBlockQueue;
+    /** @name Message receiving */
+    ///@{
+    /** Received messages from the client.
+     *  
+     *  @details    Each message block is not a separate message.
+     *              It can be a part of a message or a multiple messages.
+     */
+    std::vector< SharedPtr< MsgBlock > > RecvMsgBlocks;
     
-    /** Indicates the next offset to parse in the message block at the front of the message recv queue */
+    /** Indicates the next offset to parse in the message block at the front of the received message blocks */
     size_t RecvMsgBlockCursor;
-    
+    ///@}
+
+    /** @name Message sending */
+    ///@{
     /** Queue of messages to send. */
-    std::vector< SharedPtr< MsgBlock > > SendMsgBlockQueue;
+    std::vector< SharedPtr< MsgBlock > > MsgSendingQueue;
 
     /** Indicates the next offset to send in the message block at the front of the message send queue */
     size_t SendMsgBlockCursor;
+    ///@}
 
     FORCEINLINE ClientControlBlock()
         : hSocket(-1)
@@ -63,9 +73,9 @@ struct ClientControlBlock
         , bRegistered(false)
         , LastActiveTime(0)
         , bExpired(false)
-        , RecvMsgBlockQueue()
+        , RecvMsgBlocks()
         , RecvMsgBlockCursor(0)
-        , SendMsgBlockQueue()
+        , MsgSendingQueue()
         , SendMsgBlockCursor(0)
     {
     }
