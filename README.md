@@ -14,6 +14,10 @@ https://ria9993.github.io/IRC_server
 - `GNUC (GCC, Clang)`
 ***
 
+### Coding Standard
+- [**Documentation**](/CodingStandard.md)
+
+***
 # Process Flow
 - [**Documentation**](https://ria9993.github.io/IRC_server)
 
