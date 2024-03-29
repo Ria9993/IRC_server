@@ -2359,8 +2359,12 @@ PREDEFINED             =
 # definition found in the source code.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-EXPAND_AS_DEFINED      = ERROR_CODE_TUPLE_LIST \
-                         ERROR_CODE_X
+EXPAND_AS_DEFINED      = IRC_ERROR_CODE_TUPLE_LIST \
+                         IRC_ERROR_CODE_X \
+                         IRC_COMMAND_LIST_X \
+                         IRC_COMMAND_X \
+                         IRC_REPLY_TUPLE_LIST \
+                         IRC_REPLY_X \
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will
 # remove all references to function-like macros that are alone on a line, have

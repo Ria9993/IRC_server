@@ -7,7 +7,6 @@
 
 namespace IRC
 {
-
 Server::~Server()
 {
     // TODO:
@@ -483,6 +482,11 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
 
     // TODO: Process the message as coressponding command
 
+    /** The pairs of the command name and the command function pointer. */
+    std::vector<std::string, commandFuncPtr> commandFuncs;
+    
+    
+
     return IRC_SUCCESS;
 }
 
@@ -497,6 +501,8 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
         return IRC_FAILED_TO_CLOSE_SOCKET;
     }
 
+    // Expire the client instead of memory release and remove from the client list.
+    // See ClientControlBlock::bExpired for details.
     client->bExpired = true;
 
     // TODO: Remove client from the channels

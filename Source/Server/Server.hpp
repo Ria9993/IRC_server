@@ -22,6 +22,7 @@ using namespace IRCCore;
 #include "Server/MsgBlock.hpp"
 #include "Server/ClientControlBlock.hpp"
 #include "Server/IrcReplies.hpp"
+#include "Server/Command/Command.hpp"
 
 namespace IRC
 {
@@ -122,6 +123,9 @@ private:
     /** The main event loop of the server. */
     EIrcErrorCode eventLoop();
 
+private:
+    /** @name Message Processing */
+    ///@{
     /** Separate all separatable messages in the client's ClientControlBlock::RecvMsgBlocks 
      * 
      * @param client            The client to separate the messages.
@@ -137,6 +141,7 @@ private:
      * @param parsedMsgs        The single message to process.
      */
     EIrcErrorCode processClientMsg(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
+    ///@}
 
     /** Disconnect the client.
      * 
@@ -145,6 +150,35 @@ private:
     */
     EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
 
+    /** Get SharedPtr to the ClientControlBlock from the kevent udata. */
+    FORCEINLINE SharedPtr<ClientControlBlock> getClientFromKeventUdata(kevent_t& event) const
+    {
+        // @see SharedPtr::GetControlBlock()
+        //      mhKqueue
+        return SharedPtr<ClientControlBlock>(reinterpret_cast< detail::ControlBlock< ClientControlBlock >* >(event.udata));
+    }
+
+private:
+    /** @name       Command functions
+     *  @details    The command functions to process the client's message.  
+     *              The command functions are called by the processClientMsg().  
+     *              
+     *              Signature:  
+     *              - EIrcErrorCode executeCommand_##COMMAND_NAME(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+     * 
+     *  @param      client    The client to process the command.
+     *  @param      arguments The arguments of the command.
+     *  @return     EIrcErrorCode    Error code.
+     */
+    ///@{
+    typedef IRC::EIrcReplyCode (*commandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+
+#define IRC_COMMAND_X(command_name) commandFuncPtr executeCommand_##command_name;
+    IRC_COMMAND_LIST_X
+#undef  IRC_COMMAND_X
+    ///@}
+
+private:
     /** @name Log functions */
     ///@{
     /** Log the error code */ 
@@ -156,14 +190,6 @@ private:
     /** Log the verbose message */
     void logVerbose(const std::string& message) const;
     ///@}
-
-    /** Get SharedPtr to the ClientControlBlock from the kevent udata. */
-    FORCEINLINE SharedPtr<ClientControlBlock> getClientFromKeventUdata(kevent_t& event) const
-    {
-        // @see SharedPtr::GetControlBlock()
-        //      mhKqueue
-        return SharedPtr<ClientControlBlock>(reinterpret_cast< detail::ControlBlock< ClientControlBlock >* >(event.udata));
-    }
     
 private:
     short       mServerPort;
