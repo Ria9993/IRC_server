@@ -1,9 +1,5 @@
 #pragma once
 
-/** \def    COMMAND_X(command)
- *  \brief  Define the IRC command.
- *  \param  command The IRC command.
- */
 #define IRC_COMMAND_LIST_X     \
     IRC_COMMAND_X(PASS)        \
     IRC_COMMAND_X(NICK)        \
