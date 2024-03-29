@@ -1,6 +1,9 @@
+#include <cstring>
+
 #include "Server/Server.hpp"
 #include "Network/TcpIpDefines.hpp"
 #include "Network/Utils.hpp"
+#include "Server.hpp"
 
 namespace IRC
 {
@@ -120,6 +123,7 @@ EIrcErrorCode Server::eventLoop()
     // The list of clients with receive messages to process
     // Duplicate is allowed.
     std::vector< SharedPtr< ClientControlBlock > > clientsWithRecvMsgToProcessQueue;
+    clientsWithRecvMsgToProcessQueue.reserve(CLIENT_MAX);
 
     while (true)
     {
@@ -140,26 +144,25 @@ EIrcErrorCode Server::eventLoop()
         }
         mEventRegistrationQueue.clear();
 
-        // If there is no event, process the received messages from the clients
+        // Process the received messages from the clients when there is no observed event.
         if (observedEventNum == 0)
         {
-            for (size_t i = 0; i < clientsWithRecvMsgToProcessQueue.size(); i++)
+            for (size_t queueIdx = 0; queueIdx < clientsWithRecvMsgToProcessQueue.size(); queueIdx++)
             {
-                std::vector< SharedPtr< MsgBlock > > parsedMsgs;
-                EIrcErrorCode err = separateMsgsFromClientRecvMsgQueue(clientsWithRecvMsgToProcessQueue[i], parsedMsgs);
+                SharedPtr<ClientControlBlock> client = clientsWithRecvMsgToProcessQueue[queueIdx];
+
+                std::vector< SharedPtr< MsgBlock > > separatedMsgs;
+                EIrcErrorCode err = separateMsgsFromClientRecvMsgs(client, separatedMsgs);
                 Assert(err == IRC_SUCCESS);
                 
-                logVerbose("Parsed messages from client. IP: " + InetAddrToString(clientsWithRecvMsgToProcessQueue[i]->Addr) + ", Nick: " + clientsWithRecvMsgToProcessQueue[i]->Nickname + ", Parsed count: " + ValToString(parsedMsgs.size()));
-                
-                // DEBUG log
-                for (size_t j = 0; j < parsedMsgs.size(); j++)
+                for (size_t msgIdx = 0; msgIdx < separatedMsgs.size(); msgIdx++)
                 {
-                    logVerbose("Parsed message: " + std::string(parsedMsgs[j]->Msg, parsedMsgs[j]->MsgLen));
+                    err = processClientMsg(client, separatedMsgs[msgIdx]);
+                    if (UNLIKELY(err != IRC_SUCCESS))
+                    {
+                        return err;
+                    }
                 }
-
-                // TODO: Handle the error
-
-                // TODO: Process the parsed messages
             }
             clientsWithRecvMsgToProcessQueue.clear();
             continue;
@@ -322,14 +325,14 @@ EIrcErrorCode Server::eventLoop()
     return IRC_FAILED_UNREACHABLE_CODE;
 }
 
-EIrcErrorCode Server::separateMsgsFromClientRecvMsgQueue(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr<MsgBlock> >& outParsedMsgs)
+EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr<MsgBlock> >& outParsedMsgs)
 {
     // Check the client is expired.
     // The message block can be exist even if the client is expired.
     // See disconnectClient() for details.
     if (client->bExpired)
     {
-        logVerbose("separateMsgsFromClientRecvMsgQueue(): The client of the message is already expired. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
+        logVerbose("separateMsgsFromClientRecvMsgs(): The client of the message is already expired. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
         return IRC_SUCCESS;
     }
 
@@ -346,11 +349,11 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgQueue(SharedPtr<ClientControl
         client->RecvMsgBlockCursor = 0;
     }
 
-    // #1. Separate the messages from the message blocks based on "\r\n" separator for convenience.
+    // Separate the messages from the message blocks based on "\r\n" separator
     SharedPtr<MsgBlock> separatedMsg = MakeShared<MsgBlock>();
     size_t parseIdx = client->RecvMsgBlockCursor;
     size_t lastParsedRecvQueueBlockIdx = 0; //< For removing the fully parsed message blocks from the receive queue
-    for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->RecvMsgBlocks.size(); msgBlockQueueIdx++)
+    for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->RecvMsgBlocks.size(); msgBlockQueueIdx++, parseIdx = 0)
     {
         SharedPtr<MsgBlock> currMsgBlock = client->RecvMsgBlocks[msgBlockQueueIdx];
         Assert(currMsgBlock != NULL);
@@ -407,9 +410,6 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgQueue(SharedPtr<ClientControl
 
         } // for (; parseIdx < currMsgBlock->MsgLen; parseIdx++)
 
-        // Reset the index for the next message block
-        parseIdx = 0;
-
     } // for (size_t msgBlockQueueIdx = 0; msgBlockQueueIdx < client->ReceivedMsgBlockToProcessQueue.size(); msgBlockQueueIdx++)
 
     // Remove the fully separated message blocks from the receive queue
@@ -417,6 +417,71 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgQueue(SharedPtr<ClientControl
     {
         client->RecvMsgBlocks.erase(client->RecvMsgBlocks.begin(), client->RecvMsgBlocks.begin() + lastParsedRecvQueueBlockIdx);
     }
+
+    // Remove the CR-LF from the separated messages
+    for (size_t msgIdx = 0; msgIdx < outParsedMsgs.size(); msgIdx++)
+    {
+        outParsedMsgs[msgIdx]->MsgLen -= 2;
+    }
+
+    return IRC_SUCCESS;
+}
+
+EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
+{
+    if (client->bExpired)
+    {
+        logVerbose("processClientMsg(): The client of the message is already expired. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
+        return IRC_SUCCESS;
+    }
+
+    if (msg == NULL)
+    {
+        logVerbose("processClientMsg(): The message is NULL. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
+        return IRC_SUCCESS;
+    }
+
+    // Split the arguments into blank(' ')
+    bool bPrefixIgnored = false;
+    const char* msgCommandToken = NULL;
+    std::vector<const char*> msgTokens;
+    msgTokens.reserve(MESSAGE_LEN_MAX / 2);
+    for (size_t i = 0; i < msg->MsgLen; i++)
+    {
+        // Skip the blanks and set them to NULL('\0') character to separate the arguments
+        for (; i < msg->MsgLen && msg->Msg[i] == ' '; i++)
+        {
+            msg->Msg[i] = '\0';
+        }
+
+        // Ignore the part of prefix
+        if (msg->Msg[i] == ':' && msgTokens.size() == 0 && !bPrefixIgnored)
+        {
+            for (; i < msg->MsgLen && msg->Msg[i] != ' '; i++)
+            {
+            }
+            bPrefixIgnored = true;
+        }
+        // Store the token
+        else if (i < msg->MsgLen)
+        {
+            if (msgCommandToken == NULL)
+            {
+                msgCommandToken = &msg->Msg[i];
+            }
+            else
+            {
+                msgTokens.push_back(&msg->Msg[i]);
+            }
+        }
+    }
+
+    if (msgCommandToken == NULL)
+    {
+        return IRC_SUCCESS;
+    }
+
+    // TODO: Process the message as coressponding command
 
     return IRC_SUCCESS;
 }

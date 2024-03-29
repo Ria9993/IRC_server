@@ -34,7 +34,7 @@ struct ClientControlBlock
 
     time_t LastActiveTime;
 
-    /** Indicates whether the client connection is expired.
+    /** The flag to indicate whether the client control block is expired.
      *  
      *  @details    The server doesn't release the client control block
      *              for remaining events or messages immediately after the connection is closed.
@@ -50,7 +50,7 @@ struct ClientControlBlock
      */
     std::vector< SharedPtr< MsgBlock > > RecvMsgBlocks;
     
-    /** Indicates the next offset to parse in the message block at the front of the received message blocks */
+    /** The cursor to indicate the next offset to receive in the message block at the front of the received message blocks */
     size_t RecvMsgBlockCursor;
     ///@}
 
@@ -59,7 +59,7 @@ struct ClientControlBlock
     /** Queue of messages to send. */
     std::vector< SharedPtr< MsgBlock > > MsgSendingQueue;
 
-    /** Indicates the next offset to send in the message block at the front of the message send queue */
+    /** The cursor to indicate the next offset to send in the message block at the front of the sending queue */
     size_t SendMsgBlockCursor;
     ///@}
 
