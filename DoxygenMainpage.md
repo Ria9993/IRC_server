@@ -1,7 +1,7 @@
 # %IRC Server
 %IRC Server implementation in C++98
 ***
-## \ref [CodingStandard](CodingStandard.md)
+## [CodingStandard](\ref md_CodingStandard)
 ***
 ## \ref IRC::Server
 ***
