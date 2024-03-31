@@ -1377,7 +1377,7 @@ dl.warning, dl.attention, dl.note, dl.deprecated, dl.bug, dl.invariant, dl.pre, 
 
 dl.section dd {
     margin-bottom: 2px;
-    border-left: 1px solid var(--separator-color);
+    padding-left: var(--spacing-large);
 }
 
 dl.warning, dl.attention {
