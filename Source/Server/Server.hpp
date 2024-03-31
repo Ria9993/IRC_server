@@ -159,22 +159,26 @@ private:
     }
 
 private:
-    /** @name       Command functions
-     *  @details    The command functions to process the client's message.  
-     *              The command functions are called by the processClientMsg().  
-     *              
-     *              Signature:  
-     *              - EIrcErrorCode executeCommand_##COMMAND_NAME(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+    /** @name       Client command functions
+     *          
+     *  @par        Function signature
+     *  @code
+     *              EIrcErrorCode executeCommand_##COMMAND_NAME(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg); 
+     *  @endcode 
      * 
+     *  @file       Server/Command/Command.hpp  
+     *              Server/Command/ExecuteClientCommand_*.cpp
+     *  
      *  @param      client    The client to process the command.
      *  @param      arguments The arguments of the command.
      *  @return     EIrcErrorCode    Error code.
      */
     ///@{
-    typedef IRC::EIrcReplyCode (*commandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+    /** Client command function pointer type */
+    typedef IRC::EIrcReplyCode (*clientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
 
-#define IRC_COMMAND_X(command_name) commandFuncPtr executeCommand_##command_name;
-    IRC_COMMAND_LIST_X
+#define IRC_COMMAND_X(command_name) clientCommandFuncPtr executeClientCommand_##command_name;
+    IRC_COMMAND_LIST
 #undef  IRC_COMMAND_X
     ///@}
 
