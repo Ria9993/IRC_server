@@ -15,9 +15,9 @@ html.alternative {
     --border-radius-large: 22px;
     --border-radius-small: 9px;
     --border-radius-medium: 14px;
-    --spacing-small: 8px;
-    --spacing-medium: 14px;
-    --spacing-large: 19px;
+    --spacing-small: 10px;
+    --spacing-medium: 16px;
+    --spacing-large: 22px;
 
     --top-height: 125px;
 

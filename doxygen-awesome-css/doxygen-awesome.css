@@ -338,7 +338,7 @@ a:link, a:visited, a:hover, a:focus, a:active {
 
 a.anchor {
     scroll-margin-top: var(--spacing-large);
-    display: block;
+    display: inline-block;
 }
 
 /*
@@ -907,9 +907,14 @@ div.contents, div.header .title  {
 }
 
 div.groupHeader {
-    font-weight: normal;
+    font-weight: bold;
     font-size: 140%;
+    padding-bottom: var(--spacing-small);
+
+    padding-left: var(--spacing-small);
+    border-left: 5px solid var(--primary-dark-color);
 }
+
 
 div.header .summary {
     margin: var(--spacing-medium) auto 0 auto;
@@ -985,8 +990,11 @@ html.dark-mode div.contents .dotgraph iframe
 }
 
 h2.groupheader {
-    font-size: 150%;
+    font-size: 175%;
     border-bottom: 0px;
+    font-weight: bold;
+    border-left: 8px solid var(--primary-color);
+    padding-left: var(--spacing-medium);
     color: var(--page-foreground-color);
     box-shadow: 
         100px 0 var(--page-background-color), 
@@ -1009,6 +1017,7 @@ h2.groupheader {
         -1900px 0 var(--page-background-color),
         1900px 0.75px var(--separator-color),
         -1900px 0.75px var(--separator-color);
+
 }
 
 blockquote {
@@ -1368,6 +1377,7 @@ dl.warning, dl.attention, dl.note, dl.deprecated, dl.bug, dl.invariant, dl.pre, 
 
 dl.section dd {
     margin-bottom: 2px;
+    border-left: 1px solid var(--separator-color);
 }
 
 dl.warning, dl.attention {

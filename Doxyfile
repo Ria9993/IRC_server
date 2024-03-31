@@ -2361,7 +2361,7 @@ PREDEFINED             =
 
 EXPAND_AS_DEFINED      = IRC_ERROR_CODE_TUPLE_LIST \
                          IRC_ERROR_CODE_X \
-                         IRC_COMMAND_LIST_X \
+                         IRC_COMMAND_LIST \
                          IRC_COMMAND_X \
                          IRC_REPLY_TUPLE_LIST \
                          IRC_REPLY_X \
