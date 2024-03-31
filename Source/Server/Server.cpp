@@ -483,7 +483,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     // TODO: Process the message as coressponding command
 
     /** The pairs of the command name and the command function pointer. */
-    std::vector<std::string, commandFuncPtr> commandFuncs;
+    std::vector<std::string, ClientCommandFuncPtr> commandFuncs;
     
     
 

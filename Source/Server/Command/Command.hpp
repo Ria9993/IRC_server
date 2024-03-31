@@ -1,6 +1,7 @@
 #pragma once
 
-#define IRC_COMMAND_LIST_X     \
+/** IRC Client Command List */
+#define IRC_COMMAND_LIST     \
     IRC_COMMAND_X(PASS)        \
     IRC_COMMAND_X(NICK)        \
     IRC_COMMAND_X(USER)        \

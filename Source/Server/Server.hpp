@@ -27,8 +27,8 @@ using namespace IRCCore;
 namespace IRC
 {
 
-/** \class Server
- *  \par 
+/** @class Server
+ *  @par 
  *  # [Server Event Loop Process Flow]
  *  @details
  *  ## [한국어]
@@ -90,34 +90,31 @@ namespace IRC
 class Server
 {
 public:
-    /** Create the server instance. Accompanied by port and password validation.
+    /** Create the server instance.
      * 
      * @param outPtrServer      [out] Pointer to receive the server instance.
      * @param port              Port number to listen.
      * @param password          Password to access the server.
      *                          see Constants::SVR_PASS_MIN, Constants::SVR_PASS_MAX
-     * @return EIrcErrorCode    Error code. 
      */
     static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
 
-    /** Initialize and start the server event loop.
+    /** Initialize resources and start the server event loop.
      *  
      * @details Initialize the kqueue and resources and register the listen socket to the kqueue.
      *          And then call the eventLoop() to start server.
      * 
      * @note    Blocking until the server is terminated.
      * @warning All non-static methods must be called after this function is called.
-     * @return  EIrcErrorCode    Error code.
      */
     EIrcErrorCode Startup();
 
     ~Server();
 
 private:
-    /** Should be called by CreateServer() */
     Server(const unsigned short port, const std::string& password);
     
-    /** @internal Copy constructor is not allowed. */
+    /** @warning Copy constructor is not allowed. */
     UNUSED Server &operator=(const Server& rhs);
 
     /** The main event loop of the server. */
@@ -171,13 +168,12 @@ private:
      *  
      *  @param      client    The client to process the command.
      *  @param      arguments The arguments of the command.
-     *  @return     EIrcErrorCode    Error code.
      */
     ///@{
     /** Client command function pointer type */
-    typedef IRC::EIrcReplyCode (*clientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+    typedef IRC::EIrcReplyCode (*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
 
-#define IRC_COMMAND_X(command_name) clientCommandFuncPtr executeClientCommand_##command_name;
+#define IRC_COMMAND_X(command_name) ClientCommandFuncPtr executeClientCommand_##command_name;
     IRC_COMMAND_LIST
 #undef  IRC_COMMAND_X
     ///@}
@@ -185,13 +181,10 @@ private:
 private:
     /** @name Log functions */
     ///@{
-    /** Log the error code */ 
     void logErrorCode(EIrcErrorCode errorCode) const;
 
-    /** Log the message */
     void logMessage(const std::string& message) const;
 
-    /** Log the verbose message */
     void logVerbose(const std::string& message) const;
     ///@}
     
@@ -201,7 +194,7 @@ private:
 
     int         mhListenSocket;
 
-    /** @name   Kevent members 
+    /** @name   Kqueue 
      * 
      * @details The udata member of kevent is the controlBlock of the SharedPtr to the corresponding ClientControlBlock. (Except for the listen socket)  
      * @see     SharedPtr::GetControlBlock()  
@@ -214,7 +207,6 @@ private:
 
     /** Client control blocks
      * 
-     *  @details    Informations of the connected clients.  
      *  @warning    Do not release the client when the client's event exists in the kqueue. 
     */
     std::vector< SharedPtr< ClientControlBlock > > mClients;
