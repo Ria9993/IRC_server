@@ -133,7 +133,7 @@ namespace IRC
          */
         EIrcErrorCode separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBlock> client, std::vector<SharedPtr<MsgBlock> >& outParsedMsgs);
 
-        /** Process the client's message.
+        /** Execute and reply the client's single message.
          *
          * @param client            The client to process the message.
          * @param parsedMsgs        The single message to process.
@@ -158,15 +158,9 @@ namespace IRC
 
     private:
         /** @name       Client command functions
-         *
-         *  @par        Function signature
-         *  @code
-         *              EIrcErrorCode executeClientCommand__##COMMAND_NAME(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
-         *  @endcode
-         *
+
          *  @file       Server/ClientCommand/ClientCommand.hpp
          *              Server/ClientCommand/<COMMAND>.cpp
-         *
          *  @param      client          [in]  The client to process the command.
          *  @param      arguments       [in]  The arguments of the command.
          *  @param      outReplyCode    [out] The reply code to send to the client.
@@ -174,7 +168,7 @@ namespace IRC
          *  @return     The error code of the command execution.
          */
         ///@{
-        typedef IRC::EIrcErrorCode (ClientCommandFunc)(SharedPtr<ClientControlBlock> client, const std::vector<std::string>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+        typedef IRC::EIrcErrorCode (ClientCommandFunc)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
         typedef ClientCommandFunc  (Server::*ClientCommandFuncPtr);
 
 #define IRC_CLIENT_COMMAND_X(command_name) ClientCommandFunc executeClientCommand_##command_name;

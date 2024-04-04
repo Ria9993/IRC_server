@@ -441,10 +441,11 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     }
 
     // Split the arguments into blank(' ')
-    bool bPrefixIgnored = false;
     const char* msgCommandToken = NULL;
-    std::vector<const char*> msgTokens;
-    msgTokens.reserve(MESSAGE_LEN_MAX / 2);
+    std::vector<const char*> msgArgTokens;
+    msgArgTokens.reserve(MESSAGE_LEN_MAX / 2);
+
+    bool bPrefixIgnored = false;
     for (size_t i = 0; i < msg->MsgLen; i++)
     {
         // Skip the blanks and set them to NULL('\0') character to separate the arguments
@@ -454,7 +455,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         }
 
         // Ignore the part of prefix
-        if (msg->Msg[i] == ':' && msgTokens.size() == 0 && !bPrefixIgnored)
+        if (msg->Msg[i] == ':' && msgArgTokens.size() == 0 && !bPrefixIgnored)
         {
             for (; i < msg->MsgLen && msg->Msg[i] != ' '; i++)
             {
@@ -470,7 +471,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
             }
             else
             {
-                msgTokens.push_back(&msg->Msg[i]);
+                msgArgTokens.push_back(&msg->Msg[i]);
             }
         }
     }
@@ -481,8 +482,8 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     }
 
 
-    // Execute the message by calling coressponding function
-    // - See Client_command_functions
+    // Create a list of paired command strings and command execution functions
+    // - See "Client command functions" group in Server class for ClientCommand functions.
     typedef struct {
         const char*             command;
         ClientCommandFuncPtr    func;
@@ -495,6 +496,23 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     };
     const size_t numClientCommandFunc = sizeof(clientCommandFuncPairs) / sizeof(clientCommandFuncPairs[0]);
 
+    // Find the corresponding function and execute it
+    for (size_t i = 0; i < numClientCommandFunc; i++)
+    {
+        if (std::strcmp(msgCommandToken, clientCommandFuncPairs[i].command) == 0)
+        {
+            EIrcReplyCode   replyCode;
+            std::string     replyMsg;
+            EIrcErrorCode   err = (this->*clientCommandFuncPairs[i].func)(client, msgArgTokens, replyCode, replyMsg);
+            if (UNLIKELY(err != IRC_SUCCESS))
+            {
+                return err;
+            }
+            
+            // TODO: Send the reply message to the client
+            
+        }
+    }
     
     return IRC_SUCCESS;
 }
