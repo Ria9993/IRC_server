@@ -516,6 +516,8 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         {
             const std::string serverName = InetAddrToString(client->Addr);
             MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, serverName, msgCommandToken);
+
+            // TODO:
         }
         // Otherwise, execute the command
         else
@@ -525,6 +527,8 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
             {
                 return err;
             }
+
+            // TODO:
         }
     }
     

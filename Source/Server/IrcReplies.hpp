@@ -1,5 +1,4 @@
 /** @file
- *  @brief  IRC replies.
  *  @see    RFC 1459, Chapter 6. Replies.  
  *          https://datatracker.ietf.org/doc/html/rfc1459
  */
@@ -39,13 +38,6 @@ typedef enum {
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-/** \def    MakeIrcReplyMsg_##REPLY_CODE(arguments)
- *  \brief  Make the IRC reply message.  
- *          :<server> <reply_code> <reply_string>
- *  \param  reply_code The reply code.
- *  \param  arguments The arguments for the reply message.
- *  \return The IRC reply message ending with CR-LF.
- */
 #define IRC_REPLY_X(reply_code, reply_number, arguments, reply_string)             \
     inline void MakeIrcReplyMsg_##reply_code arguments                             \
     {                                                                              \
@@ -58,14 +50,27 @@ typedef enum {
     std::string&   outReplyMsg, \
     std::string    serverName
 
+/**  
+ * @name       Reply message making functions 
+ * @defgroup   ReplyMsgMakingFunctions Reply message making functions 
+ * 
+ * @brief   MakeIrcReplyMsg_<reply_code> functions.
+ * @details Make the IRC reply message.
+ *  
+ * @param  outReplyCode [out] The reply code.
+ * @param  outReplyMsg  [out] The IRC reply message ending with CR-LF.  
+ * @param  serverName   [in]  The server name.
+ * @param  ...          [in]  The arguments of the reply message.
+ * @return The IRC reply message ending with CR-LF.
+*/
+///@{
+/** @copydetails ReplyMsgMakingFunctions */
 IRC_REPLY_TUPLE_LIST
+///@} 
 
 #undef PARM_X
-
 #undef IRC_REPLY_X
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-
-#undef IRC_REPLY_TUPLE_LIST
 
 }

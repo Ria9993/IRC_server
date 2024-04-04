@@ -28,9 +28,10 @@ namespace IRC
 {
 
     /** @class Server
-     *  @par
-     *  # [Server Event Loop Process Flow]
-     *  @details
+     * \internal
+     * 
+     *  @brief See [ \ref server_event_loop_process_flow ] before reading implementation details.
+     *  @page server_event_loop_process_flow Server Event Loop Process Flow
      *  ## [한국어]
      *      서버의 메인 이벤트 루프는 모든 소켓 이벤트를 비동기적으로 처리합니다.
      *      ### Error event
@@ -137,6 +138,9 @@ namespace IRC
          *
          * @param client            The client to process the message.
          * @param parsedMsgs        The single message to process.
+         * 
+         *  \internal
+         *  @see                    ReplyMsgMakingFunctions
          */
         EIrcErrorCode processClientMsg(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
         ///@}
@@ -157,21 +161,25 @@ namespace IRC
         }
 
     private:
-        /** @name       Client command functions
-
-         *  @file       Server/ClientCommand/ClientCommand.hpp
-         *              Server/ClientCommand/<COMMAND>.cpp
+        /** @brief      Client command execution function type
+         *  
          *  @param      client          [in]  The client to process the command.
          *  @param      arguments       [in]  The arguments of the command.
          *  @param      outReplyCode    [out] The reply code to send to the client.
          *  @param      outReplyMsg     [out] The reply message to send to the client.
          *  @return     The error code of the command execution.
          */
-        ///@{
-        typedef IRC::EIrcErrorCode (ClientCommandFunc)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
-        typedef ClientCommandFunc  (Server::*ClientCommandFuncPtr);
+        typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
 
-#define IRC_CLIENT_COMMAND_X(command_name) ClientCommandFunc executeClientCommand_##command_name;
+        /** @name       Client command execution function list
+         *  @brief      Client command execution functions
+
+         *  @see        Server/ClientCommand/ClientCommand.hpp  
+         *              Server/ClientCommand/<COMMAND>.cpp
+         */
+        ///@{
+#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+        /** @copydoc ClientCommandFuncPtr */
         IRC_CLIENT_COMMAND_LIST
 #undef  IRC_CLIENT_COMMAND_X
         ///@}

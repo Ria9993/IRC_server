@@ -86,6 +86,7 @@ template <typename T>
 class WeakPtr;
 
 /** @name MakeShared
+ *  @anchor MakeShared
  * 
  * @brief   Function to create a shared pointer with a new object.
  * 
@@ -103,6 +104,7 @@ class WeakPtr;
  * @see     SharedPtr
  */
 ///@{
+/** @includedoc MakeShared */
 template <typename T>
 NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 
