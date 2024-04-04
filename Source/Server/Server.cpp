@@ -53,7 +53,7 @@ Server::Server(const unsigned short port, const std::string& password)
 
 EIrcErrorCode Server::Startup()
 {
-    logMessage("Server started. Port: " + std::to_string(mServerPort) + ", Password: " + mServerPassword);
+    logMessage("Server started. Port: " + ValToString(mServerPort) + ", Password: " + mServerPassword);
 
     // Create listen socket as non-blocking and bind to the port
     mhListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -136,7 +136,7 @@ EIrcErrorCode Server::eventLoop()
         }
 
         // Receive observed events from kqueue
-        observedEventNum = kevent(mhKqueue, mEventRegistrationQueue.data(), mEventRegistrationQueue.size(), observedEvents, CLIENT_MAX, &timeoutZero);
+        observedEventNum = kevent(mhKqueue, mEventRegistrationQueue.data(), mEventRegistrationQueue.size(), observedEvents, CLIENT_MAX, timeout);
         if (UNLIKELY(observedEventNum == -1))
         {
             return IRC_FAILED_TO_WAIT_KEVENT;
@@ -480,13 +480,22 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         return IRC_SUCCESS;
     }
 
-    // TODO: Process the message as coressponding command
 
-    /** The pairs of the command name and the command function pointer. */
-    std::vector<std::string, ClientCommandFuncPtr> commandFuncs;
-    
-    
+    // Execute the message by calling coressponding function
+    // - See Client_command_functions
+    typedef struct {
+        const char*             command;
+        ClientCommandFuncPtr    func;
+    } ClientCommandFuncPair;
 
+    const ClientCommandFuncPair clientCommandFuncPairs[] = {
+#define IRC_CLIENT_COMMAND_X(command_name) { #command_name, &Server::executeClientCommand_##command_name },
+        IRC_CLIENT_COMMAND_LIST
+#undef  IRC_CLIENT_COMMAND_X
+    };
+    const size_t numClientCommandFunc = sizeof(clientCommandFuncPairs) / sizeof(clientCommandFuncPairs[0]);
+
+    
     return IRC_SUCCESS;
 }
 

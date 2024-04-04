@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace IRC
 {
 
@@ -28,8 +30,6 @@ typedef enum {
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-#include <string>
-
 /** \def    MakeIrcReplyMsg_##REPLY_CODE(arguments)
  *  \brief  Make the IRC reply message.  
  *          :<server> <reply_code> <reply_string>

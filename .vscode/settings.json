@@ -63,7 +63,17 @@
 		"__tree": "cpp",
 		"map": "cpp",
 		"deque": "cpp",
-		"regex": "cpp"
+		"regex": "cpp",
+		"clocale": "cpp",
+		"*.tcc": "cpp",
+		"compare": "cpp",
+		"concepts": "cpp",
+		"memory_resource": "cpp",
+		"numeric": "cpp",
+		"random": "cpp",
+		"numbers": "cpp",
+		"cinttypes": "cpp"
 	},
-	"C_Cpp.vcFormat.indent.preserveComments": true
+	"C_Cpp.vcFormat.indent.preserveComments": true,
+	"makefile.configureOnOpen": true
 }

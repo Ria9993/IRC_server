@@ -5,7 +5,6 @@
 #include <new>
 #include <string>
 
-#include "Core/Core.hpp"
 #include "Core/FixedMemoryPool.hpp"
 
 namespace IRCCore

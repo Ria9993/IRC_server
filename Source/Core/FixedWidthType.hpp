@@ -1,7 +1,7 @@
 #pragma once 
 
-// Mac OS X 64bit 
-#if defined(__APPLE__) && defined(__MACH__) && defined(__x86_64__)
+// Mac OS X 64bit or Ubuntu 64bit
+#if (defined(__APPLE__) && defined(__MACH__) && defined(__x86_64__)) || (defined(__linux__) && defined(__x86_64__))
     #ifndef _INT8_T
     #define _INT8_T
         typedef signed char int8_t;

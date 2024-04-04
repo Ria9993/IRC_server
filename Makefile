@@ -1,8 +1,8 @@
 NAME = ircserv
 
 # easy managing module folders
-SRCS = $(wildcard Source/*/*.cpp) Source/main.cpp
-INCS = $(wildcard Source/*/*.hpp)
+SRCS = $(wildcard Source/**/*.cpp) Source/main.cpp
+INCS = $(wildcard Source/**/*.hpp)
 INCPATH = -I Source/
 LIBPATH =
 

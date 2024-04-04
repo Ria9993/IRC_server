@@ -2332,7 +2332,7 @@ SEARCH_INCLUDES        = YES
 # RECURSIVE has no effect here.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           =
+INCLUDE_PATH           = 
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
@@ -2340,7 +2340,7 @@ INCLUDE_PATH           =
 # used.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-INCLUDE_FILE_PATTERNS  =
+INCLUDE_FILE_PATTERNS  = 
 
 # The PREDEFINED tag can be used to specify one or more macro names that are
 # defined before the preprocessor is started (similar to the -D option of e.g.
@@ -2365,8 +2365,8 @@ PREDEFINED             = FORCEINLINE= \
 
 EXPAND_AS_DEFINED      = IRC_ERROR_CODE_TUPLE_LIST \
                          IRC_ERROR_CODE_X \
-                         IRC_COMMAND_LIST \
-                         IRC_COMMAND_X \
+                         IRC_CLIENT_COMMAND_LIST \
+                         IRC_CLIENT_COMMAND_X \
                          IRC_REPLY_TUPLE_LIST \
                          IRC_REPLY_X \
 

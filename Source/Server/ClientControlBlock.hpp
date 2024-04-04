@@ -13,7 +13,6 @@ using namespace IRCCore;
 
 namespace IRC
 {    
-struct ClientControlBlock;
 
 /** The control block of the client for managing the client connection and its information.
  * 

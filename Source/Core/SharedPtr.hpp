@@ -2,21 +2,11 @@
 
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
+#include "Core/VariableMemoryPool.hpp"
 
 
 namespace IRCCore
 {
-
-// Forward declaration
-template <typename T, size_t MinNumDataPerChunk>
-class VariableMemoryPool;
-
-template <typename T>
-class SharedPtr;
-
-template <typename T>
-class WeakPtr;
-
 
 namespace detail
 {
@@ -88,6 +78,12 @@ VariableMemoryPool< ControlBlock< T >, ControlBlock< T >::MIN_NUM_PER_MEMORY_POO
 } // namespace detail
 
 
+
+template <typename T>
+class SharedPtr;
+
+template <typename T>
+class WeakPtr;
 
 /** @name MakeShared
  * 
