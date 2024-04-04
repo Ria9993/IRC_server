@@ -1,5 +1,4 @@
-/** @file
- *  @see    RFC 1459, Chapter 6. Replies.  
+/** @see    RFC 1459, Chapter 6. Replies.  
  *          https://datatracker.ietf.org/doc/html/rfc1459
  */
 
@@ -54,17 +53,17 @@ typedef enum {
  * @name       Reply message making functions 
  * @defgroup   ReplyMsgMakingFunctions Reply message making functions 
  * 
- * @brief   MakeIrcReplyMsg_<reply_code> functions.
- * @details Make the IRC reply message.
- *  
+ * @brief       MakeIrcReplyMsg_<reply_code> functions.
+*/
+///@{
+/** Make the IRC reply message.
+ * 
  * @param  outReplyCode [out] The reply code.
  * @param  outReplyMsg  [out] The IRC reply message ending with CR-LF.  
  * @param  serverName   [in]  The server name.
  * @param  ...          [in]  The arguments of the reply message.
  * @return The IRC reply message ending with CR-LF.
 */
-///@{
-/** @copydetails ReplyMsgMakingFunctions */
 IRC_REPLY_TUPLE_LIST
 ///@} 
 

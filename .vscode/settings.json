@@ -74,6 +74,5 @@
 		"numbers": "cpp",
 		"cinttypes": "cpp"
 	},
-	"C_Cpp.vcFormat.indent.preserveComments": true,
-	"makefile.configureOnOpen": true
+	"C_Cpp.vcFormat.indent.preserveComments": true
 }

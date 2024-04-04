@@ -2,7 +2,7 @@ NAME = ircserv
 
 # easy managing module folders
 SRCS = $(shell find Source/ -name *.cpp -print)
-INCS = $(wildcard Source/**/*.hpp)
+INCS = $(shell find Source/ -name *.hpp -print)
 INCPATH = -I Source/
 LIBPATH =
 

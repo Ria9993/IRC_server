@@ -161,25 +161,27 @@ namespace IRC
         }
 
     private:
-        /** @brief      Client command execution function type
-         *  
-         *  @param      client          [in]  The client to process the command.
-         *  @param      arguments       [in]  The arguments of the command.
-         *  @param      outReplyCode    [out] The reply code to send to the client.
-         *  @param      outReplyMsg     [out] The reply message to send to the client.
-         *  @return     The error code of the command execution.
+        /** Client command execution function type
+         *  @copydoc    ClientCommandExecutionFunction
          */
         typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
 
-        /** @name       Client command execution function list
-         *  @brief      Client command execution functions
-
+        /** 
+         *  @name       Client command execution functions
          *  @see        Server/ClientCommand/ClientCommand.hpp  
          *              Server/ClientCommand/<COMMAND>.cpp
          */
         ///@{
 #define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
-        /** @copydoc ClientCommandFuncPtr */
+        /** 
+         *  @name       ClientCommandExecutionFunction
+         *  @brief      Execute the client command.
+         *  @param      client          [in]  The client to process the command.
+         *  @param      arguments       [in]  The arguments of the command.
+         *  @param      outReplyCode    [out] The reply code to send to the client.
+         *  @param      outReplyMsg     [out] The reply message to send to the client ending with CR-LF.
+         *  @return     The error code of the command execution.
+         */
         IRC_CLIENT_COMMAND_LIST
 #undef  IRC_CLIENT_COMMAND_X
         ///@}
@@ -200,7 +202,8 @@ namespace IRC
 
         int mhListenSocket;
 
-        /** @name   Kqueue
+        /** 
+         * @name   Kqueue
          *
          * @details The udata member of kevent is the controlBlock of the SharedPtr to the corresponding ClientControlBlock. (Except for the listen socket)
          * @see     SharedPtr::GetControlBlock()

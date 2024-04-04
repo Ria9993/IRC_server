@@ -493,7 +493,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     const ClientCommandFuncPair clientCommandFuncPairs[] = {
 #define IRC_CLIENT_COMMAND_X(command_name) { #command_name, &Server::executeClientCommand_##command_name },
         IRC_CLIENT_COMMAND_LIST
-#undef  IRC_CLIENT_COMMAND_X
+#undef  IRC_CLIENT_COMMAND_X(command_name)
     };
     const size_t numClientCommandFunc = sizeof(clientCommandFuncPairs) / sizeof(clientCommandFuncPairs[0]);
 
