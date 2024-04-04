@@ -176,6 +176,7 @@ EIrcErrorCode Server::eventLoop()
             // 1. Error event
             if (UNLIKELY(currEvent.flags & EV_ERROR))
             {
+                // Listen socket error
                 if (UNLIKELY(static_cast<int>(currEvent.ident) == mhListenSocket))
                 {
                     logErrorCode(IRC_ERROR_LISTEN_SOCKET_EVENT);
@@ -290,12 +291,10 @@ EIrcErrorCode Server::eventLoop()
                     logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
 
                     recvMsgBlock->MsgLen += nRecvBytes;
-
-                    // Indicate that there is a message to process for the client
-                    clientsWithRecvMsgToProcessQueue.push_back(currClient);
-
-                    // Update the last active time of the client
+                    
                     currClient->LastActiveTime = currentTickServerTime;
+
+                    clientsWithRecvMsgToProcessQueue.push_back(currClient);
                 }
             }
 
@@ -476,13 +475,15 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         }
     }
 
+    // I don't think a message with only a prefix is an error.
+    // There is also no reply.
     if (msgCommandToken == NULL)
     {
         return IRC_SUCCESS;
     }
 
 
-    // Create a list of paired command strings and command execution functions
+    // Create a list of client commands with name/function pairs
     // - See "Client command functions" group in Server class for ClientCommand functions.
     typedef struct {
         const char*             command;
@@ -496,23 +497,38 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     };
     const size_t numClientCommandFunc = sizeof(clientCommandFuncPairs) / sizeof(clientCommandFuncPairs[0]);
 
-    // Find the corresponding function and execute it
+    // Find the matching command
+    ClientCommandFuncPtr pCoresspondingFunc = NULL; 
     for (size_t i = 0; i < numClientCommandFunc; i++)
     {
         if (std::strcmp(msgCommandToken, clientCommandFuncPairs[i].command) == 0)
         {
-            EIrcReplyCode   replyCode;
-            std::string     replyMsg;
-            EIrcErrorCode   err = (this->*clientCommandFuncPairs[i].func)(client, msgArgTokens, replyCode, replyMsg);
+            Assert(pCoresspondingFunc == NULL);
+            pCoresspondingFunc = clientCommandFuncPairs[i].func;
+        }
+    }
+
+    EIrcReplyCode   replyCode;
+    std::string     replyMsg;
+    {
+        // Unknown command name
+        if (pCoresspondingFunc == NULL)
+        {
+            const std::string serverName = InetAddrToString(client->Addr);
+            MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, serverName, msgCommandToken);
+        }
+        // Otherwise, execute the command
+        else
+        {
+            EIrcErrorCode err = (this->*pCoresspondingFunc)(client, msgArgTokens, replyCode, replyMsg);
             if (UNLIKELY(err != IRC_SUCCESS))
             {
                 return err;
             }
-            
-            // TODO: Send the reply message to the client
-            
         }
     }
+    
+    // TODO: Send the reply message to the client
     
     return IRC_SUCCESS;
 }

@@ -1,7 +1,7 @@
 NAME = ircserv
 
 # easy managing module folders
-SRCS = $(wildcard Source/**/*.cpp) Source/main.cpp
+SRCS = $(shell find Source/ -name *.cpp -print)
 INCS = $(wildcard Source/**/*.hpp)
 INCPATH = -I Source/
 LIBPATH =
@@ -17,7 +17,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 CC = c++
 
-FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -mavx -g -DIRCCORE_LOG_ENABLE
+FLAGS = -Wall -Wextra -std=c++98 -pedantic -mavx -g -DIRCCORE_LOG_ENABLE # -Werror
 
 all: $(NAME)
 
