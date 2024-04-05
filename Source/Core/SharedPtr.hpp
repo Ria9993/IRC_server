@@ -85,9 +85,10 @@ class SharedPtr;
 template <typename T>
 class WeakPtr;
 
-/** @name MakeShared
- *  @anchor MakeShared
+/** @name   MakeSharedGroup
+ *  @anchor MakeSharedGroup
  * 
+ * @details
  * @brief   Function to create a shared pointer with a new object.
  * 
  * @param   T   Type of the object to be created. (Not support Array type. e.g. int[], char[])
@@ -101,10 +102,10 @@ class WeakPtr;
  *  SharedPtr<int> A = MakeShared<int>(5);
  * @endcode
  * 
- * @see     SharedPtr
+ * @ref     SharedPtr
  */
 ///@{
-/** @copydetails MakeShared */
+/** @copydetails MakeSharedGroup */
 template <typename T>
 NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 
@@ -151,7 +152,7 @@ NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { retu
  *  } //< B will be release and resource will be deallocated.
  * @endcode
  *
- * @see     MakeShared
+ * @see     MakeSharedGroup
  *
  * @tparam  T   Type of the object to be managed by the shared pointer. (Not support Array type. e.g. int[], char[])
  *

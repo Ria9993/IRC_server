@@ -29,7 +29,7 @@ namespace IRC
 
     /** @class Server
      * \internal
-     *  @brief See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
+     *  @warning  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
      * 
      *  @page irc_server_event_loop_process_flow    Server Event Loop Process Flow
      *  ## [한국어]
@@ -161,25 +161,24 @@ namespace IRC
 
     private:
         /** Client command execution function type
-         *  @copydetails    ClientCommandExecutionFunction
+         *  @see "Client command execution functions" Section
          */
         typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
 
         /** 
          *  @name       Client command execution functions
-         *  @see        Server/ClientCommand/<COMMAND>.cpp
+         *  @brief      Execute the client command.
          */
         ///@{
-        /** 
-         *  @name       ClientCommandExecutionFunction
-         *  @brief      Execute the client command.
+#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+        /**
          *  @param      client          [in]  The client to process the command.
          *  @param      arguments       [in]  The arguments of the command.
          *  @param      outReplyCode    [out] The reply code to send to the client.
          *  @param      outReplyMsg     [out] The reply message to send to the client ending with CR-LF.
          *  @return     The error code of the command execution.
+         *  @see        Server/ClientCommand/<COMMAND>.cpp
          */
-#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
         IRC_CLIENT_COMMAND_LIST
 #undef  IRC_CLIENT_COMMAND_X
         ///@}

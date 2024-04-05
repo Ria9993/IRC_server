@@ -1,4 +1,5 @@
-/** @see    RFC 1459, Chapter 6. Replies.  
+/** @file   Source/Server/IrcReplies.hpp
+ *  @see    RFC 1459, Chapter 6. Replies.  
  *          https://datatracker.ietf.org/doc/html/rfc1459
  */
 
