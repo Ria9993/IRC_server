@@ -322,7 +322,7 @@ public:
 
     /** Get the control block of the shared pointer.
      * 
-     * @warning
+     * @attention
      * Don't use without a knowledge of the internal implementation.  
      * 
      * @details

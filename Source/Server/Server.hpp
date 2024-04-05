@@ -29,9 +29,9 @@ namespace IRC
 
     /** @class Server
      * \internal
+     *  @brief See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
      * 
-     *  @brief See [ \ref server_event_loop_process_flow ] before reading implementation details.
-     *  @page server_event_loop_process_flow Server Event Loop Process Flow
+     *  @page irc_server_event_loop_process_flow    Server Event Loop Process Flow
      *  ## [한국어]
      *      서버의 메인 이벤트 루프는 모든 소켓 이벤트를 비동기적으로 처리합니다.
      *      ### Error event
@@ -170,7 +170,6 @@ namespace IRC
          *  @see        Server/ClientCommand/<COMMAND>.cpp
          */
         ///@{
-#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
         /** 
          *  @name       ClientCommandExecutionFunction
          *  @brief      Execute the client command.
@@ -180,6 +179,7 @@ namespace IRC
          *  @param      outReplyMsg     [out] The reply message to send to the client ending with CR-LF.
          *  @return     The error code of the command execution.
          */
+#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
         IRC_CLIENT_COMMAND_LIST
 #undef  IRC_CLIENT_COMMAND_X
         ///@}
@@ -201,18 +201,28 @@ namespace IRC
         int mhListenSocket;
 
         /** 
-         * @name   Kqueue
-         *
-         * @details Data in the udata of kevent is the controlBlock of the SharedPtr to corresponding ClientControlBlock (except listensocket).
-         *          There is a technical reason for using the controlBlock of SharedPtr.
-         *          The original plan was to just use the raw pointer of a ClientControlBlock. 
-         *          However, as the number of resources dependent on the ClientControlBlock increased,
-         *          it has become difficult to release the memory of ClientControlBlock immediately when the client is disconnected.
-         *          Thus, decided to use SharedPtr to manage the memory of ClientControlBlock.
-         *          However, Sinece the udata field of kevent is a void pointer, it couldn't use SharedPtr directly either. 
-         *          Because SharedPtr is not a POD. And maded a risky choice to use SharedPtr's controlBlock that is a POD type.
-         *          It was thought to be the best choice because in this choice removes the need to worry about the memory release in the part that doesn't directly interact with the udata.
-         *          and only complicates the one part that does interact with the udata.
+         * @name    Kqueue
+         * @brief   Data in the udata of kevent is the controlBlock of the SharedPtr to corresponding ClientControlBlock (except listensocket).
+         *          
+         * @see     \li SharedPtr::GetControlBlock(), getClientFromKeventUdata()
+         *          \li [ \ref irc_server_kqueue_udata]
+         *         
+         * @page    irc_server_kqueue_udata     Technical reason for using the controlBlock of SharedPtr in the kqueue udata
+         *          ## Summary
+         *              Data in the udata of kevent is the controlBlock of the SharedPtr to corresponding ClientControlBlock (except listensocket).
+         *          ## Details
+         *              There is a technical reason for using the controlBlock of SharedPtr.  
+         *              The original plan was to just use the raw pointer of a ClientControlBlock.   
+         *              However, as the number of resources dependent on the ClientControlBlock increased,  
+         *              it has become difficult to release the memory of ClientControlBlock immediately when the client is disconnected.
+         * 
+         *              Thus, decided to use SharedPtr to manage the memory of ClientControlBlock.  
+         *              However, Sinece the udata field of kevent is a void pointer, it couldn't use SharedPtr directly either.   
+         *              Because SharedPtr is not a POD. And made a risky choice to use SharedPtr's controlBlock that is a POD type.
+         * 
+         *              It was thought to be the best choice because in this choice removes the need to worry  
+         *              about the memory release in the part that doesn't directly interact with the udata.  
+         *              and only complicates the one part that does interact with the udata.  
          * 
          * @see     SharedPtr::GetControlBlock(), getClientFromKeventUdata()
          */
