@@ -104,7 +104,7 @@ class WeakPtr;
  * @see     SharedPtr
  */
 ///@{
-/** @copydoc MakeShared */
+/** @copydetails MakeShared */
 template <typename T>
 NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
 

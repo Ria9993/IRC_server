@@ -9,9 +9,9 @@ namespace IRC
 {
 struct MsgBlock;
 
-/** The message block for managing the fixed Constants::MESSAGE_LEN_MAX size message data.
+/** Message block for managing the fixed Constants::MESSAGE_LEN_MAX size message data.
  * 
- * @details    The message block is managed by the memory pool.
+ * @details    new/delete overrided with memory pool.
  */
 struct MsgBlock
 {

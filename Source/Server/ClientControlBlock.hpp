@@ -14,9 +14,9 @@ using namespace IRCCore;
 namespace IRC
 {    
 
-/** The control block of the client for managing the client connection and its information.
+/** Control block for management of a client connection and its information.
  * 
- * @details    The client control block is managed by the memory pool.
+ * @details    new/delete overrided with memory pool.
  */
 struct ClientControlBlock
 {
@@ -33,7 +33,7 @@ struct ClientControlBlock
 
     time_t LastActiveTime;
 
-    /** The flag to indicate whether the client control block is expired.
+    /** Flag that indicate whether the client's connection is expired.
      *  
      *  @details    The server doesn't release the client control block
      *              for remaining events or messages immediately after the connection is closed.
@@ -49,7 +49,7 @@ struct ClientControlBlock
      */
     std::vector< SharedPtr< MsgBlock > > RecvMsgBlocks;
     
-    /** The cursor to indicate the next offset to receive in the message block at the front of the received message blocks */
+    /** A cursor to indicate the next offset to receive in the message block at the front of the RecvMsgBlocks */
     size_t RecvMsgBlockCursor;
     ///@}
 
@@ -58,7 +58,7 @@ struct ClientControlBlock
     /** Queue of messages to send. */
     std::vector< SharedPtr< MsgBlock > > MsgSendingQueue;
 
-    /** The cursor to indicate the next offset to send in the message block at the front of the sending queue */
+    /** A cursor to indicate the next offset to send in the message block at the front of the MsgSendingQueue */
     size_t SendMsgBlockCursor;
     ///@}
 

@@ -5,14 +5,14 @@
 namespace IRCCore
 {
 
-/** A memory pool that can allocate fixed number of data
+/** Memory pool that can allocate fixed amount of data
  * 
- * @details  The FixedMemoryPool is implemented considering the page size(4KB).
- *           Raw memory will be allocated according to the page by new() default allocator.
+ * @details Allocates raw memory on a per-page basis ( see PAGE_SIZE ), and manages data there.
+ *          Also uses an index array filled sequentially from 1 to N, 
+ *          and a corresponding cursor to identify allocatable data.
  *
  * @tparam T                    Type of data to allocate
  * @tparam MemoryPageCapacity   Number of pages to allocate. (see details)
- * 
  */
 template <typename T, size_t MemoryPageCapacity>
 class FixedMemoryPool

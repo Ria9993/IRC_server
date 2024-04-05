@@ -40,7 +40,7 @@ namespace IRC
      *          해당하는 소켓이 리슨 소켓인 경우, 새로운 클라이언트를 추가합니다.
      *          해당하는 소켓이 클라이언트 소켓인 경우, 메시지를 받아서 해당하는 클라이언트의 메시지 처리 대기열에 추가합니다.
      *      ### Write event
-     *          해당 소켓의 메시지 전송 대기열에 있는 메시지를 send합니다.
+     *          해당 클라이언트의 메시지 전송 대기열에 있는 메시지를 send합니다.
      *
      *  ## 이벤트 등록
      *      새로 등록할 이벤트는 이벤트 등록 대기열에 추가하며, 다음 이벤트 루프에서 실제로 등록됩니다.
@@ -61,49 +61,49 @@ namespace IRC
      *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용합니다.
      *
      *  ## [English]
-     *      The main event loop of the server processes all socket events asynchronously.
+     *      Main event loop of server processes all socket events asynchronously.
      *      ### Error event
      *          If an error event occurs, close the socket and, if it is a client, disconnect the connection.
      *      ### Read event
      *          If the corresponding socket is a listen socket, add a new client.
      *          If a client socket, receive messages and add them to the message processing queue of the corresponding client.
      *      ### Write event
-     *          Send messages in the message send queue of the socket.
+     *          Send the messages in the message send queue of the corresponding client.
      *
      *  ## Event registration
-     *      The new events to be registered are added to the event registration queue and are actually registered in the next event loop.
+     *      The new events to be registered are added to event registration queue and are actually registered in the next event loop.
      *
      *  ## Message receiving
      *      Add the received message to the ClientControlBlock::RecvMsgBlocks of the corresponding client.
-     *      If there is space left in the last message block of the client, receive as much as possible in that space, otherwise in a new message block space.
-     *      The received message is added to the queue to prevent TCP congestion and is not processed immediately.
-     *      The message processing queue is processed at a convenient time when no events occur.
-     *      Also, when Recv occurs, you must add the corresponding client to the clientsWithRecvMsgToProcessQueue list to indicate that there is a message to process for the client.
+     *      If there is space left in the client's last message block, receive as much as possible in that space, otherwise in a new message block space.
+     *      Received messages are added to receiving queue to prevent TCP congestion and is not processed immediately.
+     *      A message processing queue is processed at a convenient time when no events occur.
+     *      Also, when Recv occurs, you must add the corresponding client to clientsWithRecvMsgToProcessQueue to indicate that there is a message to process for the client.
      *
      *  ## Message sending
-     *      When the server sends a message to the client, the message to be sent is added to the ClientControlBlock::MsgSendingQueue of each client and processed asynchronously through kqueue.
-     *      By default, the kevent for the client socket is disabled for the WRITE event filter.
+     *      When server sends a message to client, the message to be sent is added to the ClientControlBlock::MsgSendingQueue of each client and processed asynchronously through kqueue.
+     *      By default, kevent for client socket is disabled for the WRITE event filter.
      *      When a message to send is generated, enable the WRITE event filter for the kevent of the corresponding client socket.
      *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.
      *
-     *      Also, when sending the same message to multiple clients, use a single message block with SharedPtr to share.
+     *      Also, when sending the same message to multiple clients, use a single message block with SharedPtr for sharing.
      **/
     class Server
     {
     public:
-        /** Create the server instance.
+        /** Create a server instance.
          *
-         * @param outPtrServer      [out] Pointer to receive the server instance.
+         * @param outPtrServer      [out] Pointer to receive an instance.
          * @param port              Port number to listen.
-         * @param password          Password to access the server.
+         * @param password          Password to access server.
          *                          see Constants::SVR_PASS_MIN, Constants::SVR_PASS_MAX
          */
         static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
 
         /** Initialize resources and start the server event loop.
          *
-         * @details Initialize the kqueue and resources and register the listen socket to the kqueue.
-         *          And then call the eventLoop() to start server.
+         * @details Initialize kqueue and resources and register listen socket to kqueue.
+         *          And then call eventLoop() to start the server.
          *
          * @note    Blocking until the server is terminated.
          * @warning All non-static methods must be called after this function is called.
@@ -118,15 +118,15 @@ namespace IRC
         /** @warning Copy constructor is not allowed. */
         UNUSED Server& operator=(const Server& rhs);
 
-        /** The main event loop of the server. */
+        /** A main event loop of the server. */
         EIrcErrorCode eventLoop();
 
     private:
         /** @name Message Processing */
         ///@{
-        /** Separate all separatable messages in the client's ClientControlBlock::RecvMsgBlocks
+        /** Separate all separable messages in the client's ClientControlBlock::RecvMsgBlocks
          *
-         * @param client            The client to separate the messages.
+         * @param client            The client to separate messages.
          * @param outParsedMsgs     [out] The vector to receive the separated messages without CR-LF.
          *                          If the vector is not empty, the separated messages are appended to the end of the vector.
          * 
@@ -136,8 +136,8 @@ namespace IRC
 
         /** Execute and reply the client's single message.
          *
-         * @param client            The client to process the message.
-         * @param parsedMsgs        The single message to process.
+         *  @param client            The client to process the message.
+         *  @param msg               The single message to process.
          * 
          *  \internal
          *  @see                    ReplyMsgMakingFunctions
@@ -152,24 +152,22 @@ namespace IRC
          */
         EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
 
-        /** Get SharedPtr to the ClientControlBlock from the kevent udata. */
+        /** Get SharedPtr to the ClientControlBlock from the kevent's udata. */
         FORCEINLINE SharedPtr<ClientControlBlock> getClientFromKeventUdata(kevent_t& event) const
         {
-            // @see SharedPtr::GetControlBlock()
-            //      mhKqueue
+            // @see SharedPtr::GetControlBlock(), mhKqueue
             return SharedPtr<ClientControlBlock>(reinterpret_cast< detail::ControlBlock< ClientControlBlock >* >(event.udata));
         }
 
     private:
         /** Client command execution function type
-         *  @copydoc    ClientCommandExecutionFunction
+         *  @copydetails    ClientCommandExecutionFunction
          */
         typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
 
         /** 
          *  @name       Client command execution functions
-         *  @see        Server/ClientCommand/ClientCommand.hpp  
-         *              Server/ClientCommand/<COMMAND>.cpp
+         *  @see        Server/ClientCommand/<COMMAND>.cpp
          */
         ///@{
 #define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
@@ -205,19 +203,25 @@ namespace IRC
         /** 
          * @name   Kqueue
          *
-         * @details The udata member of kevent is the controlBlock of the SharedPtr to the corresponding ClientControlBlock. (Except for the listen socket)
-         * @see     SharedPtr::GetControlBlock()
-         *          getClientFromKeventUdata()
+         * @details Data in the udata of kevent is the controlBlock of the SharedPtr to corresponding ClientControlBlock (except listensocket).
+         *          There is a technical reason for using the controlBlock of SharedPtr.
+         *          The original plan was to just use the raw pointer of a ClientControlBlock. 
+         *          However, as the number of resources dependent on the ClientControlBlock increased,
+         *          it has become difficult to release the memory of ClientControlBlock immediately when the client is disconnected.
+         *          Thus, decided to use SharedPtr to manage the memory of ClientControlBlock.
+         *          However, Sinece the udata field of kevent is a void pointer, it couldn't use SharedPtr directly either. 
+         *          Because SharedPtr is not a POD. And maded a risky choice to use SharedPtr's controlBlock that is a POD type.
+         *          It was thought to be the best choice because in this choice removes the need to worry about the memory release in the part that doesn't directly interact with the udata.
+         *          and only complicates the one part that does interact with the udata.
+         * 
+         * @see     SharedPtr::GetControlBlock(), getClientFromKeventUdata()
          */
         ///@{
         int mhKqueue;
         std::vector<kevent_t> mEventRegistrationQueue;
         ///@}
 
-        /** Client control blocks
-         *
-         *  @warning    Do not release the client when the client's event exists in the kqueue.
-         */
+        /** @warning    Do not release a client if the client's event is still exists in the kqueue. */
         std::vector<SharedPtr<ClientControlBlock> > mClients;
 
         std::map<std::string, size_t> mNicknameToClientIdxMap;

@@ -12,7 +12,7 @@ namespace IRCCore
 
 /** A memory pool that can allocate variable number of data
  *
- * @note  The VariableMemoryPool Implementated using chunks with FixedMemoryPool
+ * @note  VariableMemoryPool Implementated using chunking with FixedMemoryPool
  *
  * @tparam T                    Type of data to allocate.
  * @tparam MinNumDataPerChunk   Minimum number of data to allocate per chunk 
