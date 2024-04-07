@@ -28,10 +28,11 @@ namespace IRC
 {
 
     /** @class Server
-     * \internal
+     *  @internal
      *  @warning  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
      * 
      *  @page irc_server_event_loop_process_flow    Server Event Loop Process Flow
+     *  @tableofcontents
      *  ## [한국어]
      *      서버의 메인 이벤트 루프는 모든 소켓 이벤트를 비동기적으로 처리합니다.
      *      ### Error event

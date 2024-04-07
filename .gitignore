@@ -37,3 +37,6 @@ docs/
 
 # vscode
 .vscode/c_cpp_properties.json
+
+doxygen/
+./doxygen
