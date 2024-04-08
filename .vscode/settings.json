@@ -72,7 +72,8 @@
 		"numeric": "cpp",
 		"random": "cpp",
 		"numbers": "cpp",
-		"cinttypes": "cpp"
+		"cinttypes": "cpp",
+		"queue": "cpp"
 	},
 	"C_Cpp.vcFormat.indent.preserveComments": true
 }

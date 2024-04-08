@@ -175,7 +175,7 @@ EIrcErrorCode Server::eventLoop()
             kevent_t& currEvent = observedEvents[eventIdx];
 
             // 1. Error event
-            if (UNLIKELY(currEvent.flags & EV_ERROR))
+            if (UNLIKELY(currEvent.flags & EV_ERROR || currEvent.flags & EV_EOF))
             {
                 // Listen socket error
                 if (UNLIKELY(static_cast<int>(currEvent.ident) == mhListenSocket))
@@ -195,7 +195,7 @@ EIrcErrorCode Server::eventLoop()
                         return err;
                     }
                 }
-            }
+            } 
 
             // 2. Read event
             else if (currEvent.filter == EVFILT_READ)
@@ -236,7 +236,7 @@ EIrcErrorCode Server::eventLoop()
                         kevent_t evClient;
                         std::memset(&evClient, 0, sizeof(evClient));
                         evClient.ident  = clientSocket;
-                        evClient.filter = EVFILT_READ | EVFILT_WRITE;
+                        evClient.filter = EVFILT_READ;
                         evClient.flags  = EV_ADD;
                         evClient.udata  = reinterpret_cast<void*>(newClient.GetControlBlock());
                         mEventRegistrationQueue.push_back(evClient);
@@ -297,21 +297,69 @@ EIrcErrorCode Server::eventLoop()
 
                     clientsWithRecvMsgToProcessQueue.push_back(currClient);
                 }
-            }
+            } // if (currEvent.filter == EVFILT_READ)
 
             // 3. Write event
             // Send messages to the client
             else if (currEvent.filter == EVFILT_WRITE)
             {
                 // TODO: Can a listen socket raise a write event? I'll check this later.
-                Assert(static_cast<int>(currEvent.ident) == mhListenSocket);
+                Assert(static_cast<int>(currEvent.ident) != mhListenSocket);
 
                 // Send message to the client
+                SharedPtr<ClientControlBlock> currClient = getClientFromKeventUdata(currEvent);
+                Assert(currClient != NULL);
+                Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
+
+                // Send the messages in the sending queue
+                if (currClient->MsgSendingQueue.empty())
                 {
-                    // TODO:
+                    goto CONTINUE_NEXT_EVENT_LOOP;
+                }
+                SharedPtr<MsgBlock> msg = currClient->MsgSendingQueue.front();
+                Assert(msg != NULL);
+
+                const int nSentBytes = send(currClient->hSocket, &msg->Msg[currClient->SendMsgBlockCursor], msg->MsgLen - currClient->SendMsgBlockCursor, 0);
+                if (UNLIKELY(nSentBytes == -1))
+                {
+                    logErrorCode(IRC_FAILED_TO_SEND_SOCKET);
+                    EIrcErrorCode err = disconnectClient(currClient);
+                    if (UNLIKELY(err != IRC_SUCCESS))
+                    {
+                        return err;
+                    }
+                    goto CONTINUE_NEXT_EVENT_LOOP;
+                }
+                // Maybe the client's receive window is full.
+                if (nSentBytes == 0)
+                {
+                    goto CONTINUE_NEXT_EVENT_LOOP;
                 }
 
-                // TODO: If all messages are sent, EVFILTER_WRITE filter should be disabled.
+                logVerbose("Sent message to client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Sent bytes: " + ValToString(nSentBytes));
+
+                // Update send cursor of the client
+                currClient->SendMsgBlockCursor += nSentBytes;
+                if (currClient->SendMsgBlockCursor >= msg->MsgLen)
+                {
+                    currClient->MsgSendingQueue.pop();
+                    currClient->SendMsgBlockCursor = 0;
+
+                    // EVFILTER_WRITE filter should be disabled after sending all messages.
+                    if (currClient->MsgSendingQueue.empty())
+                    {
+                        kevent_t kev;
+                        kev.ident = currClient->hSocket;
+                        kev.filter = EVFILT_WRITE;
+                        kev.flags = EV_DELETE;
+                        kev.fflags = 0;
+                        kev.data = 0;
+                        kev.udata = reinterpret_cast<void *>(currClient.GetControlBlock());
+
+                        mEventRegistrationQueue.push_back(kev);
+                    }
+                }
+
             }
 
         CONTINUE_NEXT_EVENT_LOOP:;
@@ -477,6 +525,12 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
             {
                 msgArgTokens.push_back(&msg->Msg[i]);
             }
+
+            // skip remaining characters of the token
+            for (; i < msg->MsgLen && msg->Msg[i] != ' ' && msg->Msg[i] != '\0'; i++)
+            {
+            }
+            i -= 1;
         }
     }
     msg->Msg[msg->MsgLen] = '\0';
@@ -515,31 +569,29 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         }
     }
 
-    // Execute the command
     EIrcReplyCode   replyCode;
     std::string     replyMsg;
+
+    // Unknown command name
+    if (pCommandExecFunc == NULL)
     {
-        // Unknown command name
-        if (pCommandExecFunc == NULL)
+        MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, mServerName, msgCommandToken);
+        sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+    }
+    // Execute the command
+    else
+    {
+        // DEBUG
+        logVerbose("processClientMsg(): Executing the command. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Command: " + msgCommandToken);
+        for (size_t i = 0; i < msgArgTokens.size(); i++)
         {
-            MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, mServerName, msgCommandToken);
-
-            // TODO: Send the reply message to the client
+            logVerbose("Args[" + ValToString(i) + "]: " + msgArgTokens[i]);
         }
-        else
-        {
-            // DEBUG
-            logVerbose("processClientMsg(): Executing the command. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Command: " + msgCommandToken);
-            for (size_t i = 0; i < msgArgTokens.size(); i++)
-            {
-                logVerbose("Args[" + ValToString(i) + "]: " + msgArgTokens[i]);
-            }
 
-            EIrcErrorCode err = (this->*pCommandExecFunc)(client, msgArgTokens);
-            if (UNLIKELY(err != IRC_SUCCESS))
-            {
-                return err;
-            }
+        EIrcErrorCode err = (this->*pCommandExecFunc)(client, msgArgTokens);
+        if (UNLIKELY(err != IRC_SUCCESS))
+        {
+            return err;
         }
     }
 
@@ -548,22 +600,82 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
 
 EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
 {
+    if (client == NULL)
+    {
+        return IRC_SUCCESS;
+    }
+
     Assert(client->bExpired == false);
 
-    // close() on a socket will delete the corresponding kevent from the kqueue.
+    // Expire the client instead of memory release and remove from the client list.
+    // See ClientControlBlock::bExpired for details.
+    client->bExpired = true;
+
+    // Remove the client from the client list
+    for (size_t i = 0; i < mClients.size(); i++)
+    {
+        if (mClients[i] == client)
+        {
+            // Fast remove (unordered)
+            mClients[i] = mClients.back();
+            mClients.pop_back();
+            break;
+        }
+    }
+    mNickToClientMap.erase(client->Nickname);
+
+    // // Remove from the channels
+    for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    {
+        SharedPtr<ChannelControlBlock> channel = it->second.Lock();
+        if (channel != NULL)
+        {
+            channel->Clients.erase(client->Nickname);
+        }
+    }
+
+    // TODO: Send QUIT message to the channels the client is in.
+
+    // // close() on a socket will delete the corresponding kevent from the kqueue.
     if (UNLIKELY(close(client->hSocket) == -1))
     {
         logErrorCode(IRC_FAILED_TO_CLOSE_SOCKET);
         return IRC_FAILED_TO_CLOSE_SOCKET;
     }
 
-    // Expire the client instead of memory release and remove from the client list.
-    // See ClientControlBlock::bExpired for details.
-    client->bExpired = true;
-
-    // TODO: Remove client from the channels
-
     return IRC_SUCCESS;
+}
+
+bool Server::registerClient(SharedPtr<ClientControlBlock> client)
+{
+    if (client == NULL)
+    {
+        return false;
+    }
+
+    if (client->Username.empty() || client->Realname.empty() || client->Nickname.empty())
+    {
+        return false;
+    }
+
+    if (client->ServerPass != mServerPassword)
+    {
+        return false;
+    }
+
+    client->bRegistered = true;
+    client->Nickname = client->Nickname;
+    mNickToClientMap.insert(std::make_pair(client->Nickname, client));
+
+    // Send the welcome message
+    {
+        EIrcReplyCode   replyCode;
+        std::string     replyMsg;
+        MakeIrcReplyMsg_RPL_WELCOME(replyCode, replyMsg, mServerName, client->Nickname);
+        sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+    }
+
+    return true;
 }
 
 void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
@@ -571,10 +683,18 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
     Assert(client != NULL);
     Assert(msg != NULL);
 
+    // There must be at least 2 bytes left to insert CR-LF.
+    Assert(msg->MsgLen < MESSAGE_LEN_MAX - 2);
+
     if (client->bExpired)
     {
         return;
     }
+
+    // Insert CR-LF
+    msg->Msg[msg->MsgLen] = '\r';
+    msg->Msg[msg->MsgLen + 1] = '\n';
+    msg->MsgLen += 2;
 
     // Enable the write event filter for the client socket.
     if (client->MsgSendingQueue.empty())
@@ -586,21 +706,45 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
         kev.fflags = 0;
         kev.data = 0;
         kev.udata = reinterpret_cast<void *>(client.GetControlBlock());
+
         mEventRegistrationQueue.push_back(kev);
         client->SendMsgBlockCursor = 0;
     }
 
-    client->MsgSendingQueue.push_back(msg);
+    client->MsgSendingQueue.push(msg);
 }
 
-void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg)
+void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient)
 {
-    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); it++)
+    Assert(channel != NULL);
+    Assert(msg != NULL);
+
+    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
     {
-        SharedPtr<ClientControlBlock> client = it->second;
-        if (client != NULL)
+        SharedPtr<ClientControlBlock> dest = it->second;
+        if (dest != NULL && dest != exceptClient)
         {
-            sendMsgToClient(client, msg);
+            sendMsgToClient(dest, msg);
+        }
+    }
+}
+
+void Server::sendMsgToConnectedChannels(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
+{
+    Assert(client != NULL);
+    Assert(msg != NULL);
+
+    if (client->bExpired)
+    {
+        return;
+    }
+
+    for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    {
+        SharedPtr<ChannelControlBlock> channel = it->second.Lock();
+        if (channel != NULL)
+        {
+            sendMsgToChannel(channel, msg, client);
         }
     }
 }

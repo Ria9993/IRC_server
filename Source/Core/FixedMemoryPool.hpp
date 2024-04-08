@@ -35,11 +35,9 @@ public:
 
     ~FixedMemoryPool()
     {
-        // Release data that is not deallocated
-        for (size_t i = 0; i < mCapacity; ++i)
+        if (mCursor != 0)
         {
-            T* ptr = (T*)(mMemoryRaw + i * sizeof(T));
-            ptr->~T(); //< Call the destructor
+            CoreLog("[FixedMemoryPool] Memory Leak Detected. Cursor: " + ValToString(mCursor));
         }
         
         delete[] mMemoryRaw;
@@ -53,7 +51,7 @@ public:
             const size_t idx = mIndices[mCursor++];
             const char* ptrRaw = mMemoryRaw + (idx * sizeof(T));
 
-            CoreLog("[FixedMemoryPool] Allocate: " + ValToStringByHex(ptrRaw) + " idx: " + ValToString(idx));
+            CoreLog("[FixedMemoryPool] Allocate: " + ValToStringByHex(reinterpret_cast<const void*>(ptrRaw)) + " idx: " + ValToString(idx));
 
             return (T*)ptrRaw;
         }
@@ -80,6 +78,11 @@ public:
     FORCEINLINE bool IsCapacityFull() const
     {
         return mCursor == mCapacity;
+    }
+
+    FORCEINLINE bool IsInPool(const void* ptr) const
+    {
+        return ptr >= mMemoryRaw && ptr < mMemoryRaw + mCapacity * sizeof(T);
     }
 
 private:

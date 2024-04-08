@@ -1,5 +1,8 @@
 #pragma once 
 
+// DEBUG
+#include <typeinfo>
+
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 #include "Core/VariableMemoryPool.hpp"
@@ -24,7 +27,7 @@ namespace detail
 template <typename T>
 struct ControlBlock
 {
-    ALIGNAS(ALIGNOF(T)) T data;
+    ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
 
     size_t StrongRefCount;
     size_t WeakRefCount;
@@ -37,7 +40,7 @@ struct ControlBlock
     {
     }
 
-    virtual ~ControlBlock()
+    FORCEINLINE ~ControlBlock()
     {
     }
 
@@ -47,28 +50,40 @@ public:
      * Overload new and delete operator with memory pool for memory management.
      */
     ///@{
-    NODISCARD FORCEINLINE void* operator new (size_t size)
-    {
-        Assert(size == sizeof(ControlBlock));
-        return reinterpret_cast<void*>(sMemoryPool.Allocate());
-    }
+    // NODISCARD FORCEINLINE void* operator new (size_t size)
+    // {
+    //     Assert(size == sizeof(ControlBlock));
+    //     return reinterpret_cast<void*>(sMemoryPool.Allocate());
+    // }
 
-    NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
-    {
-        Assert(size == sizeof(ControlBlock));
-        return ptr;
-    }
+    // NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
+    // {
+    //     Assert(size == sizeof(ControlBlock));
+    //     return ptr;
+    // }
     
-    FORCEINLINE void  operator delete (void* ptr)
-    {
-        sMemoryPool.Deallocate(reinterpret_cast<ControlBlock*>(ptr));
-    }
+    // FORCEINLINE void  operator delete (void* ptr)
+    // {
+    //     sMemoryPool.Deallocate(reinterpret_cast<ControlBlock*>(ptr));
+    // }
 
-    FORCEINLINE void  operator delete (void* ptr, void* place)
-    {
-        (void)place;
-        (void)ptr;
-    }
+    // FORCEINLINE void  operator delete (void* ptr, void* place)
+    // {
+    //     Assert(false);
+    //     (void)place;
+    //     (void)ptr;
+    // }
+    ///@}
+
+private:
+    /** @name new[]/delete[] operators
+     * 
+     * Use new/delete operator instead.
+     */
+    ///@{
+    UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
+    
+    UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
     ///@}
 
 private:
@@ -234,7 +249,6 @@ public:
         : mControlBlock(controlBlock)
     {
         Assert(mControlBlock != NULL);
-        Assert(mControlBlock->bExpired == false);
 
         if (mControlBlock != NULL)
         {
@@ -312,12 +326,10 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            CoreLog("SharedPtr Reset(): StrongRefCount: " + ValToString(mControlBlock->StrongRefCount) + " WeakRefCount: " + ValToString(mControlBlock->WeakRefCount));
             Assert(mControlBlock->StrongRefCount > 0);
             mControlBlock->StrongRefCount -= 1;
             if (mControlBlock->StrongRefCount == 0)
             {
-                CoreLog("SharedPtr Reset(): Call Destructor");
                 T* ptrData = reinterpret_cast<T*>(&mControlBlock->data);
                 ptrData->~T();
 
@@ -325,7 +337,7 @@ public:
 
                 if (mControlBlock->WeakRefCount == 0)
                 {
-                    CoreLog("SharedPtr Reset(): Delete ControlBlock");
+                    CoreLog("SharedPtr Reset(): Delete ControlBlock" + std::string(typeid(T).name()));
                     delete mControlBlock;
                 }
             }

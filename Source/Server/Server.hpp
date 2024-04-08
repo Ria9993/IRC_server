@@ -195,31 +195,51 @@ namespace IRC
         ///@}
 
     private:
-        /** Disconnect the client.
+        /** Disconnect a client.
          *
          * Close the socket and mark the client's expired flag instead of memory release and remove from the client list.
          * Use Assert to debug if there is a place that references the client while the expired flag is true.
          */
         EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
 
-        /** Send a message to the client.
+        /** Register a client to the server.
+         *
+         *  @param client   The client to register.
+         *  @return         Result of the registration.
+         */
+        bool registerClient(SharedPtr<ClientControlBlock> client);
+
+        /** 
+         *  @name      Message send functions
+         *  @note      \li Do not modify the passed message after calling this function.
+         *             \li No changes are made to the message other than adding CR-LF.
+         *             \li No check permission of the client to send the message.
+        */
+        ///@{
+        /** Send a message to client.
          * 
          *  @param client   The client to send the message.
-         *  @param msg      The message to send without CR-LF.
-         * 
-         *  @note        Do not modify the passed message after calling this function.
+         *  @param msg      The message to send that do not contain CR-LF
          */
         void sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
 
-        /** Send a message to the channel members.
+        /** Send a message to channel members.
          * 
          *  @param channel  The channel to send the message.
-         *  @param msg      The message to send without CR-LF.
-         * 
-         *  @note        Do not modify the passed message after calling this function.
+         *  @param msg      The message to send that do not contain CR-LF
+         *  @param client   A client to exclude from the message sending.
          */
-        void sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg);
+        void sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient);
 
+        /** Send a message to channels the client is connected
+         * 
+         *  @param client   The client to send the message.
+         *                  This client is excluded from the message sending.
+         *  @param msg      The message to send that do not contain CR-LF
+         */
+        void sendMsgToConnectedChannels(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
+        ///@}
+        
     private:
         /** @name Log functions */
         ///@{

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <queue>
 #include <map>
 
 #include "Core/VariableMemoryPool.hpp"
@@ -27,9 +28,10 @@ struct ClientControlBlock
     sockaddr_in_t Addr;
 
     std::string Nickname;
-    std::string Username;
     std::string Realname;
-    std::string Hostname;
+    std::string Username;
+    
+    std::string ServerPass;
 
     time_t LastActiveTime;
 
@@ -57,7 +59,7 @@ struct ClientControlBlock
      * 
      *  @note Do not modify the message block in the queue.
      **/
-    std::vector< SharedPtr< MsgBlock > > MsgSendingQueue;
+    std::queue< SharedPtr< MsgBlock > > MsgSendingQueue;
 
     /** A cursor to indicate the next offset to send in the message block at the front of the MsgSendingQueue */
     size_t SendMsgBlockCursor;
@@ -69,9 +71,9 @@ struct ClientControlBlock
         : hSocket(-1)
         , Addr()
         , Nickname()
-        , Username()
         , Realname()
-        , Hostname()
+        , Username()
+        , ServerPass()
         , LastActiveTime(0)
         , bRegistered(false)
         , bExpired(false)

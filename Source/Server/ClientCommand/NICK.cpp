@@ -18,7 +18,7 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
     // No nickname given
     if (arguments.size() == 0)
     {
-        MakeIrcReplyMsg_ERR_NEEDMOREPARAMS(replyCode, replyMsg, mServerName, commandName);
+        MakeIrcReplyMsg_ERR_NONICKNAMEGIVEN(replyCode, replyMsg, mServerName);
         goto SEND_REPLY;
     }
 
@@ -31,6 +31,9 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
             goto SEND_REPLY;
         }
     }
+    
+    // Empty nickname
+    Assert(arguments[0][0] != '\0');
 
     // Nickname is already in use
     if (mNickToClientMap.find(arguments[0]) != mNickToClientMap.end())
@@ -39,12 +42,45 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
         goto SEND_REPLY;
     }
 
-    // Update nickname
-    mNickToClientMap.erase(client->Nickname);
-    mNickToClientMap.insert(std::make_pair(arguments[0], client));
-    client->Nickname = arguments[0];
+    // Try to register the client
+    if (!client->bRegistered)
+    {
+        client->Nickname = arguments[0];
+        registerClient(client);
 
-    // Send NICK message to all channels the client is in    
+        return IRC_SUCCESS;
+    }
+    // Update the nickname in Server, Channels
+    else
+    {
+        const std::string oldNickname = client->Nickname;
+        const std::string newNickname = arguments[0];
+        client->Nickname = newNickname;
+        mNickToClientMap.erase(oldNickname);
+        mNickToClientMap.insert(std::make_pair(newNickname, client));
+
+        for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+        {
+            SharedPtr<ChannelControlBlock> channel = it->second.Lock();
+            if (channel != NULL)
+            {
+                channel->Clients.erase(client->Nickname);
+                channel->Clients.insert(std::make_pair(client->Nickname, client));
+            }
+        }
+
+        // Send NICK message to all channels the client is in
+        const std::string nickMsgStr = ":" + oldNickname + " NICK " + newNickname;
+        SharedPtr<MsgBlock> nickMsg = MakeShared<MsgBlock>(nickMsgStr);
+        sendMsgToConnectedChannels(client, nickMsg);
+
+        // Send NICK message to the origin client itself
+        sendMsgToClient(client, nickMsg);
+        
+        return IRC_SUCCESS;
+    }
+
+
 
 SEND_REPLY:
     sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
