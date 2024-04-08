@@ -1,6 +1,5 @@
 #pragma once
 
-    
 #include "Core/SharedPtr.hpp"
 
 namespace IRCCore
@@ -43,12 +42,12 @@ public:
 
     FORCEINLINE ~WeakPtr()
     {
-        this->Reset();
+        Reset();
     }
 
     FORCEINLINE WeakPtr<T>& operator=(const WeakPtr<T>& rhs)
     {
-        this->Reset();
+        Reset();
 
         mControlBlock = rhs.mControlBlock;
         if (mControlBlock != NULL)

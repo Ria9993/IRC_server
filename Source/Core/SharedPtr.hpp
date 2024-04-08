@@ -37,6 +37,10 @@ struct ControlBlock
     {
     }
 
+    virtual ~ControlBlock()
+    {
+    }
+
 public:
     /** @name new/delete operators
      * 
@@ -107,19 +111,44 @@ class WeakPtr;
 ///@{
 /** @copydetails MakeSharedGroup */
 template <typename T>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared() { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T())); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared()
+{
+    detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
+    new (&controlBlock->data) T();
+    return SharedPtr<T>(controlBlock);
+}
 
 template <typename T, typename A1>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1))); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1)
+{
+    detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
+    new (&controlBlock->data) T(a1);
+    return SharedPtr<T>(controlBlock);
+}
 
 template <typename T, typename A1, typename A2>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2))); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2)
+{
+    detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
+    new (&controlBlock->data) T(a1, a2);
+    return SharedPtr<T>(controlBlock);
+}
 
 template <typename T, typename A1, typename A2, typename A3>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3))); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3)
+{
+    detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
+    new (&controlBlock->data) T(a1, a2, a3);
+    return SharedPtr<T>(controlBlock);
+}
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4) { return SharedPtr<T>(reinterpret_cast<detail::ControlBlock<T>*>(new (&(new detail::ControlBlock<T>)->data) T(a1, a2, a3, a4))); }
+NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4)
+{
+    detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
+    new (&controlBlock->data) T(a1, a2, a3, a4);
+    return SharedPtr<T>(controlBlock);
+}
 ///@}
 
 /** Shared pointer custom implementation for C++98 standard

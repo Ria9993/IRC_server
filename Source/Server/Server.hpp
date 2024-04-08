@@ -23,13 +23,28 @@ using namespace IRCCore;
 #include "Server/ClientControlBlock.hpp"
 #include "Server/IrcReplies.hpp"
 #include "Server/ClientCommand/ClientCommand.hpp"
+#include "Server/ChannelControlBlock.hpp"
 
 namespace IRC
 {
 
     /** @class Server
      *  @internal
-     *  @warning  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
+     *  @attention  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
+     *  
+     *  @dot
+     *  digraph ServerClientChannel {
+     *     node [shape=record];
+     *     Server [label="Server"];
+     *     Client [label="ClientControlBlock"];
+     *     Channel [label="ChannelControlBlock"];
+     *  Server -> Client;
+     *  Server -> Channel;
+     *  Channel -> Client;
+     *  Client -> Channel [label="WeakPtr"];
+     *  }
+     *  @enddot
+     * 
      * 
      *  @page irc_server_event_loop_process_flow    Server Event Loop Process Flow
      *  @tableofcontents
@@ -99,7 +114,7 @@ namespace IRC
          * @param password          Password to access server.
          *                          see Constants::SVR_PASS_MIN, Constants::SVR_PASS_MAX
          */
-        static EIrcErrorCode CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password);
+        static EIrcErrorCode CreateServer(Server** outPtrServer, const std::string& serverName, const unsigned short port, const std::string& password);
 
         /** Initialize resources and start the server event loop.
          *
@@ -114,7 +129,7 @@ namespace IRC
         ~Server();
 
     private:
-        Server(const unsigned short port, const std::string& password);
+        Server(const std::string& serverName, const unsigned short port, const std::string& password);
 
         /** @warning Copy constructor is not allowed. */
         UNUSED Server& operator=(const Server& rhs);
@@ -127,31 +142,26 @@ namespace IRC
         ///@{
         /** Separate all separable messages in the client's ClientControlBlock::RecvMsgBlocks
          *
-         * @param client            The client to separate messages.
-         * @param outParsedMsgs     [out] The vector to receive the separated messages without CR-LF.
+         * @param client            A client to separate messages.
+         * @param outSeparatedMsgs     [out] Vector to receive the separated messages without CR-LF.
          *                          If the vector is not empty, the separated messages are appended to the end of the vector.
          * 
          * @see                     ClientControlBlock::RecvMsgBlockCursor
          */
-        EIrcErrorCode separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBlock> client, std::vector<SharedPtr<MsgBlock> >& outParsedMsgs);
+        EIrcErrorCode separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBlock> client, std::vector<SharedPtr<MsgBlock> >& outSeparatedMsgs);
 
         /** Execute and reply the client's single message.
          *
          *  @param client            The client to process the message.
          *  @param msg               The single message to process.
+         *  
+         *  @note                   The message will be 
          * 
          *  \internal
          *  @see                    ReplyMsgMakingFunctions
          */
         EIrcErrorCode processClientMsg(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
         ///@}
-
-        /** Disconnect the client.
-         *
-         * @details Close the socket and mark the client's expired flag instead of memory release and remove from the client list.
-         *          Use Assert to debug if there is a place that references the client while the expired flag is true.
-         */
-        EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
 
         /** Get SharedPtr to the ClientControlBlock from the kevent's udata. */
         FORCEINLINE SharedPtr<ClientControlBlock> getClientFromKeventUdata(kevent_t& event) const
@@ -164,25 +174,51 @@ namespace IRC
         /** Client command execution function type
          *  @see "Client command execution functions" Section
          */
-        typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+        typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments);
 
         /** 
          *  @name       Client command execution functions
-         *  @brief      Execute the client command.
+         *  @brief      Execute and reply the client command.
+         *  
+         *  Each function handles permission and validity checks, execution, and all replies.
          */
         ///@{
-#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg);
+#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments);
         /**
          *  @param      client          [in]  The client to process the command.
-         *  @param      arguments       [in]  The arguments of the command.
-         *  @param      outReplyCode    [out] The reply code to send to the client.
-         *  @param      outReplyMsg     [out] The reply message to send to the client ending with CR-LF.
+         *  @param      arguments       [in]  Unvalidated arguments of the command. 
          *  @return     The error code of the command execution.
          *  @see        Server/ClientCommand/<COMMAND>.cpp
          */
         IRC_CLIENT_COMMAND_LIST
 #undef  IRC_CLIENT_COMMAND_X
         ///@}
+
+    private:
+        /** Disconnect the client.
+         *
+         * Close the socket and mark the client's expired flag instead of memory release and remove from the client list.
+         * Use Assert to debug if there is a place that references the client while the expired flag is true.
+         */
+        EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
+
+        /** Send a message to the client.
+         * 
+         *  @param client   The client to send the message.
+         *  @param msg      The message to send without CR-LF.
+         * 
+         *  @note        Do not modify the passed message after calling this function.
+         */
+        void sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
+
+        /** Send a message to the channel members.
+         * 
+         *  @param channel  The channel to send the message.
+         *  @param msg      The message to send without CR-LF.
+         * 
+         *  @note        Do not modify the passed message after calling this function.
+         */
+        void sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg);
 
     private:
         /** @name Log functions */
@@ -195,7 +231,8 @@ namespace IRC
         ///@}
 
     private:
-        short mServerPort;
+        std::string mServerName; 
+        short       mServerPort;
         std::string mServerPassword;
 
         int mhListenSocket;
@@ -231,10 +268,18 @@ namespace IRC
         std::vector<kevent_t> mEventRegistrationQueue;
         ///@}
 
-        /** @warning    Do not release a client if the client's event is still exists in the kqueue. */
-        std::vector<SharedPtr<ClientControlBlock> > mClients;
+        /** @name Client list
+         * 
+         *  The containers in this group must always be synchronized with each other for the entries.
+         *  If you add or remove a client, you must also add or remove the client in all containers.
+         * 
+         *  @warning    Do not release a client if the client's event is still exists in the kqueue.
+         */
+        ///@{
+        std::vector< SharedPtr< ClientControlBlock > > mClients;
 
-        std::map<std::string, size_t> mNicknameToClientIdxMap;
+        std::map< std::string, SharedPtr< ClientControlBlock > > mNickToClientMap;
+        ///@}
     };
 
 } // namespace irc

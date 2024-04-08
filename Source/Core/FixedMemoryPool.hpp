@@ -1,6 +1,9 @@
 #pragma once
 
 #include <new>
+#include "Core/GlobalConstants.hpp"
+#include "Core/Log.hpp"
+#include "Core/MacroDefines.hpp"
 
 namespace IRCCore
 {

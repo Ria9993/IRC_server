@@ -3,7 +3,7 @@
 namespace IRC
 {
 
-EIrcErrorCode Server::executeClientCommand_PASS(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments, EIrcReplyCode& outReplyCode, std::string& outReplyMsg)
+EIrcErrorCode Server::executeClientCommand_PASS(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments)
 {
     if (client->bExpired)
     {

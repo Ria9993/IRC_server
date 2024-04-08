@@ -3,13 +3,15 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <map>
 
-#include "Core/Core.hpp"
+#include "Core/VariableMemoryPool.hpp"
 using namespace IRCCore;
 
 #include "Network/SocketTypedef.hpp"
 #include "Server/MsgBlock.hpp"
 
+#include "Server/ChannelControlBlock.hpp"
 
 namespace IRC
 {    
@@ -29,9 +31,10 @@ struct ClientControlBlock
     std::string Realname;
     std::string Hostname;
 
+    time_t LastActiveTime;
+
     bool bRegistered;
 
-    time_t LastActiveTime;
 
     /** Flag that indicate whether the client's connection is expired.
      *  
@@ -40,8 +43,6 @@ struct ClientControlBlock
     */
     bool bExpired;
 
-    /** @name Message receiving */
-    ///@{
     /** Received messages from the client.
      *  
      *  @details    Each message block is not a separate message.
@@ -51,16 +52,18 @@ struct ClientControlBlock
     
     /** A cursor to indicate the next offset to receive in the message block at the front of the RecvMsgBlocks */
     size_t RecvMsgBlockCursor;
-    ///@}
 
-    /** @name Message sending */
-    ///@{
-    /** Queue of messages to send. */
+    /** Queue of messages to send.
+     * 
+     *  @note Do not modify the message block in the queue.
+     **/
     std::vector< SharedPtr< MsgBlock > > MsgSendingQueue;
 
     /** A cursor to indicate the next offset to send in the message block at the front of the MsgSendingQueue */
     size_t SendMsgBlockCursor;
-    ///@}
+
+    /** Map of channel name to the channel control block that the client is connected. */
+    std::map< std::string, WeakPtr< ChannelControlBlock > > Channels;
 
     FORCEINLINE ClientControlBlock()
         : hSocket(-1)
@@ -69,13 +72,14 @@ struct ClientControlBlock
         , Username()
         , Realname()
         , Hostname()
-        , bRegistered(false)
         , LastActiveTime(0)
+        , bRegistered(false)
         , bExpired(false)
         , RecvMsgBlocks()
         , RecvMsgBlockCursor(0)
         , MsgSendingQueue()
         , SendMsgBlockCursor(0)
+        , Channels()
     {
     }
 

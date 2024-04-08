@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 #include "Core/Core.hpp"
 using namespace IRCCore;
 
@@ -23,7 +25,23 @@ public:
         : Msg()
         , MsgLen(0)
     {
-        Msg[0] = '\0'; //< For implementation convenience and debugging
+        Msg[0] = '\0'; //< Not necessary. Just for debug.
+    }
+
+    FORCEINLINE MsgBlock(const char* str, size_t msgLen)
+        : Msg()
+        , MsgLen(msgLen)
+    {
+        Assert(msgLen < MESSAGE_LEN_MAX);
+        std::memcpy(Msg, str, msgLen);
+    }
+
+    FORCEINLINE MsgBlock(const std::string& str)
+        : Msg()
+        , MsgLen(str.size())
+    {
+        Assert(str.size() < MESSAGE_LEN_MAX);
+        std::memcpy(Msg, str.c_str(), str.size());
     }
 
 public:

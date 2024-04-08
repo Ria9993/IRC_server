@@ -1,15 +1,8 @@
 #pragma once
 
-namespace IRCCore
-{
-enum GLOBAL_CONSTANTS {
-    CACHE_LINE_SIZE = 64,
-    PAGE_SIZE = 4096,
-    QUAD_PAGE_SIZE = PAGE_SIZE * 4
-};
-} // namespace IRCCore
 
 #include "Core/Log.hpp"
+#include "Core/GlobalConstants.hpp"
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 #include "Core/AnsiColorDefines.hpp"

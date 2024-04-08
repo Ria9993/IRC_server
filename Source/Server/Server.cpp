@@ -20,7 +20,7 @@ Server& Server::operator=(UNUSED const Server& rhs)
     return *this;
 }
 
-EIrcErrorCode Server::CreateServer(Server** outPtrServer, const unsigned short port, const std::string& password)
+EIrcErrorCode Server::CreateServer(Server** outPtrServer, const std::string& serverName, const unsigned short port, const std::string& password)
 {
     Assert(outPtrServer != NULL);
     *outPtrServer = NULL;
@@ -39,12 +39,13 @@ EIrcErrorCode Server::CreateServer(Server** outPtrServer, const unsigned short p
         return IRC_PASSWORD_TOO_LONG;
     }
 
-    *outPtrServer = new Server(port, password);
+    *outPtrServer = new Server(serverName, port, password);
     return IRC_SUCCESS;
 }
 
-Server::Server(const unsigned short port, const std::string& password)
-    : mServerPort(port)
+Server::Server(const std::string& serverName, const unsigned short port, const std::string& password)
+    : mServerName(serverName)
+    , mServerPort(port)
     , mServerPassword(password)
 {
     mClients.reserve(CLIENT_RESERVE_MIN);
@@ -323,7 +324,7 @@ EIrcErrorCode Server::eventLoop()
     return IRC_FAILED_UNREACHABLE_CODE;
 }
 
-EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr<MsgBlock> >& outParsedMsgs)
+EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBlock> client, std::vector< SharedPtr<MsgBlock> >& outSeparatedMsgs)
 {
     // Check the client is expired.
     // The message block can be exist even if the client is expired.
@@ -369,7 +370,7 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBloc
             {
                 if (separatedMsg->Msg[separatedMsg->MsgLen - 2] == '\r' && separatedMsg->Msg[separatedMsg->MsgLen - 1] == '\n')
                 {
-                    outParsedMsgs.push_back(separatedMsg);
+                    outSeparatedMsgs.push_back(separatedMsg);
                     separatedMsg = MakeShared<MsgBlock>();
                     lastParsedRecvQueueBlockIdx = msgBlockQueueIdx;
                     client->RecvMsgBlockCursor = parseIdx + 1;   
@@ -417,9 +418,9 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBloc
     }
 
     // Remove the CR-LF from the separated messages
-    for (size_t msgIdx = 0; msgIdx < outParsedMsgs.size(); msgIdx++)
+    for (size_t msgIdx = 0; msgIdx < outSeparatedMsgs.size(); msgIdx++)
     {
-        outParsedMsgs[msgIdx]->MsgLen -= 2;
+        outSeparatedMsgs[msgIdx]->MsgLen -= 2;
     }
 
     return IRC_SUCCESS;
@@ -438,6 +439,10 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         logVerbose("processClientMsg(): The message is NULL. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
         return IRC_SUCCESS;
     }
+
+    // There must be at least one blank space in msg to insert NULL.
+    // And msg is a message with CR-LF removed, so there must be at least two blank spaces.
+    Assert(msg->MsgLen < MESSAGE_LEN_MAX - 2);
 
     // Split the arguments into blank(' ')
     const char* msgCommandToken = NULL;
@@ -474,6 +479,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
             }
         }
     }
+    msg->Msg[msg->MsgLen] = '\0';
 
     // I don't think a message with only a prefix is an error.
     // There is also no reply.
@@ -493,7 +499,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     const ClientCommandFuncPair clientCommandFuncPairs[] = {
 #define IRC_CLIENT_COMMAND_X(command_name) { #command_name, &Server::executeClientCommand_##command_name },
         IRC_CLIENT_COMMAND_LIST
-#undef  IRC_CLIENT_COMMAND_X(command_name)
+#undef  IRC_CLIENT_COMMAND_X 
     };
     const size_t numClientCommandFunc = sizeof(clientCommandFuncPairs) / sizeof(clientCommandFuncPairs[0]);
 
@@ -509,32 +515,34 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         }
     }
 
+    // Execute the command
     EIrcReplyCode   replyCode;
     std::string     replyMsg;
     {
         // Unknown command name
         if (pCommandExecFunc == NULL)
         {
-            const std::string serverName = InetAddrToString(client->Addr);
-            MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, serverName, msgCommandToken);
+            MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, mServerName, msgCommandToken);
 
-            // TODO:
+            // TODO: Send the reply message to the client
         }
-        // Otherwise, execute the command
         else
         {
-            EIrcErrorCode err = (this->*pCommandExecFunc)(client, msgArgTokens, replyCode, replyMsg);
+            // DEBUG
+            logVerbose("processClientMsg(): Executing the command. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname + ", Command: " + msgCommandToken);
+            for (size_t i = 0; i < msgArgTokens.size(); i++)
+            {
+                logVerbose("Args[" + ValToString(i) + "]: " + msgArgTokens[i]);
+            }
+
+            EIrcErrorCode err = (this->*pCommandExecFunc)(client, msgArgTokens);
             if (UNLIKELY(err != IRC_SUCCESS))
             {
                 return err;
             }
-
-            // TODO:
         }
     }
-    
-    // TODO: Send the reply message to the client
-    
+
     return IRC_SUCCESS;
 }
 
@@ -556,6 +564,45 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
     // TODO: Remove client from the channels
 
     return IRC_SUCCESS;
+}
+
+void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
+{
+    Assert(client != NULL);
+    Assert(msg != NULL);
+
+    if (client->bExpired)
+    {
+        return;
+    }
+
+    // Enable the write event filter for the client socket.
+    if (client->MsgSendingQueue.empty())
+    {
+        kevent_t kev;
+        kev.ident = client->hSocket;
+        kev.filter = EVFILT_WRITE;
+        kev.flags = EV_ADD;
+        kev.fflags = 0;
+        kev.data = 0;
+        kev.udata = reinterpret_cast<void *>(client.GetControlBlock());
+        mEventRegistrationQueue.push_back(kev);
+        client->SendMsgBlockCursor = 0;
+    }
+
+    client->MsgSendingQueue.push_back(msg);
+}
+
+void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg)
+{
+    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); it++)
+    {
+        SharedPtr<ClientControlBlock> client = it->second;
+        if (client != NULL)
+        {
+            sendMsgToClient(client, msg);
+        }
+    }
 }
 
 void Server::logErrorCode(EIrcErrorCode errorCode) const

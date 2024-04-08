@@ -24,10 +24,11 @@ int main(int argc, char** argv)
     {
         try
         {
+            std::string serverName("IRCServer");
             const short port = std::atoi(argv[1]); 
             const char* password = argv[2];
             IRC::Server* server = NULL;
-            IRC::EIrcErrorCode err = IRC::Server::CreateServer(&server, port, password);
+            IRC::EIrcErrorCode err = IRC::Server::CreateServer(&server, serverName, port, password);
             
             if (server == NULL)
             {

@@ -5,7 +5,10 @@
 #include <new>
 #include <string>
 
+#include "Core/GlobalConstants.hpp"
 #include "Core/FixedMemoryPool.hpp"
+#include "Core/Log.hpp"
+#include "Core/MacroDefines.hpp"
 
 namespace IRCCore
 {
