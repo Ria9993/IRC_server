@@ -498,13 +498,14 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     const size_t numClientCommandFunc = sizeof(clientCommandFuncPairs) / sizeof(clientCommandFuncPairs[0]);
 
     // Find the matching command
-    ClientCommandFuncPtr pCoresspondingFunc = NULL; 
+    ClientCommandFuncPtr pCommandExecFunc = NULL; 
     for (size_t i = 0; i < numClientCommandFunc; i++)
     {
         if (std::strcmp(msgCommandToken, clientCommandFuncPairs[i].command) == 0)
         {
-            Assert(pCoresspondingFunc == NULL);
-            pCoresspondingFunc = clientCommandFuncPairs[i].func;
+            Assert(pCommandExecFunc == NULL);
+            pCommandExecFunc = clientCommandFuncPairs[i].func;
+            break;
         }
     }
 
@@ -512,7 +513,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     std::string     replyMsg;
     {
         // Unknown command name
-        if (pCoresspondingFunc == NULL)
+        if (pCommandExecFunc == NULL)
         {
             const std::string serverName = InetAddrToString(client->Addr);
             MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, serverName, msgCommandToken);
@@ -522,7 +523,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         // Otherwise, execute the command
         else
         {
-            EIrcErrorCode err = (this->*pCoresspondingFunc)(client, msgArgTokens, replyCode, replyMsg);
+            EIrcErrorCode err = (this->*pCommandExecFunc)(client, msgArgTokens, replyCode, replyMsg);
             if (UNLIKELY(err != IRC_SUCCESS))
             {
                 return err;

@@ -11,7 +11,10 @@ namespace IRC
 {
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-/** Tuple of the IRC replies | IRC_REPLY_X (reply_code, reply_number, (arguments), (reply_string)) */
+/** 
+ *  @def    IRC_REPLY_TUPLE_LIST 
+ *  @brief  Tuple of the IRC replies | IRC_REPLY_X (reply_code, reply_number, (arguments), (reply_string)) 
+*/
 #define IRC_REPLY_TUPLE_LIST                                                                                                                 \
     IRC_REPLY_X(ERR_NOSUCHNICK      , 401, (PARM_X, std::string nickname)    , (nickname + " :No such nick/channel"))                        \
     IRC_REPLY_X(ERR_NOSUCHSERVER    , 402, (PARM_X, std::string server_name) , (server_name + " :No such server"))                           \
@@ -43,7 +46,8 @@ typedef enum {
     {                                                                              \
         outReplyMsg = ":" + serverName + " " + #reply_number + " " + reply_string; \
         outReplyCode = reply_code;                                                 \
-    }
+    }                                                                              \
+
 
 #define PARM_X \
     EIrcReplyCode& outReplyCode,\
@@ -51,9 +55,7 @@ typedef enum {
     std::string    serverName
 
 /**  
- * @name       Reply message making functions 
- * @defgroup   ReplyMsgMakingFunctions Reply message making functions 
- * 
+ * @defgroup    ReplyMsgMakingFunctions Reply message making functions 
  * @brief       MakeIrcReplyMsg_<reply_code> functions.
 */
 ///@{
