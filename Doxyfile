@@ -1010,7 +1010,8 @@ EXCLUDE_PATTERNS       =
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories use the pattern */test/*
 
-EXCLUDE_SYMBOLS        = 
+EXCLUDE_SYMBOLS        = size_t \
+                         char
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include
@@ -2532,7 +2533,7 @@ GROUP_GRAPHS           = YES
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-UML_LOOK               = YES
+UML_LOOK               = NO
 
 # If the UML_LOOK tag is enabled, the fields and methods are shown inside the
 # class node. If there are many fields or methods and many nodes the graph may
