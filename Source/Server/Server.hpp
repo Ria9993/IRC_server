@@ -30,7 +30,7 @@ namespace IRC
 
     /** @class Server
      *  @internal
-     *  @attention  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
+     *  @note  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
      *  
      *  @dot
      *  digraph ServerClientChannel {
@@ -121,8 +121,8 @@ namespace IRC
          * @details Initialize kqueue and resources and register listen socket to kqueue.
          *          And then call eventLoop() to start the server.
          *
-         * @note    Blocking until the server is terminated.
-         * @warning All non-static methods must be called after this function is called.
+         * @note    \li Blocking until the server is terminated.
+         *          \li All non-static methods must be called after this function is called.
          */
         EIrcErrorCode Startup();
 
