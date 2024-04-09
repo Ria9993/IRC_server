@@ -40,12 +40,25 @@ class FlexibleMemoryPoolingBase
 public:
     void* operator new(size_t size)
     {
+        Assert(size == sizeof(DerivedType));
         return mPool.Allocate();
     }
 
-    void operator delete(void* p)
+    void operator delete(void* ptr)
     {
-        mPool.Deallocate(static_cast<DerivedType*>(p));
+        mPool.Deallocate(static_cast<DerivedType*>(ptr));
+    }
+
+    void* operator new(size_t size, void* ptr)
+    {
+        Assert(size == sizeof(DerivedType));
+        return ptr;
+    }
+
+    void operator delete(void* ptr, size_t size)
+    {
+        (void)ptr;
+        (void)size;
     }
 
 private:
@@ -53,10 +66,10 @@ private:
     void* operator new[](size_t size);
 
     /** Unavailable new/delete for array */
-    void operator delete[](void* p);
+    void operator delete[](void* ptr);
 
 private:
-    static FlexibleFixedMemoryPool<T, MinNumDataPerChunk> mPool;
+    static FlexibleFixedMemoryPool<DerivedType, MinNumDataPerChunk> mPool;
 };
 
 template <typename DerivedType, size_t MinNumDataPerChunk>

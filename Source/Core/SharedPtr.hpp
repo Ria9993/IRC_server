@@ -26,7 +26,7 @@ namespace detail
  *          (see MakeShared() implementation)
  * */
 template <typename T>
-struct ControlBlock : public FlexibleMemoryPoolingBase<ControlBlock<T>>
+struct ControlBlock : public FlexibleMemoryPoolingBase< ControlBlock< T > >
 {
     ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
 
