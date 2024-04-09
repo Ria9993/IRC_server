@@ -37,13 +37,10 @@ struct ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
 
     bool bRegistered;
 
-
-    /** Flag that indicate whether the client's connection is expired.
-     *  
-     *  @details    The server doesn't release the client control block
-     *              for remaining events or messages immediately after the connection is closed.
-    */
+    /** Flag that indicate whether the client is expired, and expired client will be released after the remaining messages are sent. */
     bool bExpired;
+
+    bool bSocketClosed;
 
     /** Received messages from the client.
      *  
@@ -77,6 +74,7 @@ struct ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
         , LastActiveTime(0)
         , bRegistered(false)
         , bExpired(false)
+        , bSocketClosed(false)
         , RecvMsgBlocks()
         , RecvMsgBlockCursor(0)
         , MsgSendingQueue()

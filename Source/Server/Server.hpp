@@ -137,6 +137,12 @@ namespace IRC
         /** A main event loop of the server. */
         EIrcErrorCode eventLoop();
 
+        /** Destroy all resources of the server. 
+         * 
+         * @note   After calling this function, the server instance is no longer available.
+        */
+        EIrcErrorCode destroyResources();
+
     private:
         /** @name Message Processing */
         ///@{
@@ -177,7 +183,7 @@ namespace IRC
         typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments);
 
         /** 
-         *  @name       Client command execution functions
+         *  @name       Client command execution
          *  @brief      Execute and reply the client command.
          *  
          *  Each function handles permission and validity checks, execution, and all replies.
@@ -195,12 +201,20 @@ namespace IRC
         ///@}
 
     private:
-        /** Disconnect a client.
-         *
-         * Close the socket and mark the client's expired flag instead of memory release and remove from the client list.
-         * Use Assert to debug if there is a place that references the client while the expired flag is true.
-         */
+        /**
+         * @name    Client disconnection
+         * @note    The releases of the disconnected clients are deferred to the next main event loop for the remaining kevents of the client.
+        */
+        ///@{
+        /** Close the client socket and release the client. */
+        EIrcErrorCode forceDisconnectClient(SharedPtr<ClientControlBlock> client);
+
+        /** Mark the client's bExpired flag and block the messages from the client, then close the socket after remaining messages are sent. 
+         * 
+         *  Sending to the client is not able after calling this function. 
+        */
         EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
+        ///@}
 
         /** Register a client to the server.
          *
@@ -210,7 +224,7 @@ namespace IRC
         bool registerClient(SharedPtr<ClientControlBlock> client);
 
         /** 
-         *  @name      Message send functions
+         *  @name      Message sending
          *  @note      \li Do not modify the passed message after calling this function.
          *             \li No changes are made to the message other than adding CR-LF.
          *             \li No check permission of the client to send the message.
@@ -241,7 +255,7 @@ namespace IRC
         ///@}
         
     private:
-        /** @name Log functions */
+        /** @name Logging */
         ///@{
         void logErrorCode(EIrcErrorCode errorCode) const;
 
@@ -288,7 +302,7 @@ namespace IRC
         std::vector<kevent_t> mEventRegistrationQueue;
         ///@}
 
-        /** @name Client list
+        /** @name Client lists
          * 
          *  The containers in this group must always be synchronized with each other for the entries.
          *  If you add or remove a client, you must also add or remove the client in all containers.
@@ -300,6 +314,12 @@ namespace IRC
 
         std::map< std::string, SharedPtr< ClientControlBlock > > mNickToClientMap;
         ///@}
+
+        /** Queue to release expired clients
+         * 
+         *  @see "Disconnect Client"
+        */
+        std::vector< SharedPtr< ClientControlBlock > > mClientReleaseQueue;
     };
 
 } // namespace irc

@@ -38,7 +38,7 @@ EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> cl
             {
                 replyMsg = "ERROR :Invalid USER arguments";
                 sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
-                disconnectClient(client);
+                forceDisconnectClient(client);
                 
                 return IRC_SUCCESS;
             }
