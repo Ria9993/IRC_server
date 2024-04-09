@@ -19,7 +19,7 @@ namespace IRCCore
  * 
  * // You can also set MinNumDataPerChunk template parameter
  * template <typename T>
- * struct ControlBlock : public FlexibleMemoryPoolingBase<ControlBlock<T>>
+ * struct ControlBlock : public FlexibleMemoryPoolingBase<ControlBlock<T>, 128>;
  * 
  * int main()
  * {
