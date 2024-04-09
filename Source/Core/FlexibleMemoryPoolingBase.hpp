@@ -49,10 +49,10 @@ public:
     }
 
 private:
-    // Unavailable new/delete for array
+    /** Unavailable new/delete for array */
     void* operator new[](size_t size);
 
-    // Unavailable new/delete for array
+    /** Unavailable new/delete for array */
     void operator delete[](void* p);
 
 private:
