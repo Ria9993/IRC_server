@@ -15,7 +15,7 @@ struct MsgBlock;
  * 
  * @details    new/delete overrided with memory pool.
  */
-struct MsgBlock
+struct MsgBlock : public FlexibleMemoryPoolingBase<MsgBlock>
 {
 public:
     char Msg[MESSAGE_LEN_MAX];
@@ -43,44 +43,6 @@ public:
         Assert(str.size() < MESSAGE_LEN_MAX);
         std::memcpy(Msg, str.c_str(), str.size());
     }
-
-public:
-    /** @name new/delete operators
-     * 
-     * Overload new and delete operator with memory pool for memory management.
-     */
-    ///@{
-    NODISCARD FORCEINLINE void* operator new (size_t size)
-    {
-        Assert(size == sizeof(MsgBlock));
-        return reinterpret_cast<void*>(sMemoryPool.Allocate());
-    }
-
-    NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
-    {
-        Assert(size == sizeof(MsgBlock));
-        return ptr;
-    }
-    
-    FORCEINLINE void  operator delete (void* ptr)
-    {
-        sMemoryPool.Deallocate(reinterpret_cast<MsgBlock*>(ptr));
-    }
-    ///@}
-
-private:
-    /** @name new[]/delete[] operators
-     * 
-     * @warning Use new/delete operator instead.
-     */
-    ///@{
-    UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
-
-    UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
-    ///@}
-    
-private:
-    enum { MIN_NUM_PER_MEMORY_POOL_CHUNK = 64 };
-    static VariableMemoryPool<MsgBlock, MIN_NUM_PER_MEMORY_POOL_CHUNK> sMemoryPool;
 };
+
 } // namespace IRC

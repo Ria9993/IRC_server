@@ -13,25 +13,25 @@
 namespace IRCCore
 {
 
-/** A memory pool that can allocate variable number of data
+/** A memory pool that can allocate flexible number of data
  *
- * @note  VariableMemoryPool Implementated using chunking with FixedMemoryPool
+ * @note  FlexibleFixedMemoryPool Implementated using chunking with FixedMemoryPool
  *
  * @tparam T                    Type of data to allocate.
  * @tparam MinNumDataPerChunk   Minimum number of data to allocate per chunk 
  */
-template <typename T, size_t MinNumDataPerChunk>
-class VariableMemoryPool
+template <typename T, size_t MinNumDataPerChunk = 64>
+class FlexibleFixedMemoryPool
 {
 public:
-    VariableMemoryPool()
+    FlexibleFixedMemoryPool()
         : mChunks()
         , mChunkCursor(0)
     {
         mChunks.reserve(16);
     }
 
-    ~VariableMemoryPool()
+    ~FlexibleFixedMemoryPool()
     {
         for (size_t i = 0; i < mChunks.size(); ++i)
         {
@@ -39,10 +39,6 @@ public:
         }
     }
 
-    /** Allocate a data
-     * 
-     * @return  Pointer to the allocated data
-     */
     NODISCARD inline T* Allocate()
     {
         // Find available pool
@@ -56,26 +52,22 @@ public:
 
         // Create new pool if all pools are full
         mChunks.push_back(new FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>);
-        CoreLog("[VariableMemoryPool] New Chunk Created. Total Chunks: " + ValToString(mChunks.size()));
+        CoreLog("[FlexibleFixedMemoryPool] New Chunk Created. Total Chunks: " + ValToString(mChunks.size()));
 
     ALLLOCATE_NEW_BLOCK:
-        CoreLog("[VariableMemoryPool] Allocate: ChunkIdx: " + ValToString(mChunkCursor));
+        CoreLog("[FlexibleFixedMemoryPool] Allocate: ChunkIdx: " + ValToString(mChunkCursor));
         Block* block = mChunks[mChunkCursor]->Allocate();
         Assert(block != NULL);
         block->chunkIdx = mChunkCursor;
         return reinterpret_cast<T*>(&block->data);
     }
 
-    /** Deallocate a data
-     * 
-     * @param ptr  Pointer to the data to deallocate
-     */
     FORCEINLINE void Deallocate(T* ptr)
     {
         if (ptr == NULL)
             return;
         
-        CoreLog("[VariableMemoryPool] Deallocate: Ptr: " + ValToString(ptr));
+        CoreLog("[FlexibleFixedMemoryPool] Deallocate: Ptr: " + ValToString(ptr));
 
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
         mChunks[block->chunkIdx]->Deallocate(block);
@@ -90,8 +82,6 @@ private:
     public:
         size_t chunkIdx; //< Index of the chunk that allocated this block
         ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
-        
-        // Block() = default;
     };
 
     enum { BLOCK_SIZE = sizeof(Block) };

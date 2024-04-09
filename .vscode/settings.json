@@ -75,5 +75,10 @@
 		"cinttypes": "cpp",
 		"queue": "cpp"
 	},
-	"C_Cpp.vcFormat.indent.preserveComments": true
+	"C_Cpp.vcFormat.indent.preserveComments": true,
+	"editor.tokenColorCustomizations": {
+		"comments": "",
+		"textMateRules": []
+	},
+	"better-comments.highlightPlainText": false
 }

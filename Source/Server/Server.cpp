@@ -624,7 +624,7 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
     }
     mNickToClientMap.erase(client->Nickname);
 
-    // // Remove from the channels
+    // Remove from the channels
     for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
     {
         SharedPtr<ChannelControlBlock> channel = it->second.Lock();
@@ -636,7 +636,7 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
 
     // TODO: Send QUIT message to the channels the client is in.
 
-    // // close() on a socket will delete the corresponding kevent from the kqueue.
+    // close() on a socket will delete the corresponding kevent from the kqueue.
     if (UNLIKELY(close(client->hSocket) == -1))
     {
         logErrorCode(IRC_FAILED_TO_CLOSE_SOCKET);

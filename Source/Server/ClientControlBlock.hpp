@@ -6,7 +6,7 @@
 #include <queue>
 #include <map>
 
-#include "Core/VariableMemoryPool.hpp"
+#include "Core/FlexibleMemoryPoolingBase.hpp"
 using namespace IRCCore;
 
 #include "Network/SocketTypedef.hpp"
@@ -21,7 +21,7 @@ namespace IRC
  * 
  * @details    new/delete overrided with memory pool.
  */
-struct ClientControlBlock
+struct ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
 {
     int hSocket;
 
@@ -84,44 +84,5 @@ struct ClientControlBlock
         , Channels()
     {
     }
-
-public:
-    /** @name new/delete operators
-     * 
-     * Overload new and delete operator with memory pool for memory management.
-     */
-    ///@{
-    NODISCARD FORCEINLINE void* operator new (size_t size)
-    {
-        Assert(size == sizeof(ClientControlBlock));
-        return reinterpret_cast<void*>(sMemoryPool.Allocate());
-    }
-
-    NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
-    {
-        Assert(size == sizeof(ClientControlBlock));
-        return ptr;
-    }
-    
-    FORCEINLINE void  operator delete (void* ptr)
-    {
-        sMemoryPool.Deallocate(reinterpret_cast<ClientControlBlock*>(ptr));
-    }
-    ///@}
-
-private:
-    /** @name new[]/delete[] operators
-     * 
-     * Use new/delete operator instead.
-     */
-    ///@{
-    UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
-
-    UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
-    ///@}
-
-private:
-    enum { MIN_NUM_PER_MEMORY_POOL_CHUNK = 64 };
-    static VariableMemoryPool<ClientControlBlock, MIN_NUM_PER_MEMORY_POOL_CHUNK> sMemoryPool;
 };
 } // namespace IRC

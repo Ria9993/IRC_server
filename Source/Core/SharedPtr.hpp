@@ -5,7 +5,8 @@
 
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
-#include "Core/VariableMemoryPool.hpp"
+#include "Core/FlexibleFixedMemoryPool.hpp"
+#include "Core/FlexibleMemoryPoolingBase.hpp"
 
 
 namespace IRCCore
@@ -25,7 +26,7 @@ namespace detail
  *          (see MakeShared() implementation)
  * */
 template <typename T>
-struct ControlBlock
+struct ControlBlock : public FlexibleMemoryPoolingBase<ControlBlock<T>>
 {
     ALIGNAS(ALIGNOF(T)) char data[sizeof(T)];
 
@@ -43,56 +44,7 @@ struct ControlBlock
     FORCEINLINE ~ControlBlock()
     {
     }
-
-public:
-    /** @name new/delete operators
-     * 
-     * Overload new and delete operator with memory pool for memory management.
-     */
-    ///@{
-    // NODISCARD FORCEINLINE void* operator new (size_t size)
-    // {
-    //     Assert(size == sizeof(ControlBlock));
-    //     return reinterpret_cast<void*>(sMemoryPool.Allocate());
-    // }
-
-    // NODISCARD FORCEINLINE void* operator new (size_t size, void* ptr)
-    // {
-    //     Assert(size == sizeof(ControlBlock));
-    //     return ptr;
-    // }
-    
-    // FORCEINLINE void  operator delete (void* ptr)
-    // {
-    //     sMemoryPool.Deallocate(reinterpret_cast<ControlBlock*>(ptr));
-    // }
-
-    // FORCEINLINE void  operator delete (void* ptr, void* place)
-    // {
-    //     Assert(false);
-    //     (void)place;
-    //     (void)ptr;
-    // }
-    ///@}
-
-private:
-    /** @name new[]/delete[] operators
-     * 
-     * Use new/delete operator instead.
-     */
-    ///@{
-    UNUSED NORETURN FORCEINLINE void* operator new[] (size_t size);
-    
-    UNUSED NORETURN FORCEINLINE void  operator delete[] (void* ptr);
-    ///@}
-
-private:
-    enum { MIN_NUM_PER_MEMORY_POOL_CHUNK = 64 };
-    static VariableMemoryPool< ControlBlock< T >, MIN_NUM_PER_MEMORY_POOL_CHUNK > sMemoryPool;
 };
-
-template <typename T>
-VariableMemoryPool< ControlBlock< T >, ControlBlock< T >::MIN_NUM_PER_MEMORY_POOL_CHUNK > ControlBlock< T >::sMemoryPool;
 
 } // namespace detail
 
