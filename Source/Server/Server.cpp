@@ -264,6 +264,11 @@ EIrcErrorCode Server::eventLoop()
                     Assert(currClient != NULL);
                     Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
 
+                    if (currClient->bSocketClosed || currClient->bExpired)
+                    {
+                        continue;
+                    }
+
                     // If there is space left in the last message block of the client, receive as many bytes as possible in that space,
                     // or if not, in a new message block space.
                     if (currClient->RecvMsgBlocks.empty() || currClient->RecvMsgBlocks.back()->MsgLen == MESSAGE_LEN_MAX)
@@ -284,7 +289,7 @@ EIrcErrorCode Server::eventLoop()
                         {
                             return err;
                         }
-                        goto CONTINUE_NEXT_EVENT_LOOP;
+                        continue;
                     }
                     // Client disconnected
                     else if (nRecvBytes == 0)
@@ -295,7 +300,7 @@ EIrcErrorCode Server::eventLoop()
                         {
                             return err;
                         }
-                        goto CONTINUE_NEXT_EVENT_LOOP;
+                        continue;
                     }
 
                     logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
@@ -320,10 +325,15 @@ EIrcErrorCode Server::eventLoop()
                 Assert(currClient != NULL);
                 Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
 
+                if (currClient->bSocketClosed)
+                {
+                    continue;
+                }
+
                 // Send the messages in the sending queue
                 if (currClient->MsgSendingQueue.empty())
                 {
-                    goto CONTINUE_NEXT_EVENT_LOOP;
+                    continue;
                 }
                 SharedPtr<MsgBlock> msg = currClient->MsgSendingQueue.front();
                 Assert(msg != NULL);
@@ -337,12 +347,12 @@ EIrcErrorCode Server::eventLoop()
                     {
                         return err;
                     }
-                    goto CONTINUE_NEXT_EVENT_LOOP;
+                    continue;
                 }
                 // Maybe the client's receive window is full.
                 if (nSentBytes == 0)
                 {
-                    goto CONTINUE_NEXT_EVENT_LOOP;
+                    continue;
                 }
 
                 logVerbose("Sent message to client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Sent bytes: " + ValToString(nSentBytes));

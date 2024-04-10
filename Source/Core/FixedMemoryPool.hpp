@@ -27,7 +27,7 @@ public:
         , mCursor(0)
         , mMemoryRaw(new char[MemoryPageCapacity * PAGE_SIZE])
     {
-        for (size_t i = 0; i < mCapacity; ++i)
+        for (size_t i = 0; i < mCapacity; i++)
         {
             mIndices[i] = i;
         }
@@ -83,6 +83,16 @@ public:
     FORCEINLINE bool IsInPool(const void* ptr) const
     {
         return ptr >= mMemoryRaw && ptr < mMemoryRaw + mCapacity * sizeof(T);
+    }
+
+    FORCEINLINE size_t GetUsed() const
+    {
+        return mCursor;
+    }
+
+    FORCEINLINE size_t GetCapacity() const
+    {
+        return mCapacity;
     }
 
 private:

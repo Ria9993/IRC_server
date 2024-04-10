@@ -33,6 +33,15 @@ public:
 
     ~FlexibleFixedMemoryPool()
     {
+        // DEBUG : Check if there is any memory leak
+        for (size_t i = 0; i < mChunks.size(); ++i)
+        {
+            if (mChunks[i]->GetUsed() != 0)
+            {
+                CoreMemoryLog("[FlexibleFixedMemoryPool] Memory Leak Detected. ChunkIdx: " + ValToString(i) + " Used: " + ValToString(mChunks[i]->GetUsed()));
+            }
+        }
+
         for (size_t i = 0; i < mChunks.size(); ++i)
         {
             delete mChunks[i];
