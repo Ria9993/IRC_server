@@ -3,6 +3,7 @@
 namespace IRC
 {
 
+// Syntax: PASS <password>
 EIrcErrorCode Server::executeClientCommand_PASS(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments)
 {
     const std::string   commandName("PASS");

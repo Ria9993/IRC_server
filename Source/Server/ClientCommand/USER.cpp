@@ -4,7 +4,8 @@
 namespace IRC
 {
 
-EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments)
+// Syntax: USER <username> <hostname> <servername> <realname>
+EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments)
 {
     const std::string   commandName("USER");
     EIrcReplyCode       replyCode;

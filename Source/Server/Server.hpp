@@ -180,7 +180,7 @@ namespace IRC
         /** Client command execution function type
          *  @see "Client command execution functions" Section
          */
-        typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments);
+        typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments);
 
         /** 
          *  @name       Client command execution
@@ -189,7 +189,7 @@ namespace IRC
          *  Each function handles permission and validity checks, execution, and all replies.
          */
         ///@{
-#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments);
+#define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments);
         /**
          *  @param      client          [in]  The client to process the command.
          *  @param      arguments       [in]  Unvalidated arguments of the command. 
@@ -302,24 +302,23 @@ namespace IRC
         std::vector<kevent_t> mEventRegistrationQueue;
         ///@}
 
-        /** @name Client lists
-         * 
-         *  The containers in this group must always be synchronized with each other for the entries.
-         *  If you add or remove a client, you must also add or remove the client in all containers.
-         * 
+        /**
+         *  @name   Client lists
          *  @warning    Do not release a client if the client's event is still exists in the kqueue.
          */
         ///@{
-        std::vector< SharedPtr< ClientControlBlock > > mClients;
+        std::vector< SharedPtr< ClientControlBlock > > mUnregistedClients;
 
         std::map< std::string, SharedPtr< ClientControlBlock > > mNickToClientMap;
         ///@}
 
         /** Queue to release expired clients
          * 
-         *  @see "Disconnect Client"
+         *  @see "Client disconnection"
         */
         std::vector< SharedPtr< ClientControlBlock > > mClientReleaseQueue;
+
+        std::map< std::string, SharedPtr< ChannelControlBlock > > mChannels;
     };
 
 } // namespace irc

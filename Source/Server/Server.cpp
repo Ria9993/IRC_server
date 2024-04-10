@@ -46,7 +46,6 @@ Server::Server(const std::string& serverName, const unsigned short port, const s
     , mServerPort(port)
     , mServerPassword(password)
 {
-    mClients.reserve(CLIENT_RESERVE_MIN);
     mEventRegistrationQueue.reserve(CLIENT_MAX);
 }
 
@@ -237,7 +236,7 @@ EIrcErrorCode Server::eventLoop()
                         newClient->hSocket = clientSocket;
                         newClient->Addr = clientAddr;
                         newClient->LastActiveTime = currentTickServerTime;
-                        mClients.push_back(newClient);
+                        mUnregistedClients.push_back(newClient);
 
                         // Add to the kqueue registration queue.
                         // With pass the controlBlock of SharedPtr to the udata member of kevent.
@@ -408,17 +407,24 @@ EIrcErrorCode Server::destroyResources()
     // Clients and message blocks are will be released automatically by SharedPtr.
     close(mhKqueue);
     close(mhListenSocket);
-    for (size_t i = 0; i < mClients.size(); i++)
+    for (size_t i = 0; i < mUnregistedClients.size(); i++)
     {
-        if (!mClients[i]->bSocketClosed)
+        if (!mUnregistedClients[i]->bSocketClosed)
         {
-            close(mClients[i]->hSocket);
+            close(mUnregistedClients[i]->hSocket);
+        }
+    }
+    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = mNickToClientMap.begin(); it != mNickToClientMap.end(); ++it)
+    {
+        if (!it->second->bSocketClosed)
+        {
+            close(it->second->hSocket);
         }
     }
 
     // Release clients
     // The clients and message blocks are will be released automatically by SharedPtr.
-    mClients.clear();
+    mUnregistedClients.clear();
     mNickToClientMap.clear();
     mEventRegistrationQueue.clear();
     mClientReleaseQueue.clear();
@@ -543,7 +549,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
 
     // Split the arguments into blank(' ')
     const char* msgCommandToken = NULL;
-    std::vector<const char*> msgArgTokens;
+    std::vector<char*> msgArgTokens;
     msgArgTokens.reserve(MESSAGE_LEN_MAX / 2);
 
     bool bPrefixIgnored = false;
@@ -671,13 +677,13 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
     client->bExpired = true;
 
     // Remove the client from client lists
-    for (size_t i = 0; i < mClients.size(); i++)
+    for (size_t i = 0; i < mUnregistedClients.size(); i++)
     {
-        if (mClients[i] == client)
+        if (mUnregistedClients[i] == client)
         {
             // Fast remove (unordered)
-            mClients[i] = mClients.back();
-            mClients.pop_back();
+            mUnregistedClients[i] = mUnregistedClients.back();
+            mUnregistedClients.pop_back();
             break;
         }
     }
@@ -733,13 +739,13 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
     mEventRegistrationQueue.push_back(kev);
 
     // Remove the client from client lists
-    for (size_t i = 0; i < mClients.size(); i++)
+    for (size_t i = 0; i < mUnregistedClients.size(); i++)
     {
-        if (mClients[i] == client)
+        if (mUnregistedClients[i] == client)
         {
             // Fast remove (unordered)
-            mClients[i] = mClients.back();
-            mClients.pop_back();
+            mUnregistedClients[i] = mUnregistedClients.back();
+            mUnregistedClients.pop_back();
             break;
         }
     }
