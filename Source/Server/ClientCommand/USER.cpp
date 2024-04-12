@@ -19,15 +19,15 @@ EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> cl
     // Already registered
     if (client->bRegistered)
     {
-        MakeIrcReplyMsg_ERR_ALREADYREGISTRED(replyCode, replyMsg, mServerName);
-        goto SEND_REPLY;
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_ALREADYREGISTRED(mServerName)));
+        return IRC_SUCCESS;
     }
 
     // Need more parameters
     if (arguments.size() < 4)
     {
-        MakeIrcReplyMsg_ERR_NEEDMOREPARAMS(replyCode, replyMsg, mServerName, commandName);
-        goto SEND_REPLY;
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NEEDMOREPARAMS(mServerName, commandName)));
+        return IRC_SUCCESS;
     }
 
     // Validate names
@@ -56,12 +56,6 @@ EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> cl
 
     // Register the client
     registerClient(client);
-    return IRC_SUCCESS;
-
-
-SEND_REPLY:
-    sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
-
     return IRC_SUCCESS;
 }
 

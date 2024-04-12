@@ -32,16 +32,24 @@ public:
         : Msg()
         , MsgLen(msgLen)
     {
-        Assert(msgLen < MESSAGE_LEN_MAX);
-        std::memcpy(Msg, str, msgLen);
+        // If the string is too long, truncate it.
+        if (msgLen >= MESSAGE_LEN_MAX)
+        {
+            MsgLen = MESSAGE_LEN_MAX - CRLF_LEN_2;
+        }
+        std::memcpy(Msg, str, MsgLen);
     }
 
     FORCEINLINE MsgBlock(const std::string& str)
         : Msg()
         , MsgLen(str.size())
     {
-        Assert(str.size() < MESSAGE_LEN_MAX);
-        std::memcpy(Msg, str.c_str(), str.size());
+        // If the string is too long, truncate it.
+        if (str.size() >= MESSAGE_LEN_MAX)
+        {
+            MsgLen = MESSAGE_LEN_MAX - CRLF_LEN_2;
+        }
+        std::memcpy(Msg, str.c_str(), MsgLen);
     }
 };
 

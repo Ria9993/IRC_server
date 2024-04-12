@@ -226,30 +226,29 @@ namespace IRC
         /** 
          *  @name      Message sending
          *  @note      \li Do not modify the passed message after calling this function.
-         *             \li No changes are made to the message other than adding CR-LF.
          *             \li No check permission of the client to send the message.
         */
         ///@{
         /** Send a message to client.
          * 
          *  @param client   The client to send the message.
-         *  @param msg      The message to send that do not contain CR-LF
+         *  @param msg      The message to send. It can contain CR-LF or not.
          */
         void sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
 
         /** Send a message to channel members.
          * 
          *  @param channel  The channel to send the message.
-         *  @param msg      The message to send that do not contain CR-LF
+         *  @param msg      The message to send. It can contain CR-LF or not.
          *  @param client   A client to exclude from the message sending.
          */
-        void sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient);
+        void sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient = NULL);
 
         /** Send a message to channels the client is connected
          * 
          *  @param client   The client to send the message.
          *                  This client is excluded from the message sending.
-         *  @param msg      The message to send that do not contain CR-LF
+         *  @param msg      The message to send. It can contain CR-LF or not.
          */
         void sendMsgToConnectedChannels(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);
         ///@}

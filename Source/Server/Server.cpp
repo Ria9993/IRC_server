@@ -337,6 +337,16 @@ EIrcErrorCode Server::eventLoop()
                 SharedPtr<MsgBlock> msg = currClient->MsgSendingQueue.front();
                 Assert(msg != NULL);
 
+                // DEBUG : send data and request size
+                std::cout << "msg data : ";
+                for (size_t i = 0; i < msg->MsgLen; i++)
+                {
+                    std::cout << std::hex << static_cast<int>(msg->Msg[i]) << " ";
+                }
+                std::cout << std::endl;
+                std::cout << "cursor : " << currClient->SendMsgBlockCursor << std::endl;
+                std::cout << "Send request size : " << msg->MsgLen - currClient->SendMsgBlockCursor << std::endl;
+
                 const int nSentBytes = send(currClient->hSocket, &msg->Msg[currClient->SendMsgBlockCursor], msg->MsgLen - currClient->SendMsgBlockCursor, 0);
                 if (UNLIKELY(nSentBytes == -1))
                 {
@@ -483,7 +493,7 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBloc
                 }
             }
 
-            // Check if the message is too long
+            // Skip the too long message
             // The messages must be MESSAGE_LEN_MAX or less
             if (separatedMsg->MsgLen == MESSAGE_LEN_MAX)
             {
@@ -525,7 +535,7 @@ EIrcErrorCode Server::separateMsgsFromClientRecvMsgs(SharedPtr<ClientControlBloc
     // Remove the CR-LF from the separated messages
     for (size_t msgIdx = 0; msgIdx < outSeparatedMsgs.size(); msgIdx++)
     {
-        outSeparatedMsgs[msgIdx]->MsgLen -= 2;
+        outSeparatedMsgs[msgIdx]->MsgLen -= CRLF_LEN_2;
     }
 
     return IRC_SUCCESS;
@@ -590,6 +600,14 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     }
     msg->Msg[msg->MsgLen] = '\0';
 
+    // DEBUG
+    std::cout << "msg : ";
+    for (size_t i = 0; i < msg->MsgLen; i++)
+    {
+        std::cout << std::hex << static_cast<int>(msg->Msg[i]) << " ";
+    }
+    std::cout << std::endl;
+
     // I don't think a message with only a prefix is an error.
     // There is also no reply.
     if (msgCommandToken == NULL)
@@ -624,14 +642,10 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         }
     }
 
-    EIrcReplyCode   replyCode;
-    std::string     replyMsg;
-
     // Unknown command name
     if (pCommandExecFunc == NULL)
     {
-        MakeIrcReplyMsg_ERR_UNKNOWNCOMMAND(replyCode, replyMsg, mServerName, msgCommandToken);
-        sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_UNKNOWNCOMMAND(mServerName, msgCommandToken)));
     }
     // Execute the command
     else
@@ -786,6 +800,13 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
         return false;
     }
 
+    // Nickname is already in use
+    if (mNickToClientMap.find(client->Nickname) != mNickToClientMap.end())
+    {
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NICKNAMEINUSE(mServerName, client->Nickname)));
+        return false;
+    }
+
     client->bRegistered = true;
     client->Nickname = client->Nickname;
     mNickToClientMap.insert(std::make_pair(client->Nickname, client));
@@ -794,8 +815,7 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
     {
         EIrcReplyCode   replyCode;
         std::string     replyMsg;
-        MakeIrcReplyMsg_RPL_WELCOME(replyCode, replyMsg, mServerName, client->Nickname);
-        sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_RPL_WELCOME(mServerName, client->Nickname)));
     }
 
     return true;
@@ -806,18 +826,18 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
     Assert(client != NULL);
     Assert(msg != NULL);
 
-    // There must be at least 2 bytes left to insert CR-LF.
-    Assert(msg->MsgLen < MESSAGE_LEN_MAX - 2);
-
     if (client->bExpired)
     {
         return;
     }
 
-    // Insert CR-LF
-    msg->Msg[msg->MsgLen] = '\r';
-    msg->Msg[msg->MsgLen + 1] = '\n';
-    msg->MsgLen += 2;
+    // Insert CR-LF if it is not already in the message
+    if (msg->MsgLen < CRLF_LEN_2 || (msg->Msg[msg->MsgLen - 2] != '\r' && msg->Msg[msg->MsgLen - 1] != '\n'))
+    {
+        msg->Msg[msg->MsgLen] = '\r';
+        msg->Msg[msg->MsgLen + 1] = '\n';
+        msg->MsgLen += CRLF_LEN_2;
+    }
 
     // Enable the write event filter for the client socket.
     if (client->MsgSendingQueue.empty())
@@ -837,7 +857,7 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
     client->MsgSendingQueue.push(msg);
 }
 
-void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient)
+void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient = NULL)
 {
     Assert(channel != NULL);
     Assert(msg != NULL);

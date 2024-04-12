@@ -4,11 +4,9 @@ namespace IRC
 {
 
 // Syntax: PASS <password>
-EIrcErrorCode Server::executeClientCommand_PASS(SharedPtr<ClientControlBlock> client, const std::vector<const char*>& arguments)
+EIrcErrorCode Server::executeClientCommand_PASS(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments)
 {
     const std::string   commandName("PASS");
-    EIrcReplyCode       replyCode;
-    std::string         replyMsg;
 
     if (client->bExpired)
     {
@@ -18,14 +16,12 @@ EIrcErrorCode Server::executeClientCommand_PASS(SharedPtr<ClientControlBlock> cl
     // Already registered
     if (client->bRegistered)
     {
-        MakeIrcReplyMsg_ERR_ALREADYREGISTRED(replyCode, replyMsg, mServerName);
-        sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_ALREADYREGISTRED(mServerName)));
     }
     // Need more parameters
     else if (arguments.size() == 0)
     {
-        MakeIrcReplyMsg_ERR_NEEDMOREPARAMS(replyCode, replyMsg, mServerName, commandName);
-        sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NEEDMOREPARAMS(mServerName, commandName)));
     }
     else
     {

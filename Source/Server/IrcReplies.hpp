@@ -36,12 +36,16 @@ namespace IRC
     IRC_REPLY_X(ERR_BADCHANNELKEY   , 475, (PARM_X, const std::string channel_name), (channel_name + " :Cannot join channel (+k)"))                                                                        \
     IRC_REPLY_X(ERR_CHANNELISFULL   , 471, (PARM_X, const std::string channel_name), (channel_name + " :Cannot join channel (+l)"))                                                                        \
     IRC_REPLY_X(ERR_BADCHANMASK     , 476, (PARM_X, const std::string channel_name), (channel_name + " :Bad Channel Mask"))                                                                                \
-    IRC_REPLY_X(ERR_TOOMANYCHANNELS , 405, (PARM_X, const std::string channel_name), (channel_name + " :You have joined too many channels"))                                                               \
+    IRC_REPLY_X(ERR_UNKNOWNMODE     , 472, (PARM_X, const char mode), (mode + " :is unknown mode char to me"))                                                                                              \
+    IRC_REPLY_X(ERR_CHANOPRIVSNEEDED, 482, (PARM_X, const std::string channel_name), (channel_name + " :You're not channel operator"))                                                                     \
     IRC_REPLY_X(RPL_NOTOPIC         , 331, (PARM_X, const std::string channel_name), (channel_name + " :No topic is set"))                                                                                          \
     IRC_REPLY_X(RPL_TOPIC           , 332, (PARM_X, const std::string channel_name, const std::string topic), (channel_name + " :" + topic))                                                                        \
     IRC_REPLY_X(RPL_LISTSTART       , 321, (PARM_X), (":Channel :Users Name"))                                                                                                                                      \
     IRC_REPLY_X(RPL_LIST            , 322, (PARM_X, const std::string channel_name, const std::string visible_user_count, const std::string topic), (channel_name + " " + visible_user_count + " :" + topic))       \
-    IRC_REPLY_X(RPL_LISTEND         , 323, (PARM_X), (":End of /LIST"))
+    IRC_REPLY_X(RPL_LISTEND         , 323, (PARM_X), (":End of /LIST"))                                                                                                                                             \
+    IRC_REPLY_X(RPL_NAMREPLY        , 353, (PARM_X, const std::string channel_name, const std::string nicknames), (channel_name + " :" + nicknames))                                                               \
+    IRC_REPLY_X(RPL_ENDOFNAMES      , 366, (PARM_X, const std::string channel_name), (channel_name + " :End of /NAMES list"))                                                                                     \
+    IRC_REPLY_X(RPL_CHANNELMODEIS   , 324, (PARM_X, const std::string channel_name, const std::string mode), (channel_name + " " + mode))                                                                         \
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 #define IRC_REPLY_X(reply_code, reply_number, arguments, reply_string) reply_code = reply_number,
@@ -56,30 +60,26 @@ typedef enum {
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-#define IRC_REPLY_X(reply_code, reply_number, arguments, reply_string)             \
-    inline void MakeIrcReplyMsg_##reply_code arguments                             \
-    {                                                                              \
-        outReplyMsg = ":" + serverName + " " + #reply_number + " " + reply_string; \
-        outReplyCode = reply_code;                                                 \
-    }                                                                              \
+#define IRC_REPLY_X(reply_code, reply_number, arguments, reply_string)                              \
+    inline std::string MakeReplyMsg_##reply_code arguments                                           \
+    {                                                                                               \
+        std::string msg = std::string(":") + serverName + " " + #reply_number + " " + reply_string; \
+    }                                                                                               \
 
 
 #define PARM_X \
-    EIrcReplyCode& outReplyCode,\
-    std::string&   outReplyMsg, \
     const std::string    serverName
 
 /**  
  * @defgroup    ReplyMsgMakingFunctions Reply message making functions 
- * @brief       MakeIrcReplyMsg_<reply_code> functions.
+ * @brief       MakeReplyMsg_<reply_code> functions.
 */
 ///@{
 /** Make an IRC reply message.
  * 
- * @param  outReplyCode [out] The reply code.
- * @param  outReplyMsg  [out] The IRC reply message ending with CR-LF.  
  * @param  serverName   [in]  The server name.
  * @param  ...          [in]  The arguments of the reply message.
+ * @return The reply message that is not contain CR-LF.
 */
 IRC_REPLY_TUPLE_LIST
 ///@} 

@@ -197,7 +197,7 @@ public:
      * @warning Don't use without a knowledge of the internal implementation.  
      * @see SharedPtr::GetControlBlock
      */
-    FORCEINLINE SharedPtr(detail::ControlBlock<T>* controlBlock)
+    FORCEINLINE explicit SharedPtr(detail::ControlBlock<T>* controlBlock)
         : mControlBlock(controlBlock)
     {
         Assert(mControlBlock != NULL);

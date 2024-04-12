@@ -8,8 +8,6 @@ namespace IRC
 EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments)
 {
     const std::string   commandName("NICK");
-    EIrcReplyCode       replyCode;
-    std::string         replyMsg;
 
     if (client->bExpired)
     {
@@ -19,8 +17,8 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
     // No nickname given
     if (arguments.size() == 0)
     {
-        MakeIrcReplyMsg_ERR_NONICKNAMEGIVEN(replyCode, replyMsg, mServerName);
-        goto SEND_REPLY;
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NONICKNAMEGIVEN(mServerName)));
+        return IRC_SUCCESS;
     }
 
     // Validate nickname
@@ -28,9 +26,16 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
     {
         if (isalnum(*p) == 0 && *p != '_')
         {
-            MakeIrcReplyMsg_ERR_ERRONEUSNICKNAME(replyCode, replyMsg, mServerName, arguments[0]);
-            goto SEND_REPLY;
+            sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_ERRONEUSNICKNAME(mServerName, arguments[0])));
+            return IRC_SUCCESS;
         }
+    }
+
+    // Too long nickname
+    if (strlen(arguments[0]) > MAX_NICKNAME_LENGTH)
+    {
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_ERRONEUSNICKNAME(mServerName, arguments[0])));
+        return IRC_SUCCESS;
     }
     
     // Empty nickname
@@ -39,8 +44,8 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
     // Nickname is already in use
     if (mNickToClientMap.find(arguments[0]) != mNickToClientMap.end())
     {
-        MakeIrcReplyMsg_ERR_NICKNAMEINUSE(replyCode, replyMsg, mServerName, arguments[0]);
-        goto SEND_REPLY;
+        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NICKNAMEINUSE(mServerName, arguments[0])));
+        return IRC_SUCCESS;
     }
 
     // Try to register the client
@@ -80,11 +85,6 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
         
         return IRC_SUCCESS;
     }
-
-
-
-SEND_REPLY:
-    sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
 
     return IRC_SUCCESS;
 }
