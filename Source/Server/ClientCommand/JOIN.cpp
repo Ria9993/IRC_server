@@ -42,7 +42,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         {
             break;
         }
-        *p = '\0';            
+        *p = '\0';
     }
 
     // Split keys
@@ -74,7 +74,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         SharedPtr<ChannelControlBlock> channel;
 
         // Invalid channel name
-        if (channelName[0] != '#')
+        if (channelName[0] != '#' || channelName[0] == '&')
         {
             sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, channelName)));
             continue;

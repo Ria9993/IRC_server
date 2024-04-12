@@ -831,6 +831,12 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
         return;
     }
 
+    // If the message is too long, truncate it.
+    if (msg->MsgLen >= MESSAGE_LEN_MAX)
+    {
+        msg->MsgLen = MESSAGE_LEN_MAX - CRLF_LEN_2;
+    }
+
     // Insert CR-LF if it is not already in the message
     if (msg->MsgLen < CRLF_LEN_2 || (msg->Msg[msg->MsgLen - 2] != '\r' && msg->Msg[msg->MsgLen - 1] != '\n'))
     {
