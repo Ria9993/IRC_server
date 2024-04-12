@@ -398,8 +398,6 @@ EIrcErrorCode Server::eventLoop()
 
             }
 
-        CONTINUE_NEXT_EVENT_LOOP:;
-
         } // for (int eventIdx = 0; eventIdx < observedEventNum; eventIdx++)
 
     } // while (true)
@@ -601,12 +599,11 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     msg->Msg[msg->MsgLen] = '\0';
 
     // DEBUG
-    std::cout << "msg : ";
-    for (size_t i = 0; i < msg->MsgLen; i++)
+    if (msgCommandToken != NULL && strcmp(msgCommandToken, "QUIT") == 0)
     {
-        std::cout << std::hex << static_cast<int>(msg->Msg[i]) << " ";
+        destroyResources();
+        return IRC_FAILED_UNREACHABLE_CODE;
     }
-    std::cout << std::endl;
 
     // I don't think a message with only a prefix is an error.
     // There is also no reply.
@@ -812,11 +809,7 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
     mNickToClientMap.insert(std::make_pair(client->Nickname, client));
 
     // Send the welcome message
-    {
-        EIrcReplyCode   replyCode;
-        std::string     replyMsg;
-        sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_RPL_WELCOME(mServerName, client->Nickname)));
-    }
+    sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_RPL_WELCOME(mServerName, client->Nickname)));
 
     return true;
 }
@@ -863,7 +856,7 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
     client->MsgSendingQueue.push(msg);
 }
 
-void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient = NULL)
+void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient)
 {
     Assert(channel != NULL);
     Assert(msg != NULL);

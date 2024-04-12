@@ -38,7 +38,7 @@ public:
         {
             if (mChunks[i]->GetUsed() != 0)
             {
-                CoreMemoryLog("[FlexibleFixedMemoryPool] Memory Leak Detected. ChunkIdx: " + ValToString(i) + " Used: " + ValToString(mChunks[i]->GetUsed()));
+                CoreMemoryLeakLog("[FlexibleFixedMemoryPool] Memory Leak Detected. ChunkIdx: " + ValToString(i) + " Used: " + ValToString(mChunks[i]->GetUsed()));
             }
         }
 
@@ -64,7 +64,7 @@ public:
         CoreLog("[FlexibleFixedMemoryPool] New Chunk Created. Total Chunks: " + ValToString(mChunks.size()));
 
     ALLLOCATE_NEW_BLOCK:
-        CoreLog("[FlexibleFixedMemoryPool] Allocate: ChunkIdx: " + ValToString(mChunkCursor));
+        // CoreLog("[FlexibleFixedMemoryPool] Allocate: ChunkIdx: " + ValToString(mChunkCursor));
         Block* block = mChunks[mChunkCursor]->Allocate();
         Assert(block != NULL);
         block->chunkIdx = mChunkCursor;
@@ -76,7 +76,7 @@ public:
         if (ptr == NULL)
             return;
         
-        CoreLog("[FlexibleFixedMemoryPool] Deallocate: Ptr: " + ValToString(ptr));
+        // CoreLog("[FlexibleFixedMemoryPool] Deallocate: Ptr: " + ValToString(ptr));
 
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
         mChunks[block->chunkIdx]->Deallocate(block);

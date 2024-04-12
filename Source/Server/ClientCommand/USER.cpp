@@ -8,8 +8,6 @@ namespace IRC
 EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments)
 {
     const std::string   commandName("USER");
-    EIrcReplyCode       replyCode;
-    std::string         replyMsg;
 
     if (client->bExpired)
     {
@@ -37,8 +35,7 @@ EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> cl
         {
             if (isalnum(*p) == 0 && *p != '_')
             {
-                replyMsg = "ERROR :Invalid USER arguments";
-                sendMsgToClient(client, MakeShared<MsgBlock>(replyMsg));
+                sendMsgToClient(client, MakeShared<MsgBlock>("ERROR :Invalid USER arguments"));
                 forceDisconnectClient(client);
                 
                 return IRC_SUCCESS;

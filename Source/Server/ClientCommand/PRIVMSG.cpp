@@ -20,14 +20,14 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
     }
 
     // No receipients given
-    if (arguments.size() <= 1)
+    if (arguments.size() <= 0)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NORECIPIENT(mServerName, commandName)));
         return IRC_SUCCESS;
     }
 
     // No text to send
-    if (arguments.size() <= 2)
+    if (arguments.size() <= 1)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOTEXTTOSEND(mServerName)));
         return IRC_SUCCESS;
@@ -76,7 +76,8 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
 
             // Send the message to the channel
             const std::string content = arguments[1];
-            sendMsgToChannel(channel, MakeShared<MsgBlock>(MakeReplyMsg_RPL_PRIVMSG(client->Nickname, receiver, content), client));
+            const std::string msg = ":" + client->Nickname + " PRIVMSG " + receiver + " :" + content;
+            sendMsgToChannel(channel, MakeShared<MsgBlock>(msg), client);
         }
 
         // User
@@ -92,7 +93,8 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
 
             // Send the message to the user
             const std::string content = arguments[1];
-            sendMsgToClient(userIter->second, MakeShared<MsgBlock>(MakeReplyMsg_RPL_PRIVMSG(client->Nickname, receiver, content)));
+            const std::string msg = ":" + client->Nickname + " PRIVMSG " + receiver + " :" + content;
+            sendMsgToClient(userIter->second, MakeShared<MsgBlock>(msg));
         }
     }
 

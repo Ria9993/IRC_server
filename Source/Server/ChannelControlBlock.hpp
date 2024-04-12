@@ -38,7 +38,7 @@ struct ChannelControlBlock
     /** Channel has a password */
     bool bPrivate;
 
-    ChannelControlBlock(const std::string& name, SharedPtr< ClientControlBlock > creator)
+    ChannelControlBlock(const std::string& name, SharedPtr< ClientControlBlock > creator, std::string creatorNickname)
         : Name(name)
         , Topic("")
         , Password("")
@@ -47,8 +47,8 @@ struct ChannelControlBlock
         , MaxClients(0)
         , bInviteOnly(false)
     {
-        Clients.insert(std::make_pair(creator->Nickname, creator));
-        Operators.insert(std::make_pair(creator->Nickname, creator));
+        Clients.insert(std::make_pair(creatorNickname, creator));
+        Operators.insert(std::make_pair(creatorNickname, creator));
     }
 };
 

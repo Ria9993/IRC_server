@@ -55,7 +55,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
 
         // Process each mode
         bool bAddMode = (modeStr[0] == '+');
-        std::string changesStr = "" + modeStr[0]; 
+        std::string changesStr = modeStr.substr(0, 1);
         for (size_t i = 1; i < modeStr.size(); i++)
         {
             const char mode = modeStr[i];

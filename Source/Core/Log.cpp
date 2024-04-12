@@ -12,7 +12,12 @@ void CoreLog(const std::string &msg)
 
 void CoreMemoryLog(const std::string &msg)
 {
-    std::cout << ANSI_BRED << "[CORE][MEMORY]" << msg << ANSI_RESET << std::endl;
+    std::cout << ANSI_BBLU << "[CORE][MEMORY]" << msg << ANSI_RESET << std::endl;
+}
+
+void CoreMemoryLeakLog(const std::string& msg)
+{
+    std::cout << ANSI_BRED << "[CORE][MEMORY][LEAK]" << msg << ANSI_RESET << std::endl;
 }
 
 } // namespace IRCCore

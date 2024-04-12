@@ -37,7 +37,7 @@ public:
     {
         if (mCursor != 0)
         {
-            CoreLog("[FixedMemoryPool] Memory Leak Detected. Cursor: " + ValToString(mCursor));
+            CoreMemoryLeakLog("[FixedMemoryPool] Memory Leak Detected. Cursor: " + ValToString(mCursor));
         }
         
         delete[] mMemoryRaw;
@@ -51,7 +51,7 @@ public:
             const size_t idx = mIndices[mCursor++];
             const char* ptrRaw = mMemoryRaw + (idx * sizeof(T));
 
-            CoreLog("[FixedMemoryPool] Allocate: " + ValToStringByHex(reinterpret_cast<const void*>(ptrRaw)) + " idx: " + ValToString(idx));
+            // CoreLog("[FixedMemoryPool] Allocate: " + ValToStringByHex(reinterpret_cast<const void*>(ptrRaw)) + " idx: " + ValToString(idx));
 
             return (T*)ptrRaw;
         }
@@ -71,7 +71,7 @@ public:
             const size_t idx = ptr - (T*)mMemoryRaw;
             mIndices[--mCursor] = idx;
 
-            CoreLog("[FixedMemoryPool] Deallocate: " + ValToStringByHex(ptr) + " idx: " + ValToString(idx));
+            // CoreLog("[FixedMemoryPool] Deallocate: " + ValToStringByHex(ptr) + " idx: " + ValToString(idx));
         }
     }
 
