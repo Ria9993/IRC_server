@@ -734,8 +734,9 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
     mClients.erase(client->Nickname);
 
     // Remove from the channels
-    for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    while (!client->Channels.empty())
     {
+        std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin();
         SharedPtr<ChannelControlBlock> channel = it->second;
         if (channel != NULL)
         {
