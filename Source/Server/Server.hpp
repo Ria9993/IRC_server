@@ -159,11 +159,9 @@ namespace IRC
         /** Execute and reply the client's single message.
          *
          *  @param client            The client to process the message.
-         *  @param msg               The single message to process.
-         *  
-         *  @note                   The message will be 
+         *  @param msg               The single message to process. It contains CR-LF.
+         *                           And it will be modified during the processing. 
          * 
-         *  \internal
          *  @see                    ReplyMsgMakingFunctions
          */
         EIrcErrorCode processClientMsg(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg);

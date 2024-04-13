@@ -553,7 +553,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
 
     // There must be at least one blank space in msg to insert NULL.
     // And msg is a message with CR-LF removed, so there must be at least two blank spaces.
-    Assert(msg->MsgLen < MESSAGE_LEN_MAX - 2);
+    Assert(msg->MsgLen < MESSAGE_LEN_MAX - CRLF_LEN_2);
 
     // Split the arguments into blank(' ')
     const char* msgCommandToken = NULL;
@@ -598,7 +598,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     }
     msg->Msg[msg->MsgLen] = '\0';
 
-    // DEBUG
+    // ! DEBUG
     if (msgCommandToken != NULL && strcmp(msgCommandToken, "QUIT") == 0)
     {
         destroyResources();
