@@ -90,8 +90,9 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
                 continue;
             }
 
-            channel = MakeShared<ChannelControlBlock>(channelName, client, client->Nickname);
+            channel = MakeShared<ChannelControlBlock>(channelName, client);
             mChannels.insert(std::make_pair(channelName, channel));
+            joinClientToChannel(client, channel);
         }
         // Otherwise, check the permission and join the client.
         else
@@ -133,8 +134,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
             }
 
             // Add the client to the channel
-            channel->Clients.insert(std::make_pair(client->Nickname, client));
-            client->Channels.insert(std::make_pair(channelName, channel));
+            joinClientToChannel(client, channel);
         }
 
 
@@ -153,8 +153,8 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         std::string namesMsg = namesTemplate;
         for (std::map<std::string, WeakPtr<ClientControlBlock> >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
         {
-            const SharedPtr<ClientControlBlock> channelClientIter = it->second.Lock();
-            if (channelClientIter == NULL)
+            const SharedPtr<ClientControlBlock> clientIter = it->second.Lock();
+            if (clientIter == NULL)
             {
                 continue;
             }

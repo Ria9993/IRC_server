@@ -41,7 +41,7 @@ public:
 
     std::map<std::string, WeakPtr< ClientControlBlock > > InvitedClients;
 
-    inline ChannelControlBlock(const std::string& name, WeakPtr< ClientControlBlock > creator, std::string creatorNickname)
+    inline ChannelControlBlock(const std::string& name, SharedPtr< ClientControlBlock > creator)
         : Name(name)
         , Topic("")
         , Password("")
@@ -50,8 +50,14 @@ public:
         , MaxClients(0)
         , bInviteOnly(false)
     {
-        Clients.insert(std::make_pair(creatorNickname, creator));
-        Operators.insert(std::make_pair(creatorNickname, creator));
+        Clients.insert(std::make_pair(creator->Nickname, creator));
+        Operators.insert(std::make_pair(creator->Nickname, creator));
+    }
+
+    inline ~ChannelControlBlock()
+    {
+        // ! DEBUG. Destructor call check
+        std::cout << ANSI_BGGRN << "ChannelControlBlock::~ChannelControlBlock() " << Name << ANSI_RESET << std::endl;
     }
 
     FORCEINLINE SharedPtr<ClientControlBlock> FindClient(const std::string& nickname)

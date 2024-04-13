@@ -761,6 +761,13 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
         return IRC_SUCCESS;
     }
 
+    // If there is no reason to wait remaining messages, force disconnect the client.
+    if (client->MsgSendingQueue.empty())
+    {
+        forceDisconnectClient(client, quitMessage);
+        return IRC_SUCCESS;
+    }
+
     client->bExpired = true;
 
     // Block the messages from the client
@@ -804,9 +811,6 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
         }
     }
 
-    // Defer the release of the client.
-    mClientReleaseQueue.push_back(client);
-
     return IRC_SUCCESS;
 }
 
@@ -837,6 +841,18 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
     client->bRegistered = true;
     client->Nickname = client->Nickname;
     mClients.insert(std::make_pair(client->Nickname, client));
+    
+    // Remove the client from the unregistered client list
+    for (size_t i = 0; i < mUnregistedClients.size(); i++)
+    {
+        if (mUnregistedClients[i] == client)
+        {
+            // Fast remove (unordered)
+            mUnregistedClients[i] = mUnregistedClients.back();
+            mUnregistedClients.pop_back();
+            break;
+        }
+    }
 
     // Send the welcome message
     sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_RPL_WELCOME(mServerName, client->Nickname)));
@@ -853,6 +869,7 @@ void Server::joinClientToChannel(SharedPtr<ClientControlBlock> client, SharedPtr
 void Server::partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
 {
     channel->Clients.erase(client->Nickname);
+    channel->Operators.erase(client->Nickname);
     client->Channels.erase(channel->Name);
 }
 

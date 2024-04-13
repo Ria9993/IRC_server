@@ -36,7 +36,14 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            mControlBlock->WeakRefCount += 1;
+            if (mControlBlock->bExpired)
+            {
+                mControlBlock = NULL;
+            }
+            else
+            {
+                mControlBlock->WeakRefCount += 1;
+            }
         }
     }
 
@@ -52,7 +59,14 @@ public:
         mControlBlock = rhs.mControlBlock;
         if (mControlBlock != NULL)
         {
-            mControlBlock->WeakRefCount += 1;
+            if (mControlBlock->bExpired)
+            {
+                mControlBlock = NULL;
+            }
+            else
+            {
+                mControlBlock->WeakRefCount += 1;
+            }
         }
 
         return *this;
