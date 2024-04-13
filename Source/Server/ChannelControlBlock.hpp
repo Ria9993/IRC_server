@@ -11,10 +11,11 @@ using namespace IRCCore;
 namespace IRC
 {
 
-struct ClientControlBlock;
+class ClientControlBlock;
 
-struct ChannelControlBlock
+class ChannelControlBlock : public FlexibleMemoryPoolingBase<ChannelControlBlock>
 {
+public: 
     std::string Name;
 
     /** ""(empty string) means no topic */
@@ -23,9 +24,9 @@ struct ChannelControlBlock
     /** Check bPrivate before checking this */
     std::string Password;
 
-    std::map<std::string, SharedPtr< ClientControlBlock > > Clients;
+    std::map<std::string, WeakPtr< ClientControlBlock > > Clients;
 
-    std::map<std::string, SharedPtr< ClientControlBlock > > Operators;
+    std::map<std::string, WeakPtr< ClientControlBlock > > Operators;
     
     /** '0' means no limit */
     size_t MaxClients;
@@ -40,7 +41,7 @@ struct ChannelControlBlock
 
     std::map<std::string, WeakPtr< ClientControlBlock > > InvitedClients;
 
-    ChannelControlBlock(const std::string& name, SharedPtr< ClientControlBlock > creator, std::string creatorNickname)
+    inline ChannelControlBlock(const std::string& name, WeakPtr< ClientControlBlock > creator, std::string creatorNickname)
         : Name(name)
         , Topic("")
         , Password("")
@@ -51,6 +52,19 @@ struct ChannelControlBlock
     {
         Clients.insert(std::make_pair(creatorNickname, creator));
         Operators.insert(std::make_pair(creatorNickname, creator));
+    }
+
+    FORCEINLINE SharedPtr<ClientControlBlock> FindClient(const std::string& nickname)
+    {
+        std::map<std::string, WeakPtr< ClientControlBlock > >::iterator it = Clients.find(nickname);
+        if (it == Clients.end())
+            return SharedPtr<ClientControlBlock>();
+        return it->second.Lock();
+    }
+
+    FORCEINLINE bool IsOperator(const std::string& nickname)
+    {
+        return Operators.find(nickname) != Operators.end();
     }
 };
 

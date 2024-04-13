@@ -42,7 +42,7 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
     Assert(arguments[0][0] != '\0');
 
     // Nickname is already in use
-    if (mNickToClientMap.find(arguments[0]) != mNickToClientMap.end())
+    if (findClient(arguments[0]) != NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NICKNAMEINUSE(mServerName, arguments[0])));
         return IRC_SUCCESS;
@@ -62,12 +62,12 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
         const std::string oldNickname = client->Nickname;
         const std::string newNickname = arguments[0];
         client->Nickname = newNickname;
-        mNickToClientMap.erase(oldNickname);
-        mNickToClientMap.insert(std::make_pair(newNickname, client));
+        mClients.erase(oldNickname);
+        mClients.insert(std::make_pair(newNickname, client));
 
-        for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+        for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
         {
-            SharedPtr<ChannelControlBlock> channel = it->second.Lock();
+            SharedPtr<ChannelControlBlock> channel = it->second;
             if (channel != NULL)
             {
                 channel->Clients.erase(client->Nickname);

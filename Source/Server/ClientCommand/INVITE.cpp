@@ -28,23 +28,22 @@ EIrcErrorCode Server::executeClientCommand_INVITE(SharedPtr<ClientControlBlock> 
 
     // Find the channel
     const std::string channelName = arguments[1];
-    std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator channelIter = mChannels.find(channelName);
-    if (channelIter == mChannels.end())
+    SharedPtr< ChannelControlBlock > channel = findChannel(channelName);
+    if (channel == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, channelName)));
         return IRC_SUCCESS;
     }
     
     // Check if the client is on the the channel
-    SharedPtr< ChannelControlBlock > channel = channelIter->second;
-    if (channel->Clients.find(client->Nickname) == channel->Clients.end())
+    if (channel->FindClient(client->Nickname) == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOTONCHANNEL(mServerName, channelName)));
         return IRC_SUCCESS;
     }
 
     // Verify permission
-    if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+    if (!channel->IsOperator(client->Nickname))
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
         return IRC_SUCCESS;
@@ -52,16 +51,15 @@ EIrcErrorCode Server::executeClientCommand_INVITE(SharedPtr<ClientControlBlock> 
 
     // Find the target user
     const std::string nickname = arguments[0];
-    std::map< std::string, SharedPtr< ClientControlBlock > >::iterator userIter = mNickToClientMap.find(nickname);
-    if (userIter == mNickToClientMap.end())
+    SharedPtr< ClientControlBlock > target = findClient(nickname);
+    if (target == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHNICK(mServerName, nickname)));
         return IRC_SUCCESS;
     }
 
     // Already on the channel
-    SharedPtr< ClientControlBlock > target = userIter->second;
-    if (channel->Clients.find(target->Nickname) != channel->Clients.end())
+    if (channel->FindClient(target->Nickname) != NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_USERONCHANNEL(mServerName, target->Nickname, channelName)));
         return IRC_SUCCESS;

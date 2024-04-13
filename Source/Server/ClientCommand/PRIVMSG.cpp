@@ -59,16 +59,15 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
         if (receiver[0] == '#')
         {
             // Find the channel
-            std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator channelIter = mChannels.find(receiver);
-            if (channelIter == mChannels.end())
+            SharedPtr<ChannelControlBlock> channel = findChannel(receiver);
+            if (channel == NULL)
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, receiver)));
                 continue;
             }
 
             // Validate permissions
-            SharedPtr< ChannelControlBlock > channel = channelIter->second;
-            if (channel->Clients.find(client->Nickname) == channel->Clients.end())
+            if (channel->FindClient(client->Nickname) == NULL)
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CANNOTSENDTOCHAN(mServerName, receiver)));
                 continue;
@@ -84,8 +83,8 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
         else
         {
             // Find the user
-            std::map< std::string, SharedPtr< ClientControlBlock > >::iterator userIter = mNickToClientMap.find(receiver);
-            if (userIter == mNickToClientMap.end())
+            SharedPtr<ClientControlBlock> user = findClient(receiver);
+            if (user == NULL)
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHNICK(mServerName, receiver)));
                 continue;
@@ -94,7 +93,7 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
             // Send the message to the user
             const std::string content = arguments[1];
             const std::string msg = ":" + client->Nickname + " PRIVMSG " + receiver + " :" + content;
-            sendMsgToClient(userIter->second, MakeShared<MsgBlock>(msg));
+            sendMsgToClient(user, MakeShared<MsgBlock>(msg));
         }
     }
 

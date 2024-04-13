@@ -203,10 +203,22 @@ namespace IRC
 
         /** Register a client to the server.
          *
+         *  Reply the result of the registration.
+         * 
          *  @param client   The client to register.
          *  @return         Result of the registration.
          */
         bool registerClient(SharedPtr<ClientControlBlock> client);
+
+        /** Join a client to the exist channel without any error/permission check. */
+        void joinClientToChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel);
+
+        /** Part a client from the channel without any error/permission check. */
+        void partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel);
+
+        SharedPtr<ClientControlBlock> findClient(const std::string& nickname);
+
+        SharedPtr<ChannelControlBlock> findChannel(const std::string& channelName);
 
         /** 
          *  @name      Message sending
@@ -293,7 +305,8 @@ namespace IRC
         ///@{
         std::vector< SharedPtr< ClientControlBlock > > mUnregistedClients;
 
-        std::map< std::string, SharedPtr< ClientControlBlock > > mNickToClientMap;
+        /** Nickname to client map */
+        std::map< std::string, SharedPtr< ClientControlBlock > > mClients;
         ///@}
 
         /** Queue to release expired clients
@@ -302,7 +315,8 @@ namespace IRC
         */
         std::vector< SharedPtr< ClientControlBlock > > mClientReleaseQueue;
 
-        std::map< std::string, SharedPtr< ChannelControlBlock > > mChannels;
+        /** Channel name to channel map */
+        std::map< std::string, WeakPtr< ChannelControlBlock > > mChannels;
     };
 
 } // namespace irc

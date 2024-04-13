@@ -34,15 +34,14 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
     {
         // Find the channel
         const std::string channelName = arguments[0];
-        std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator channelIter = mChannels.find(channelName);
-        if (channelIter == mChannels.end())
+        SharedPtr<ChannelControlBlock> channel = findChannel(channelName);
+        if (channel == NULL)
         {
             sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, channelName)));
             return IRC_SUCCESS;
         }
 
         // <Mode>
-        SharedPtr< ChannelControlBlock > channel = channelIter->second;
         const std::string modeStr = arguments[1];
         if (modeStr.size() == 0 || (modeStr[0] != '+' && modeStr[0] != '-'))
         {
@@ -79,14 +78,13 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
 
                     // Find the target client
                     const std::string nickname = arguments[modeIndex++];
-                    std::map< std::string, SharedPtr< ClientControlBlock > >::iterator nickIter = mNickToClientMap.find(nickname);
-                    if (nickIter == mNickToClientMap.end())
+                    SharedPtr< ClientControlBlock > targetClient = findClient(nickname);
+                    if (targetClient == NULL)
                     {
                         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHNICK(mServerName, nickname)));
                         continue;
                     }
 
-                    SharedPtr< ClientControlBlock > targetClient = nickIter->second;
                     if (bAddMode)
                     {
                         channel->Operators.insert(std::make_pair(targetClient->Nickname, targetClient));
@@ -104,7 +102,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
             case 'i':
                 {
                     // Check if the client is a channel operator
-                    if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+                    if (!channel->IsOperator(client->Nickname))
                     {
                         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
                         continue;
@@ -119,7 +117,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
             case 't':
                 {
                     // Check if the client is a channel operator
-                    if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+                    if (!channel->IsOperator(client->Nickname))
                     {
                         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
                         continue;
@@ -134,7 +132,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
             case 'k':
                 {
                     // Check if the client is a channel operator
-                    if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+                    if (!channel->IsOperator(client->Nickname))
                     {
                         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
                         continue;
@@ -166,7 +164,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
             case 'l':
                 {
                     // Check if the client is a channel operator
-                    if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+                    if (!channel->IsOperator(client->Nickname))
                     {
                         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
                         continue;

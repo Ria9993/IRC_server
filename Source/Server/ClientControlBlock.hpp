@@ -21,8 +21,9 @@ namespace IRC
  * 
  * @details    new/delete overrided with memory pool.
  */
-struct ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
+class ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
 {
+public: 
     int hSocket;
 
     sockaddr_in_t Addr;
@@ -62,7 +63,7 @@ struct ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
     size_t SendMsgBlockCursor;
 
     /** Map of channel name to the channel control block that the client is connected. */
-    std::map< std::string, WeakPtr< ChannelControlBlock > > Channels;
+    std::map< std::string, SharedPtr< ChannelControlBlock > > Channels;
 
     FORCEINLINE ClientControlBlock()
         : hSocket(-1)
@@ -81,6 +82,16 @@ struct ClientControlBlock : public FlexibleMemoryPoolingBase<ClientControlBlock>
         , SendMsgBlockCursor(0)
         , Channels()
     {
+    }
+
+    FORCEINLINE SharedPtr<ChannelControlBlock> FindChannel(const std::string& ChannelName)
+    {
+        std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = Channels.find(ChannelName);
+        if (it != Channels.end())
+        {
+            return it->second;
+        }
+        return SharedPtr<ChannelControlBlock>();
     }
 };
 } // namespace IRC

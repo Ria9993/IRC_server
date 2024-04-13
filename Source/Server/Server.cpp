@@ -433,20 +433,22 @@ EIrcErrorCode Server::destroyResources()
         if (!mUnregistedClients[i]->bSocketClosed)
         {
             close(mUnregistedClients[i]->hSocket);
+            mUnregistedClients[i]->bSocketClosed = true;
         }
     }
-    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = mNickToClientMap.begin(); it != mNickToClientMap.end(); ++it)
+    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = mClients.begin(); it != mClients.end(); ++it)
     {
         if (!it->second->bSocketClosed)
         {
             close(it->second->hSocket);
+            it->second->bSocketClosed = true;
         }
     }
 
     // Release clients
     // The clients and message blocks are will be released automatically by SharedPtr.
     mUnregistedClients.clear();
-    mNickToClientMap.clear();
+    mClients.clear();
     mEventRegistrationQueue.clear();
     mClientReleaseQueue.clear();
 
@@ -729,15 +731,15 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
             break;
         }
     }
-    mNickToClientMap.erase(client->Nickname);
+    mClients.erase(client->Nickname);
 
     // Remove from the channels
-    for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
     {
-        SharedPtr<ChannelControlBlock> channel = it->second.Lock();
+        SharedPtr<ChannelControlBlock> channel = it->second;
         if (channel != NULL)
         {
-            channel->Clients.erase(client->Nickname);
+            partClientFromChannel(client, channel);
         }
     }
 
@@ -782,17 +784,7 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
             break;
         }
     }
-    mNickToClientMap.erase(client->Nickname);
-
-    // Remove from the channels
-    for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
-    {
-        SharedPtr<ChannelControlBlock> channel = it->second.Lock();
-        if (channel != NULL)
-        {
-            channel->Clients.erase(client->Nickname);
-        }
-    }
+    mClients.erase(client->Nickname);
 
     // Send QUIT message to the channels the client is in.
     std::string quitMsgStr = ":" + client->Nickname + " QUIT";
@@ -801,6 +793,16 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
         quitMsgStr += " :" + quitMessage;
     }
     sendMsgToConnectedChannels(client, MakeShared<MsgBlock>(quitMsgStr));
+
+    // Remove from the channels
+    for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    {
+        SharedPtr<ChannelControlBlock> channel = it->second;
+        if (channel != NULL)
+        {
+            partClientFromChannel(client, channel);
+        }
+    }
 
     // Defer the release of the client.
     mClientReleaseQueue.push_back(client);
@@ -826,7 +828,7 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
     }
 
     // Nickname is already in use
-    if (mNickToClientMap.find(client->Nickname) != mNickToClientMap.end())
+    if (findClient(client->Nickname) != NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NICKNAMEINUSE(mServerName, client->Nickname)));
         return false;
@@ -834,12 +836,44 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
 
     client->bRegistered = true;
     client->Nickname = client->Nickname;
-    mNickToClientMap.insert(std::make_pair(client->Nickname, client));
+    mClients.insert(std::make_pair(client->Nickname, client));
 
     // Send the welcome message
     sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_RPL_WELCOME(mServerName, client->Nickname)));
 
     return true;
+}
+
+void Server::joinClientToChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
+{
+    client->Channels.insert(std::make_pair(channel->Name, channel));
+    channel->Clients.insert(std::make_pair(client->Nickname, client));
+}
+
+void Server::partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
+{
+    channel->Clients.erase(client->Nickname);
+    client->Channels.erase(channel->Name);
+}
+
+SharedPtr<ClientControlBlock> Server::findClient(const std::string &nickname)
+{
+    std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = mClients.find(nickname);
+    if (it != mClients.end())
+    {
+        return it->second;
+    }
+    return SharedPtr<ClientControlBlock>();
+}
+
+SharedPtr<ChannelControlBlock> Server::findChannel(const std::string &channelName)
+{
+    std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = mChannels.find(channelName);
+    if (it != mChannels.end())
+    {
+        return it->second.Lock();
+    }
+    return SharedPtr<ChannelControlBlock>();
 }
 
 void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
@@ -889,9 +923,9 @@ void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<
     Assert(channel != NULL);
     Assert(msg != NULL);
 
-    for (std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
+    for (std::map< std::string, WeakPtr< ClientControlBlock > >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
     {
-        SharedPtr<ClientControlBlock> dest = it->second;
+        SharedPtr<ClientControlBlock> dest = it->second.Lock();
         if (dest != NULL && dest != exceptClient)
         {
             sendMsgToClient(dest, msg);
@@ -904,9 +938,9 @@ void Server::sendMsgToConnectedChannels(SharedPtr<ClientControlBlock> client, Sh
     Assert(client != NULL);
     Assert(msg != NULL);
 
-    for (std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
     {
-        SharedPtr<ChannelControlBlock> channel = it->second.Lock();
+        SharedPtr<ChannelControlBlock> channel = it->second;
         if (channel != NULL)
         {
             sendMsgToChannel(channel, msg, client);

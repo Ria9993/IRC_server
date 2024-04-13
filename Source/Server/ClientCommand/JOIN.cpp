@@ -71,7 +71,6 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
     {
         const std::string channelName(channels[i]);
         const std::string channelKey = (i < keys.size()) ? keys[i] : "";
-        SharedPtr<ChannelControlBlock> channel;
 
         // Invalid channel name
         if (channelName[0] != '#' || channelName[0] == '&')
@@ -81,7 +80,8 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         }
 
         // If the channel does not exist, create it and join the client as channel operator.
-        if (mChannels.find(channelName) == mChannels.end())
+        SharedPtr<ChannelControlBlock> channel = findChannel(channelName);
+        if (channel == NULL)
         {
             // Too long channel name
             if (channelName.size() > MAX_CHANNEL_NAME_LENGTH)
@@ -96,15 +96,8 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         // Otherwise, check the permission and join the client.
         else
         {
-            channel = mChannels[channelName];
-            if (channel == NULL)
-            {
-                sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, channelName)));
-                continue;
-            }
-
             // Already joined
-            if (channel->Clients.find(client->Nickname) != channel->Clients.end())
+            if (channel->FindClient(client->Nickname) != NULL)
             {
                 continue;
             }
@@ -158,10 +151,16 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         // Reply NAMES message to the client
         const std::string namesTemplate = MakeReplyMsg_RPL_NAMREPLY(mServerName, channelName, std::string(""));
         std::string namesMsg = namesTemplate;
-        for (std::map<std::string, SharedPtr<ClientControlBlock> >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
+        for (std::map<std::string, WeakPtr<ClientControlBlock> >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
         {
-            const char prefix = (channel->Operators.find(it->first) != channel->Operators.end()) ? '@' : '+';
+            const SharedPtr<ClientControlBlock> channelClientIter = it->second.Lock();
+            if (channelClientIter == NULL)
+            {
+                continue;
+            }
+
             const std::string nickname = it->first;
+            const char prefix = (channel->IsOperator(nickname)) ? '@' : '+';
             const std::string element = prefix + nickname;
 
             // Send multiple NAMES messages if the message size exceeds the MESSAGE_LEN_MAX(512)

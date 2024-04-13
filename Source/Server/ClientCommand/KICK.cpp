@@ -28,23 +28,22 @@ EIrcErrorCode Server::executeClientCommand_KICK(SharedPtr<ClientControlBlock> cl
 
     // Find the channel
     const std::string channelName = arguments[0];
-    std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator channelIter = mChannels.find(channelName);
-    if (channelIter == mChannels.end())
+    SharedPtr< ChannelControlBlock > channel = findChannel(channelName);
+    if (channel == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, channelName)));
         return IRC_SUCCESS;
     }
 
     // Check if the client is on the the channel
-    if (client->Channels.find(channelName) == client->Channels.end())
+    if (channel->FindClient(client->Nickname) == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOTONCHANNEL(mServerName, channelName)));
         return IRC_SUCCESS;
     }
 
     // Verify permission
-    SharedPtr< ChannelControlBlock > channel = channelIter->second;
-    if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+    if (!channel->IsOperator(client->Nickname))
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
         return IRC_SUCCESS;
@@ -52,33 +51,31 @@ EIrcErrorCode Server::executeClientCommand_KICK(SharedPtr<ClientControlBlock> cl
 
     // Find the target user
     const std::string nickname = arguments[1];
-    std::map< std::string, SharedPtr< ClientControlBlock > >::iterator userIter = mNickToClientMap.find(nickname);
-    if (userIter == mNickToClientMap.end())
+    SharedPtr< ClientControlBlock > target = findClient(nickname);
+    if (target == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHNICK(mServerName, nickname)));
         return IRC_SUCCESS;
     }
 
     // Check if the target user is on the the channel
-    if (userIter->second->Channels.find(channelName) == userIter->second->Channels.end())
+    if (channel->FindClient(nickname) == NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_USERNOTINCHANNEL(mServerName, nickname, channelName)));
         return IRC_SUCCESS;
     }
 
     // Kick the target user
-    SharedPtr< ClientControlBlock > targetUser = userIter->second;
-    channel->Clients.erase(targetUser->Nickname);
-    targetUser->Channels.erase(channelName);
+    partClientFromChannel(target, channel);
 
     // Send KICK message to the target user and the channel
     // Additioanlly, append the comment if it exists
-    std::string kickMsg = ":" + client->Nickname + " " + "KICK" + " " + channelName + " " + targetUser->Nickname;
+    std::string kickMsg = ":" + client->Nickname + " " + "KICK" + " " + channelName + " " + target->Nickname;
     if (arguments.size() > 2)
     {
         kickMsg += " :" + std::string(arguments[2]);
     }
-    sendMsgToClient(targetUser, MakeShared<MsgBlock>(kickMsg));
+    sendMsgToClient(target, MakeShared<MsgBlock>(kickMsg));
     sendMsgToChannel(channel, MakeShared<MsgBlock>(kickMsg));
 
     return IRC_SUCCESS;
