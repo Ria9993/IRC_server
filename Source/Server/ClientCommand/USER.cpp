@@ -33,10 +33,9 @@ EIrcErrorCode Server::executeClientCommand_USER(SharedPtr<ClientControlBlock> cl
     {
         for (const char* p = arguments[i]; *p != '\0'; p++)
         {
-            if (isalnum(*p) == 0 && *p != '_')
+            if (isalnum(*p) == 0 && *p != '_' && *p != '*')
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>("ERROR :Invalid USER arguments"));
-                forceDisconnectClient(client);
                 
                 return IRC_SUCCESS;
             }

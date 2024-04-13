@@ -337,16 +337,6 @@ EIrcErrorCode Server::eventLoop()
                 SharedPtr<MsgBlock> msg = currClient->MsgSendingQueue.front();
                 Assert(msg != NULL);
 
-                // DEBUG : send data and request size
-                std::cout << "msg data : ";
-                for (size_t i = 0; i < msg->MsgLen; i++)
-                {
-                    std::cout << std::hex << static_cast<int>(msg->Msg[i]) << " ";
-                }
-                std::cout << std::endl;
-                std::cout << "cursor : " << currClient->SendMsgBlockCursor << std::endl;
-                std::cout << "Send request size : " << msg->MsgLen - currClient->SendMsgBlockCursor << std::endl;
-
                 const int nSentBytes = send(currClient->hSocket, &msg->Msg[currClient->SendMsgBlockCursor], msg->MsgLen - currClient->SendMsgBlockCursor, 0);
                 if (UNLIKELY(nSentBytes == -1))
                 {
@@ -580,6 +570,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
         // <Trail> token
         else if (msg->Msg[i] == ':' && msgArgTokens.size() > 0)
         {
+            msg->Msg[i] = '\0';
             msgArgTokens.push_back(&msg->Msg[i + 1]);
             break;
         }
@@ -904,7 +895,9 @@ void Server::logMessage(const std::string& message) const
 
 void Server::logVerbose(const std::string& message) const
 {
+#ifdef IRC_VERBOSE_LOG
     std::cout << ANSI_WHT << "[LOG][VERBOSE]" << message << std::endl << ANSI_RESET;
+#endif
 }
 
 } // namespace irc

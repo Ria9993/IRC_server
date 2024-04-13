@@ -141,6 +141,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
 
             // Add the client to the channel
             channel->Clients.insert(std::make_pair(client->Nickname, client));
+            client->Channels.insert(std::make_pair(channelName, channel));
         }
 
 
