@@ -112,7 +112,6 @@ public:
             {
                 if (mControlBlock->StrongRefCount == 0)
                 {
-                    CoreLog("WeakPtr Reset(): Delete ControlBlock" + std::string(typeid(T).name()));
                     delete mControlBlock;
                 }
             }

@@ -73,6 +73,10 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
                 channel->Clients.erase(client->Nickname);
                 channel->Clients.insert(std::make_pair(client->Nickname, client));
             }
+            else
+            {
+                client->Channels.erase(it);
+            }
         }
 
         // Send NICK message to all channels the client is in

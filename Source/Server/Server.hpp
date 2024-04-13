@@ -31,19 +31,6 @@ namespace IRC
     /** @class Server
      *  @internal
      *  @note  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
-     *  
-     *  @dot
-     *  digraph ServerClientChannel {
-     *     node [shape=record];
-     *     Server [label="Server"];
-     *     Client [label="ClientControlBlock"];
-     *     Channel [label="ChannelControlBlock"];
-     *  Server -> Client;
-     *  Server -> Channel;
-     *  Channel -> Client;
-     *  Client -> Channel [label="WeakPtr"];
-     *  }
-     *  @enddot
      * 
      * 
      *  @page irc_server_event_loop_process_flow    Server Event Loop Process Flow
