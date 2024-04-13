@@ -863,7 +863,7 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
 void Server::joinClientToChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
 {
     client->Channels[channel->Name] = channel;
-    channel->Clients[client->Nickname], client;
+    channel->Clients[client->Nickname] = client;
 }
 
 void Server::partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
