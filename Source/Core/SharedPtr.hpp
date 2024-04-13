@@ -190,14 +190,7 @@ public:
 
         if (mControlBlock != NULL)
         {
-            if (mControlBlock->bExpired)
-            {
-                mControlBlock = NULL;
-            }
-            else
-            {
-                mControlBlock->StrongRefCount += 1;
-            }
+            mControlBlock->StrongRefCount += 1;
         }
     }
 
@@ -289,15 +282,17 @@ public:
         {
             Assert(mControlBlock->StrongRefCount > 0);
             mControlBlock->StrongRefCount -= 1;
+
             if (mControlBlock->StrongRefCount == 0)
             {
                 T* ptrData = reinterpret_cast<T*>(&mControlBlock->data);
                 ptrData->~T();
 
-                mControlBlock->bExpired = true;
+                Assert(mControlBlock->StrongRefCount == 0);
 
-                if (mControlBlock->WeakRefCount == 0)
+                if (mControlBlock->WeakRefCount == 0 && !mControlBlock->bExpired)
                 {
+                    mControlBlock->bExpired = true;
                     delete mControlBlock;
                 }
             }

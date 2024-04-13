@@ -36,7 +36,7 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            if (mControlBlock->bExpired)
+            if (mControlBlock->StrongRefCount == 0)
             {
                 mControlBlock = NULL;
             }
@@ -59,7 +59,7 @@ public:
         mControlBlock = rhs.mControlBlock;
         if (mControlBlock != NULL)
         {
-            if (mControlBlock->bExpired)
+            if (mControlBlock->StrongRefCount == 0)
             {
                 mControlBlock = NULL;
             }
@@ -99,7 +99,7 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            if (mControlBlock->bExpired == false)
+            if (mControlBlock->StrongRefCount > 0)
             {
                 return SharedPtr<T>(mControlBlock);
             }
@@ -111,7 +111,7 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            return mControlBlock->bExpired;
+            return mControlBlock->StrongRefCount == 0;
         }
         return true;
     }
@@ -122,10 +122,12 @@ public:
         {
             Assert(mControlBlock->WeakRefCount > 0);
             mControlBlock->WeakRefCount -= 1;
+
             if (mControlBlock->WeakRefCount == 0)
             {
-                if (mControlBlock->StrongRefCount == 0)
+                if (!mControlBlock->bExpired && mControlBlock->StrongRefCount == 0)
                 {
+                    mControlBlock->bExpired = true;
                     delete mControlBlock;
                 }
             }
@@ -138,7 +140,7 @@ public:
     {
         if (mControlBlock != NULL)
         {
-            return mControlBlock->WeakRefCount;
+            return mControlBlock->StrongRefCount;
         }
         return 0;
     }

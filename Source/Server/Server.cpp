@@ -840,7 +840,6 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
     }
 
     client->bRegistered = true;
-    client->Nickname = client->Nickname;
     mClients[client->Nickname] = client;
     
     // Remove the client from the unregistered client list

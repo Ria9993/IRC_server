@@ -34,6 +34,7 @@ public:
     ~FlexibleFixedMemoryPool()
     {
         // DEBUG : Check if there is any memory leak
+        std::cout << ANSI_BBLU << "[FlexibleFixedMemoryPool] Destructor" << ANSI_RESET << std::endl;
         for (size_t i = 0; i < mChunks.size(); ++i)
         {
             if (mChunks[i]->GetUsed() != 0)

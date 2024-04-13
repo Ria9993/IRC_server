@@ -69,9 +69,12 @@ public:
         if (ptr != NULL)
         {
             const size_t idx = ptr - (T*)mMemoryRaw;
+            Assert(mCursor !=0);
             mIndices[--mCursor] = idx;
 
-            // CoreLog("[FixedMemoryPool] Deallocate: " + ValToStringByHex(ptr) + " idx: " + ValToString(idx));
+            // DEBUG
+            // CoreLog("[FixedMemoryPool] Deallocate: " + ValToStringByHex(ptr) + " idx: " + ValToString(idx) + " Cursor: " + ValToString(mCursor) + " Class: " + typeid(T).name());
+            
         }
     }
 
