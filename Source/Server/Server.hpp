@@ -192,13 +192,13 @@ namespace IRC
         */
         ///@{
         /** Close the client socket and release the client. */
-        EIrcErrorCode forceDisconnectClient(SharedPtr<ClientControlBlock> client);
+        EIrcErrorCode forceDisconnectClient(SharedPtr<ClientControlBlock> client, const std::string quitMessage = "");
 
         /** Mark the client's bExpired flag and block the messages from the client, then close the socket after remaining messages are sent. 
          * 
          *  Sending to the client is not able after calling this function. 
         */
-        EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client);
+        EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client, const std::string quitMessage = "");
         ///@}
 
         /** Register a client to the server.

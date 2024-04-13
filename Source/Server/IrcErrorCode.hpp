@@ -6,6 +6,7 @@
 #define IRC_ERROR_CODE_TUPLE_LIST                                                                            \
     IRC_ERROR_CODE_X(IRC_SUCCESS                , 0, "Success")                                              \
     IRC_ERROR_CODE_X(IRC_FAILED_UNREACHABLE_CODE, 5, "Failed to reach the unreachable code")                 \
+    IRC_ERROR_CODE_X(IRC_SHUTDOWN               , 6, "Shutdown")                                             \
                                                                                                              \
     /** @name Related CreateServer() */                                                                      \
     /**@{*/                                                                                                  \

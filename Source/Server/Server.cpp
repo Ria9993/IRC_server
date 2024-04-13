@@ -45,6 +45,8 @@ Server::Server(const std::string& serverName, const unsigned short port, const s
     : mServerName(serverName)
     , mServerPort(port)
     , mServerPassword(password)
+    , mhListenSocket(-1)
+    , mhKqueue(-1)
 {
     mEventRegistrationQueue.reserve(CLIENT_MAX);
 }
@@ -67,19 +69,19 @@ EIrcErrorCode Server::Startup()
     severAddr.sin_port        = htons(mServerPort);
     if (bind(mhListenSocket, reinterpret_cast<struct sockaddr*>(&severAddr), sizeof(severAddr)) == -1)
     {
-        close(mhListenSocket);
+        destroyResources();
         return IRC_FAILED_TO_BIND_SOCKET;
     }
 
     if (listen(mhListenSocket, SOMAXCONN) == -1)
     {
-        close(mhListenSocket);
+        destroyResources();
         return IRC_FAILED_TO_LISTEN_SOCKET;
     }
 
     if (fcntl(mhListenSocket, F_SETFL, O_NONBLOCK) == -1)
     {
-        close(mhListenSocket);
+        destroyResources();
         return IRC_FAILED_TO_SETSOCKOPT_SOCKET;
     }
     
@@ -87,7 +89,7 @@ EIrcErrorCode Server::Startup()
     mhKqueue = kqueue();
     if (mhKqueue == -1)
     {
-        close(mhListenSocket);
+        destroyResources();
         return IRC_FAILED_TO_CREATE_KQUEUE;
     }
 
@@ -98,8 +100,7 @@ EIrcErrorCode Server::Startup()
     evListen.flags  = EV_ADD;
     if (kevent(mhKqueue, &evListen, 1, NULL, 0, NULL) == -1)
     {
-        close(mhListenSocket);
-        close(mhKqueue);
+        destroyResources();
         return IRC_FAILED_TO_ADD_KEVENT;
     }
 
@@ -197,7 +198,21 @@ EIrcErrorCode Server::eventLoop()
                 {
                     logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
                     SharedPtr<ClientControlBlock> client = getClientFromKeventUdata(currEvent);
-                    EIrcErrorCode err = forceDisconnectClient(client);
+                    if (client == NULL)
+                    {
+                        continue;
+                    }
+
+                    EIrcErrorCode err;
+                    if (currEvent.flags & EV_EOF)
+                    {
+                        err = forceDisconnectClient(client, "Connection closed by client.");
+                    }
+                    else
+                    {
+                        err = forceDisconnectClient(client, "Socket error.");
+                    }
+
                     if (UNLIKELY(err != IRC_SUCCESS))
                     {
                         return err;
@@ -283,7 +298,7 @@ EIrcErrorCode Server::eventLoop()
                     if (UNLIKELY(nRecvBytes == -1))
                     {
                         logErrorCode(IRC_FAILED_TO_RECV_SOCKET);
-                        EIrcErrorCode err = forceDisconnectClient(currClient);
+                        EIrcErrorCode err = forceDisconnectClient(currClient, "Failed to receive message from client.");
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
                             return err;
@@ -294,7 +309,7 @@ EIrcErrorCode Server::eventLoop()
                     else if (nRecvBytes == 0)
                     {
                         logMessage("Client disconnected. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname);
-                        EIrcErrorCode err = forceDisconnectClient(currClient);
+                        EIrcErrorCode err = forceDisconnectClient(currClient, "Connection closed by client.");
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
                             return err;
@@ -341,7 +356,7 @@ EIrcErrorCode Server::eventLoop()
                 if (UNLIKELY(nSentBytes == -1))
                 {
                     logErrorCode(IRC_FAILED_TO_SEND_SOCKET);
-                    EIrcErrorCode err = forceDisconnectClient(currClient);
+                    EIrcErrorCode err = forceDisconnectClient(currClient, "Failed to send message to client.");
                     if (UNLIKELY(err != IRC_SUCCESS))
                     {
                         return err;
@@ -403,8 +418,16 @@ EIrcErrorCode Server::destroyResources()
 
     // Close sockets
     // Clients and message blocks are will be released automatically by SharedPtr.
-    close(mhKqueue);
-    close(mhListenSocket);
+    if (mhKqueue != -1)
+    {
+        close(mhKqueue);
+        mhKqueue = -1;
+    }
+    if (mhListenSocket != -1)
+    {
+        close(mhListenSocket);
+        mhListenSocket = -1;
+    }
     for (size_t i = 0; i < mUnregistedClients.size(); i++)
     {
         if (!mUnregistedClients[i]->bSocketClosed)
@@ -596,7 +619,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     msg->Msg[msg->MsgLen] = '\0';
 
     // ! DEBUG
-    if (msgCommandToken != NULL && strcmp(msgCommandToken, "FORECEQUIT") == 0)
+    if (msgCommandToken != NULL && strcmp(msgCommandToken, "SHUTDOWN") == 0)
     {
         return IRC_FAILED_UNREACHABLE_CODE;
     }
@@ -660,7 +683,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     return IRC_SUCCESS;
 }
 
-EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client)
+EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client, const std::string quitMessage)
 {
     if (client == NULL)
     {
@@ -673,6 +696,19 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
         return IRC_SUCCESS;
     }
 
+    // Send QUIT message to the channels the client is in
+    // (only at the first time when bExpired flag becomes true)
+    if (!client->bExpired)
+    {
+        std::string quitMsgStr = ":" + client->Nickname + " QUIT";
+        if (!quitMessage.empty())
+        {
+            quitMsgStr += " :" + quitMessage;
+        }
+        sendMsgToConnectedChannels(client, MakeShared<MsgBlock>(quitMsgStr));
+    }
+    client->bExpired = true;
+
     // Close the client socket.
     // close() on a socket will delete the corresponding kevent from the kqueue.
     if (UNLIKELY(close(client->hSocket) == -1))
@@ -681,7 +717,6 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
         return IRC_FAILED_TO_CLOSE_SOCKET;
     }
     client->bSocketClosed = true;
-    client->bExpired = true;
 
     // Remove the client from client lists
     for (size_t i = 0; i < mUnregistedClients.size(); i++)
@@ -706,16 +741,13 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
         }
     }
 
-    // TODO: Send QUIT message to the channels the client is in.
-
-
     // Defer the release of the client.
     mClientReleaseQueue.push_back(client);
 
     return IRC_SUCCESS;
 }
 
-EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
+EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, const std::string quitMessage)
 {
     if (client == NULL)
     {
@@ -728,12 +760,6 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
     }
 
     client->bExpired = true;
-
-    // If the client has no message to send, disconnect the client immediately.
-    if (client->MsgSendingQueue.empty())
-    {
-        return forceDisconnectClient(client);
-    }
 
     // Block the messages from the client
     kevent_t kev;
@@ -768,7 +794,13 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client)
         }
     }
 
-    // TODO: Send QUIT message to the channels the client is in.
+    // Send QUIT message to the channels the client is in.
+    std::string quitMsgStr = ":" + client->Nickname + " QUIT";
+    if (!quitMessage.empty())
+    {
+        quitMsgStr += " :" + quitMessage;
+    }
+    sendMsgToConnectedChannels(client, MakeShared<MsgBlock>(quitMsgStr));
 
     // Defer the release of the client.
     mClientReleaseQueue.push_back(client);
@@ -894,6 +926,7 @@ void Server::logMessage(const std::string& message) const
 
 void Server::logVerbose(const std::string& message) const
 {
+    (void)message;
 #ifdef IRC_VERBOSE_LOG
     std::cout << ANSI_WHT << "[LOG][VERBOSE]" << message << std::endl << ANSI_RESET;
 #endif
