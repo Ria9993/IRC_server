@@ -108,13 +108,6 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
             {
                 continue;
             }
-            
-            // Invite only
-            if (channel->bInviteOnly)
-            {
-                sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_INVITEONLYCHAN(mServerName, channelName)));
-                continue;
-            }
 
             // Validate the password
             if (channel->bPrivate && channel->Password != channelKey)
@@ -128,6 +121,22 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANNELISFULL(mServerName, channelName)));
                 continue;
+            }
+
+            // Invite only
+            if (channel->bInviteOnly)
+            {
+                // Already invited
+                if (channel->InvitedClients.find(client->Nickname) != channel->InvitedClients.end())
+                {
+                    channel->InvitedClients.erase(client->Nickname);
+                }
+                // Not invited
+                else
+                {
+                    sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_INVITEONLYCHAN(mServerName, channelName)));
+                    continue;
+                }
             }
 
             // Add the client to the channel

@@ -38,6 +38,8 @@ struct ChannelControlBlock
     /** Channel has a password */
     bool bPrivate;
 
+    std::map<std::string, WeakPtr< ClientControlBlock > > InvitedClients;
+
     ChannelControlBlock(const std::string& name, SharedPtr< ClientControlBlock > creator, std::string creatorNickname)
         : Name(name)
         , Topic("")
