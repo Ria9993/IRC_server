@@ -80,11 +80,14 @@ EIrcErrorCode Server::executeClientCommand_TOPIC(SharedPtr<ClientControlBlock> c
             return IRC_SUCCESS;
         }
 
-        // Verify topic permission
-        if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+        if (channel->bTopicProtected)
         {
-            sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
-            return IRC_SUCCESS;
+            // Verify topic permission
+            if (channel->Operators.find(client->Nickname) == channel->Operators.end())
+            {
+                sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANOPRIVSNEEDED(mServerName, channelName)));
+                return IRC_SUCCESS;
+            }
         }
 
         // Set topic

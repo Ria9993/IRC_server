@@ -596,7 +596,7 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
     msg->Msg[msg->MsgLen] = '\0';
 
     // ! DEBUG
-    if (msgCommandToken != NULL && strcmp(msgCommandToken, "QUIT") == 0)
+    if (msgCommandToken != NULL && strcmp(msgCommandToken, "FORECEQUIT") == 0)
     {
         return IRC_FAILED_UNREACHABLE_CODE;
     }
