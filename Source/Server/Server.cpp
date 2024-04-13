@@ -840,7 +840,7 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
 
     client->bRegistered = true;
     client->Nickname = client->Nickname;
-    mClients.insert(std::make_pair(client->Nickname, client));
+    mClients[client->Nickname] = client;
     
     // Remove the client from the unregistered client list
     for (size_t i = 0; i < mUnregistedClients.size(); i++)
@@ -862,8 +862,8 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
 
 void Server::joinClientToChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
 {
-    client->Channels.insert(std::make_pair(channel->Name, channel));
-    channel->Clients.insert(std::make_pair(client->Nickname, client));
+    client->Channels[channel->Name] = channel;
+    channel->Clients[client->Nickname], client;
 }
 
 void Server::partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel)
@@ -878,6 +878,12 @@ SharedPtr<ClientControlBlock> Server::findClientGlobal(const std::string &nickna
     std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = mClients.find(nickname);
     if (it != mClients.end())
     {
+        if (it->second->bExpired)
+        {
+            mClients.erase(it);
+            return SharedPtr<ClientControlBlock>();
+        }
+
         return it->second;
     }
     return SharedPtr<ClientControlBlock>();
@@ -888,6 +894,13 @@ SharedPtr<ChannelControlBlock> Server::findChannelGlobal(const std::string &chan
     std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = mChannels.find(channelName);
     if (it != mChannels.end())
     {
+        // Remove the expired channel
+        if (it->second.Expired())
+        {
+            mChannels.erase(it);
+            return SharedPtr<ChannelControlBlock>();
+        }
+
         return it->second.Lock();
     }
     return SharedPtr<ChannelControlBlock>();

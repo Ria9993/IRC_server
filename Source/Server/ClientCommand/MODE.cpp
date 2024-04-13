@@ -87,7 +87,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
 
                     if (bAddMode)
                     {
-                        channel->Operators.insert(std::make_pair(targetClient->Nickname, targetClient));
+                        channel->Operators[targetClient->Nickname] = targetClient;
                     }
                     else
                     {

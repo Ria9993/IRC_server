@@ -72,7 +72,7 @@ EIrcErrorCode Server::executeClientCommand_INVITE(SharedPtr<ClientControlBlock> 
     }
 
     // Add the client to the invited list
-    channel->InvitedClients.insert(std::make_pair(target->Nickname, target));
+    channel->InvitedClients[target->Nickname] = target;
 
     // Send the INVITE message
     const std::string inviteMsg = ":" + client->Nickname + " INVITE " + target->Nickname + " :" + channelName;

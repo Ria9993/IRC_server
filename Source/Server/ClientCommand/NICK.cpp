@@ -63,7 +63,7 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
         const std::string newNickname = arguments[0];
         client->Nickname = newNickname;
         mClients.erase(oldNickname);
-        mClients.insert(std::make_pair(newNickname, client));
+        mClients[newNickname] = client;
 
         for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
         {
@@ -71,7 +71,7 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
             if (channel != NULL)
             {
                 channel->Clients.erase(client->Nickname);
-                channel->Clients.insert(std::make_pair(client->Nickname, client));
+                channel->Clients[client->Nickname] = client;
             }
             else
             {

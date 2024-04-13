@@ -34,10 +34,14 @@ struct ControlBlock : public FlexibleMemoryPoolingBase< ControlBlock< T > >
     size_t WeakRefCount;
     bool   bExpired;
 
+    /** <T> reference of data for debugging watch */
+    T& _Data;
+
     FORCEINLINE ControlBlock()
         : StrongRefCount(0)
         , WeakRefCount(0)
         , bExpired(false)
+        , _Data(reinterpret_cast<T&>(data))
     {
     }
 
@@ -179,6 +183,11 @@ public:
     FORCEINLINE SharedPtr(const SharedPtr<T>& rhs)
         : mControlBlock(rhs.mControlBlock)
     {
+        if (&rhs == this)
+        {
+            return;
+        }
+
         if (mControlBlock != NULL)
         {
             if (mControlBlock->bExpired)

@@ -49,6 +49,8 @@ public:
         , Operators()
         , MaxClients(0)
         , bInviteOnly(false)
+        , bTopicProtected(false)
+        , bPrivate(false)
     {
         Clients.insert(std::make_pair(creatorNickname, creator));
         Operators.insert(std::make_pair(creatorNickname, creator));
@@ -57,14 +59,22 @@ public:
     inline ~ChannelControlBlock()
     {
         // ! DEBUG. Destructor call check
-        std::cout << ANSI_BGGRN << "ChannelControlBlock::~ChannelControlBlock() " << Name << ANSI_RESET << std::endl;
+        std::cout << ANSI_BGRN << "ChannelControlBlock::~ChannelControlBlock() " << Name << ANSI_RESET << std::endl;
     }
 
     FORCEINLINE SharedPtr<ClientControlBlock> FindClient(const std::string& nickname)
     {
         std::map<std::string, WeakPtr< ClientControlBlock > >::iterator it = Clients.find(nickname);
         if (it == Clients.end())
+        {
             return SharedPtr<ClientControlBlock>();
+        }
+        else if (it->second.Expired())
+        {
+            Clients.erase(it);
+            Operators.erase(nickname);
+            return SharedPtr<ClientControlBlock>();
+        }
         return it->second.Lock();
     }
 

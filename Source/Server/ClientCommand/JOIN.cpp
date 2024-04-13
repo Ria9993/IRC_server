@@ -91,7 +91,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
             }
 
             channel = MakeShared<ChannelControlBlock>(channelName, client, client->Nickname);
-            mChannels.insert(std::make_pair(channelName, channel));
+            mChannels[channelName] = channel;
             joinClientToChannel(client, channel);
         }
         // Otherwise, check the permission and join the client.
