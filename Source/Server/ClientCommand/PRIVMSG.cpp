@@ -59,7 +59,7 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
         if (receiver[0] == '#')
         {
             // Find the channel
-            SharedPtr<ChannelControlBlock> channel = findChannel(receiver);
+            SharedPtr<ChannelControlBlock> channel = findChannelGlobal(receiver);
             if (channel == NULL)
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, receiver)));
@@ -83,7 +83,7 @@ EIrcErrorCode Server::executeClientCommand_PRIVMSG(SharedPtr<ClientControlBlock>
         else
         {
             // Find the user
-            SharedPtr<ClientControlBlock> user = findClient(receiver);
+            SharedPtr<ClientControlBlock> user = findClientGlobal(receiver);
             if (user == NULL)
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHNICK(mServerName, receiver)));

@@ -828,7 +828,7 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
     }
 
     // Nickname is already in use
-    if (findClient(client->Nickname) != NULL)
+    if (findClientGlobal(client->Nickname) != NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NICKNAMEINUSE(mServerName, client->Nickname)));
         return false;
@@ -856,7 +856,7 @@ void Server::partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedP
     client->Channels.erase(channel->Name);
 }
 
-SharedPtr<ClientControlBlock> Server::findClient(const std::string &nickname)
+SharedPtr<ClientControlBlock> Server::findClientGlobal(const std::string &nickname)
 {
     std::map< std::string, SharedPtr< ClientControlBlock > >::iterator it = mClients.find(nickname);
     if (it != mClients.end())
@@ -866,7 +866,7 @@ SharedPtr<ClientControlBlock> Server::findClient(const std::string &nickname)
     return SharedPtr<ClientControlBlock>();
 }
 
-SharedPtr<ChannelControlBlock> Server::findChannel(const std::string &channelName)
+SharedPtr<ChannelControlBlock> Server::findChannelGlobal(const std::string &channelName)
 {
     std::map< std::string, WeakPtr< ChannelControlBlock > >::iterator it = mChannels.find(channelName);
     if (it != mChannels.end())

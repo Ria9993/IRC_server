@@ -216,9 +216,9 @@ namespace IRC
         /** Part a client from the channel without any error/permission check. */
         void partClientFromChannel(SharedPtr<ClientControlBlock> client, SharedPtr<ChannelControlBlock> channel);
 
-        SharedPtr<ClientControlBlock> findClient(const std::string& nickname);
+        SharedPtr<ClientControlBlock> findClientGlobal(const std::string& nickname);
 
-        SharedPtr<ChannelControlBlock> findChannel(const std::string& channelName);
+        SharedPtr<ChannelControlBlock> findChannelGlobal(const std::string& channelName);
 
         /** 
          *  @name      Message sending

@@ -80,7 +80,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         }
 
         // If the channel does not exist, create it and join the client as channel operator.
-        SharedPtr<ChannelControlBlock> channel = findChannel(channelName);
+        SharedPtr<ChannelControlBlock> channel = findChannelGlobal(channelName);
         if (channel == NULL)
         {
             // Too long channel name

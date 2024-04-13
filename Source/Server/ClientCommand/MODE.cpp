@@ -34,7 +34,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
     {
         // Find the channel
         const std::string channelName = arguments[0];
-        SharedPtr<ChannelControlBlock> channel = findChannel(channelName);
+        SharedPtr<ChannelControlBlock> channel = findChannelGlobal(channelName);
         if (channel == NULL)
         {
             sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHCHANNEL(mServerName, channelName)));
@@ -78,7 +78,7 @@ EIrcErrorCode Server::executeClientCommand_MODE(SharedPtr<ClientControlBlock> cl
 
                     // Find the target client
                     const std::string nickname = arguments[modeIndex++];
-                    SharedPtr< ClientControlBlock > targetClient = findClient(nickname);
+                    SharedPtr< ClientControlBlock > targetClient = findClientGlobal(nickname);
                     if (targetClient == NULL)
                     {
                         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NOSUCHNICK(mServerName, nickname)));

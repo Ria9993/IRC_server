@@ -42,7 +42,7 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
     Assert(arguments[0][0] != '\0');
 
     // Nickname is already in use
-    if (findClient(arguments[0]) != NULL)
+    if (findClientGlobal(arguments[0]) != NULL)
     {
         sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_NICKNAMEINUSE(mServerName, arguments[0])));
         return IRC_SUCCESS;
