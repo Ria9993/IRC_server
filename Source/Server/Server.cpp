@@ -577,7 +577,13 @@ EIrcErrorCode Server::processClientMsg(SharedPtr<ClientControlBlock> client, Sha
             }
             bPrefixIgnored = true;
         }
-        // Store the token
+        // <Trail> token
+        else if (msg->Msg[i] == ':' && msgArgTokens.size() > 0)
+        {
+            msgArgTokens.push_back(&msg->Msg[i + 1]);
+            break;
+        }
+        // Store the normal argument token
         else if (i < msg->MsgLen)
         {
             if (msgCommandToken == NULL)
