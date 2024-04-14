@@ -177,7 +177,13 @@ namespace IRC
 #define IRC_CLIENT_COMMAND_X(command_name) IRC::EIrcErrorCode executeClientCommand_##command_name(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments);
         /**
          *  @param      client          [in]  The client to process the command.
-         *  @param      arguments       [in]  Unvalidated arguments of the command. 
+         *  @param      arguments       [in]  Unvalidated arguments that separated by space.  
+         *                              Example: "JOIN #channel1,#channel2 key1 key2 :h ello!@:world"  
+         *                              arguments[0] = "#channel1,#channel2"  
+         *                              arguments[1] = "key1"  
+         *                              arguments[2] = "key2"  
+         *                              arguments[3] = "h ello!@:world"  
+         *                                    
          *  @return     The error code of the command execution.
          *  @see        Server/ClientCommand/<COMMAND>.cpp
          */
