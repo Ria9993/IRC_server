@@ -315,7 +315,24 @@ namespace IRC
         */
         std::vector< SharedPtr< ClientControlBlock > > mClientReleaseQueue;
 
-        /** Channel name to channel map */
+        /** Channel name to channel map 
+         * 
+         *  @warning
+         *  # Caution for using WeakPtr
+         *  ## [한국어] 
+         *      WeakPtr이 Expired 되어도 map에서 자동으로 제거되지 않습니다.  
+         *      map을 직접 조작하는 경우 다음과 같은 문제를 주의해야 합니다.  
+         *      만약 expired 된 엔트리가 제거되지 않은 상태에서 동일한 key로 map::insert() 를 시도하면 덮어씌워지지 않습니다. (map::insert()는 동일한 key가 있을 경우 실패합니다.)  
+         *      이러한 경우를 방지하기 위해 expired 된 엔트리를 수동으로 제거하거나, map::insert() 대신 map::operator[] 를 사용해야합니다. (operator[]는 동일한 key가 있을 경우 덮어씌웁니다.)  
+         *      그러므로 가능한 joinClientToChannel(), partClientFromChannel() 등 미리 구현된 함수를 사용해야합니다.
+         *      
+         *  ## [English]
+         *      Even if WeakPtr is Expired, it is not automatically removed from the map.  
+         *      When directly manipulating the map, you should be aware of the following issues.  
+         *      If an expired entry is not removed and an attempt is made to map::insert() with the same key, it will not be overwritten. (map::insert() fails if the same key exists.)  
+         *      To prevent this, you must manually remove the expired entry or use map::operator[] instead of map::insert(). (operator[] overwrites if the same key exists.)  
+         *      Thus, you should use pre-implemented functions such as joinClientToChannel(), partClientFromChannel().
+        */
         std::map< std::string, WeakPtr< ChannelControlBlock > > mChannels;
     };
 
