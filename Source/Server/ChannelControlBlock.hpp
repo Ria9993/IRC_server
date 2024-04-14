@@ -77,7 +77,7 @@ public:
         }
         return it->second.Lock();
     }
-
+    
     FORCEINLINE bool IsOperator(const std::string& nickname)
     {
         return Operators.find(nickname) != Operators.end();

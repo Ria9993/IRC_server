@@ -110,8 +110,9 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
                 continue;
             }
 
-            // Check the server is full
-            if (channel->MaxClients != 0 && channel->Clients.size() >= channel->MaxClients)
+            // Check the channel is full
+            const bool bChannelHasLimit = (channel->MaxClients != 0);
+            if (bChannelHasLimit && channel->Clients.size() >= channel->MaxClients)
             {
                 sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_ERR_CHANNELISFULL(mServerName, channelName)));
                 continue;
@@ -149,6 +150,7 @@ EIrcErrorCode Server::executeClientCommand_JOIN(SharedPtr<ClientControlBlock> cl
         }
 
         // Reply NAMES message to the client
+        // If the message size exceeds the MESSAGE_LEN_MAX(512), send multiple NAMES messages
         const std::string namesTemplate = MakeReplyMsg_RPL_NAMREPLY(mServerName, channelName, std::string(""));
         std::string namesMsg = namesTemplate;
         for (std::map<std::string, WeakPtr<ClientControlBlock> >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)

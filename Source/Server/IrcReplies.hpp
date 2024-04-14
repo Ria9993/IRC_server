@@ -67,7 +67,7 @@ typedef enum {
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 #define IRC_REPLY_X(reply_code, reply_number, arguments, reply_string)                              \
-    inline std::string MakeReplyMsg_##reply_code arguments                                           \
+    inline std::string MakeReplyMsg_##reply_code arguments                                          \
     {                                                                                               \
         std::string msg;                                                                            \
         msg += std::string() + ":" + serverName + " " + #reply_number + " " + reply_string;         \
