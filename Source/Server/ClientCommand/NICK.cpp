@@ -84,7 +84,7 @@ EIrcErrorCode Server::executeClientCommand_NICK(SharedPtr<ClientControlBlock> cl
         SharedPtr<MsgBlock> nickMsg = MakeShared<MsgBlock>(nickMsgStr);
         sendMsgToConnectedChannels(client, nickMsg);
 
-        // Send NICK message to the origin client itself
+        // Send NICK message to the origin client
         sendMsgToClient(client, nickMsg);
         
         return IRC_SUCCESS;

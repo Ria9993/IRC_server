@@ -908,8 +908,10 @@ SharedPtr<ChannelControlBlock> Server::findChannelGlobal(const std::string &chan
 
 void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
 {
-    Assert(client != NULL);
-    Assert(msg != NULL);
+    if (client == NULL || msg == NULL)
+    {
+        return;
+    }
 
     if (client->bExpired)
     {
@@ -950,8 +952,10 @@ void Server::sendMsgToClient(SharedPtr<ClientControlBlock> client, SharedPtr<Msg
 
 void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<MsgBlock> msg, SharedPtr<ClientControlBlock> exceptClient)
 {
-    Assert(channel != NULL);
-    Assert(msg != NULL);
+    if (channel == NULL || msg == NULL)
+    {
+        return;
+    }
 
     for (std::map< std::string, WeakPtr< ClientControlBlock > >::iterator it = channel->Clients.begin(); it != channel->Clients.end(); ++it)
     {
@@ -965,8 +969,10 @@ void Server::sendMsgToChannel(SharedPtr<ChannelControlBlock> channel, SharedPtr<
 
 void Server::sendMsgToConnectedChannels(SharedPtr<ClientControlBlock> client, SharedPtr<MsgBlock> msg)
 {
-    Assert(client != NULL);
-    Assert(msg != NULL);
+    if (client == NULL || msg == NULL)
+    {
+        return;
+    }
 
     for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
     {
