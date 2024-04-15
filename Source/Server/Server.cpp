@@ -154,7 +154,9 @@ EIrcErrorCode Server::eventLoop()
         mEventRegistrationQueue.clear();
 
         // Process the received messages from the clients when there is no observed event.
-        if (observedEventNum == 0)
+        // However, if there are more messages pending than it can handle, it will exceptionally prioritize processing.
+        const size_t pendingMsgWarningThreshold = CLIENT_MAX;
+        if (observedEventNum == 0 || clientsWithRecvMsgToProcessQueue.size() > pendingMsgWarningThreshold)
         {
             for (size_t queueIdx = 0; queueIdx < clientsWithRecvMsgToProcessQueue.size(); queueIdx++)
             {
@@ -336,8 +338,10 @@ EIrcErrorCode Server::eventLoop()
 
                 // Send message to the client
                 SharedPtr<ClientControlBlock> currClient = getClientFromKeventUdata(currEvent);
-                Assert(currClient != NULL);
-                Assert(currClient->hSocket == static_cast<int>(currEvent.ident));
+                if (currClient == NULL)
+                {
+                    continue;
+                }
 
                 if (currClient->bSocketClosed)
                 {

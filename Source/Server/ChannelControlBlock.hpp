@@ -54,12 +54,15 @@ public:
     {
         Clients.insert(std::make_pair(creatorNickname, creator));
         Operators.insert(std::make_pair(creatorNickname, creator));
+
+        // ! DEBUG. Constructor call check
+        std::cout << ANSI_BGRN << "Channel Created: " << Name << ANSI_RESET << std::endl;
     }
 
     inline ~ChannelControlBlock()
     {
         // ! DEBUG. Destructor call check
-        std::cout << ANSI_BGRN << "ChannelControlBlock::~ChannelControlBlock() " << Name << ANSI_RESET << std::endl;
+        std::cout << ANSI_BGRN << "Channel Deleted: " << Name << ANSI_RESET << std::endl;
     }
 
     FORCEINLINE SharedPtr<ClientControlBlock> FindClient(const std::string& nickname)

@@ -73,7 +73,8 @@
 		"random": "cpp",
 		"numbers": "cpp",
 		"cinttypes": "cpp",
-		"queue": "cpp"
+		"queue": "cpp",
+		"thread": "cpp"
 	},
 	"C_Cpp.vcFormat.indent.preserveComments": true,
 	"editor.tokenColorCustomizations": {
