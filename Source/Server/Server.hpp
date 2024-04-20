@@ -140,7 +140,7 @@ namespace IRC
      *
      *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용 가능합니다.
      *      
-     *      @see "Message sending"
+     *      @see MessageSending
      * 
      *      ### 메시지 처리 및 실행
      *      각 클라이언트의 RecvMsgBlocks 에 저장된 수신 메시지들은 "\r\n"을 기준으로 분리되어 있지 않습니다.  
@@ -149,7 +149,7 @@ namespace IRC
      *      각 커맨드 실행 함수는 클라이언트의 권한 및 유효성 검사, 실행, 모든 응답을 처리합니다.  
      *      
      *      각 커맨드 실행 함수는 executeClientCommand_<COMMAND>() 형태로 정의되어 있습니다.
-     *      @see "Client command execution"
+     *      @see ClientCommandExecution
      * 
      *  ## 클라이언트
      *      ### 클라이언트 생성
@@ -244,12 +244,13 @@ namespace IRC
 
     private:
         /** Client command execution function type
-         *  @see "Client command execution functions" Section
+         *  @see ClientCommandExecution
          */
         typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments);
 
         /** 
          *  @name       Client command execution
+         *  @defgroup   ClientCommandExecution
          *  @brief      Execute and reply the client command.
          *  
          *  Each function handles permission and validity checks, execution, and all replies.
@@ -274,7 +275,8 @@ namespace IRC
 
     private:
         /**
-         * @name    Client disconnection
+         * @name     Client disconnection
+         * @defgroup ClientDisconnection
          * @note    The releases of the disconnected clients are deferred to the next main event loop for the remaining kevents of the client.
         */
         ///@{
@@ -309,6 +311,7 @@ namespace IRC
 
         /** 
          *  @name      Message sending
+         *  @defgroup  MessageSending
          *  @note      \li Do not modify the passed message after calling this function.
          *             \li No check permission of the client to send the message.
         */
@@ -398,7 +401,7 @@ namespace IRC
 
         /** Queue to release expired clients
          * 
-         *  @see "Client disconnection"
+         *  @see   ClientDisconnection
         */
         std::vector< SharedPtr< ClientControlBlock > > mClientReleaseQueue;
 
