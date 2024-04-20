@@ -63,6 +63,15 @@ namespace IRC
      *           chan2 [ label = "#chan2" ];
      *           chan1 -> chan2 [style=invis];
      *       }
+     * 
+     *       subgraph cluster_msgblocks {
+     *           label = "MsgBlocks";
+     *           Msg1
+     *           Msg2
+     *           Msg3
+     *           Msg1 -> Msg2 [style=invis];
+     *           Msg2 -> Msg3 [style=invis];
+     *       }
      *       
      *       {
      *           a -> chan1
@@ -75,6 +84,11 @@ namespace IRC
      *           chan1 -> c [ style = dashed ];
      *           chan2 -> d [ style = dashed ];
      *           chan2 -> a [ style = dashed ];
+     *           a -> Msg1
+     *           b -> Msg1
+     *           c -> Msg1
+     *           c -> Msg2
+     *           d -> Msg3
      *       }
      *
      *       a -> Server [ dir=back, ltail=cluster_clients]
@@ -86,7 +100,7 @@ namespace IRC
      *       }
      *       {
      *           rank = same;
-     *           rank3 -> a -> chan1 [style = invis];
+     *           rank3 -> a -> chan1 -> Msg1 [style = invis];
      *           rankdir = LR;
      *       }
      *   }
