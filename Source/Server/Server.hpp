@@ -250,7 +250,7 @@ namespace IRC
 
         /** 
          *  @name       Client command execution
-         *  @defgroup   ClientCommandExecution
+         *  @anchor     ClientCommandExecution
          *  @brief      Execute and reply the client command.
          *  
          *  Each function handles permission and validity checks, execution, and all replies.
