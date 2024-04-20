@@ -29,6 +29,69 @@ namespace IRC
 {
 
     /** @class Server
+     *  
+     *  ### Hierarchy diagram
+     *   \dot
+     *   digraph ST {
+     *       node [ shape=square ];
+     *       newrank=true;
+     *       compound=true;
+     *       rankdir = "LR";
+     *       
+     *       // make invisible ranks
+     *       rank1 [style=invisible];
+     *       rank2 [style=invisible];
+     *       rank3 [style=invisible]
+     *       rank1 -> rank2 [style=invis];
+     *       rank2 -> rank3 [style=invis];
+     *
+     *       subgraph cluster_clients {
+     *           label = "Clients";
+     *           a;
+     *           b;
+     *           c;
+     *           d;
+     *           e;
+     *           a -> b [style=invis];
+     *           b -> c [style=invis];
+     *           c -> d [style=invis];
+     *           d -> e [style=invis];
+     *       }
+     *       subgraph cluster_channels {
+     *           label = "Channels";
+     *           chan1 [ label = "#chan1" ];
+     *           chan2 [ label = "#chan2" ];
+     *           chan1 -> chan2 [style=invis];
+     *       }
+     *       
+     *       {
+     *           a -> chan1
+     *           a -> chan2
+     *           b -> chan1
+     *           c -> chan1
+     *           d -> chan2
+     *           chan1 -> a [ style = dashed ];
+     *           chan1 -> b [ style = dashed ];
+     *           chan1 -> c [ style = dashed ];
+     *           chan2 -> d [ style = dashed ];
+     *           chan2 -> a [ style = dashed ];
+     *       }
+     *
+     *       a -> Server [ dir=back, ltail=cluster_clients]
+     *       Server -> chan1 [lhead=cluster_channels, style = dashed]
+     *       {
+     *           rank = same;
+     *           rank1 -> Server [style = invis];
+     *           rankdir = LR;
+     *       }
+     *       {
+     *           rank = same;
+     *           rank3 -> a -> chan1 [style = invis];
+     *           rankdir = LR;
+     *       }
+     *   }
+     *   \enddot
+     * 
      *  @internal
      *  @note  See [ \ref irc_server_event_loop_process_flow ] before reading implementation details.
      * 
