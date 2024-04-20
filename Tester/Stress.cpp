@@ -68,18 +68,25 @@ int test()
 
     std::cout << "Connected to localhost:6667" << std::endl;
 
+
     // Register to the server
     std::string message;
     message = std::string("PASS ") + PASSWORD + "\r\n";
     send(sockfd, message.c_str(), message.length(), 0);
-    
+    fsync(sockfd);
+    usleep(1000 * 1000);
+
     std::string randomNick = "T";
     randomNick += std::to_string(rand() % RANDOM_USER_RANGE);
     message = std::string("NICK ") + randomNick + "\r\n";
     send(sockfd, message.c_str(), message.length(), 0);
+    fsync(sockfd);
+    usleep(1000 * 1000);
 
     message = std::string("USER ") + "Tester 0 * :Tester" + "\r\n";
     send(sockfd, message.c_str(), message.length(), 0);
+    fsync(sockfd);
+    usleep(1000 * 1000);
 
     srand(time(NULL));
 
@@ -93,6 +100,7 @@ int test()
             channel += std::to_string(rand() % RANDOM_CHAN_RANGE);
             message = std::string("JOIN ") + channel + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
+            fsync(sockfd);
         }
 
         // Send a message to the random channel
@@ -107,6 +115,7 @@ int test()
             }
             message = std::string("PRIVMSG ") + channel + " :" + content + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
+            fsync(sockfd);
         }
 
         // Send a message to a random user
@@ -121,6 +130,7 @@ int test()
             }
             message = std::string("PRIVMSG ") + user + " :" + content + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
+            fsync(sockfd);
         }
 
         // Leave the channel
@@ -130,6 +140,7 @@ int test()
             channel += std::to_string(rand() % RANDOM_CHAN_RANGE);
             message = std::string("PART ") + channel + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
+            fsync(sockfd);
         }
 
         // Leave the server
@@ -137,11 +148,13 @@ int test()
         {
             message = std::string("QUIT") + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
+            fsync(sockfd);
             
             // Wait 10 seconds for the server to process the QUIT message
             usleep(10 * 1000 * 1000);
             message = std::string("PART ") + "#DUMMY" + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
+            fsync(sockfd);
             break;
         }
 
