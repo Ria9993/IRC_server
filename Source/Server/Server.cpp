@@ -127,8 +127,8 @@ EIrcErrorCode Server::eventLoop()
 
     // The list of clients with receive messages to process
     // Duplicate is allowed.
-    std::vector< SharedPtr< ClientControlBlock > > clientsWithRecvMsgToProcessQueue;
-    clientsWithRecvMsgToProcessQueue.reserve(CLIENT_MAX);
+    std::vector< SharedPtr< ClientControlBlock > > receivedClientMsgProcessQueue;
+    receivedClientMsgProcessQueue.reserve(CLIENT_MAX);
 
     while (true)
     {
@@ -139,7 +139,7 @@ EIrcErrorCode Server::eventLoop()
         // If there is no message to process, the timeout is NULL to wait indefinitely.
         // Else, the timeout is zero to process the received messages from the clients.
         struct timespec* timeout = NULL;
-        if (!clientsWithRecvMsgToProcessQueue.empty())
+        if (!receivedClientMsgProcessQueue.empty())
         {
             timeout = &timeoutZero;
         }
@@ -156,11 +156,11 @@ EIrcErrorCode Server::eventLoop()
         // Process the received messages from the clients when there is no observed event.
         // However, if there are more messages pending than it can handle, it will exceptionally prioritize processing.
         const size_t pendingMsgWarningThreshold = CLIENT_MAX;
-        if (observedEventNum == 0 || clientsWithRecvMsgToProcessQueue.size() > pendingMsgWarningThreshold)
+        if (observedEventNum == 0 || receivedClientMsgProcessQueue.size() > pendingMsgWarningThreshold)
         {
-            for (size_t queueIdx = 0; queueIdx < clientsWithRecvMsgToProcessQueue.size(); queueIdx++)
+            for (size_t queueIdx = 0; queueIdx < receivedClientMsgProcessQueue.size(); queueIdx++)
             {
-                SharedPtr<ClientControlBlock> client = clientsWithRecvMsgToProcessQueue[queueIdx];
+                SharedPtr<ClientControlBlock> client = receivedClientMsgProcessQueue[queueIdx];
 
                 std::vector< SharedPtr< MsgBlock > > separatedMsgs;
                 EIrcErrorCode err = separateMsgsFromClientRecvMsgs(client, separatedMsgs);
@@ -175,7 +175,7 @@ EIrcErrorCode Server::eventLoop()
                     }
                 }
             }
-            clientsWithRecvMsgToProcessQueue.clear();
+            receivedClientMsgProcessQueue.clear();
             continue;
         }
 
@@ -325,7 +325,7 @@ EIrcErrorCode Server::eventLoop()
                     
                     currClient->LastActiveTime = currentTickServerTime;
 
-                    clientsWithRecvMsgToProcessQueue.push_back(currClient);
+                    receivedClientMsgProcessQueue.push_back(currClient);
                 }
             } // if (currEvent.filter == EVFILT_READ)
 

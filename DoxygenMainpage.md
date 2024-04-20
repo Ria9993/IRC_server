@@ -3,6 +3,5 @@
 ***
 ## [CodingStandard](\ref md__coding_standard)
 ***
-## %Server class
-\ref IRC::Server
+## IRC::Server class
 \copydoc IRC::Server

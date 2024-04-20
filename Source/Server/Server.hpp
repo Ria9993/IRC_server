@@ -98,61 +98,65 @@ namespace IRC
      * 
      *  @page irc_server_event_loop_process_flow    Server Event Loop Process Flow
      *  @tableofcontents
-     *  ## [한국어]
-     *      서버의 메인 이벤트 루프는 모든 소켓 이벤트를 비동기적으로 처리합니다.
-     *      ### Error event
-     *          에러 이벤트가 발생한 경우, 해당 소켓을 닫고, 클라이언트라면 연결을 해제합니다.
-     *      ### Read event
-     *          해당하는 소켓이 리슨 소켓인 경우, 새로운 클라이언트를 추가합니다.
-     *          해당하는 소켓이 클라이언트 소켓인 경우, 메시지를 받아서 해당하는 클라이언트의 메시지 처리 대기열에 추가합니다.
-     *      ### Write event
-     *          해당 클라이언트의 메시지 전송 대기열에 있는 메시지를 send합니다.
+     *  
+     *  ## Kqueue & Kevent
+     *      메인 이벤트 루프는 kqueue를 사용하여 이벤트를 처리합니다.  
+     *      모든 클라이언트는 mhKqueue에 등록되며 소켓이 닫히게되면 kqueue에서 자동으로 제거됩니다.  
+     *      
+     *      ### 이벤트 등록
+     *      Kqueue에 이벤트 등록을 하기 위해선 kevent() 함수를 호출하여야 하지만 이는 system call이므로 최대한 줄이는 것이 좋습니다.  
+     *      그러므로 일반적인 Kevent 등록은 mEventRegistrationQueue에 추가하고 다음 이벤트 루프 시작점에서 한 번에 처리합니다.  
+     * 
+     *  ## 메시지
+     *      메시지는 기본적으로 MsgBlock 클래스로 저장됩니다.
+     * 
+     *      ### 메시지 수신
+     *      Recv()로 메시지를 받아 해당하는 클라이언트의 ClientControlBlock::RecvMsgBlocks 에 추가합니다.  
+     *      클라이언트가 가진 마지막 메시지 블록에 남은 공간이 있다면 해당 공간에, 없다면 새로운 메시지 블록 공간에 가능한 byte만큼 recv합니다.  
+     *      수신받은 메시지는 TCP 속도저하를 방지하기 위해 대기열에 추가되며, 즉시 처리하지 않습니다.  
+     *      메시지 처리 대기열은 이벤트가 발생하지 않는 여유러운 시점에 처리됩니다.  
+     *      그러므로 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 receivedClientMsgProcessQueue 목록에 추가해야합니다.
      *
-     *  ## 이벤트 등록
-     *      새로 등록할 이벤트는 이벤트 등록 대기열에 추가하며, 다음 이벤트 루프에서 실제로 등록됩니다.
+     *      ### 메시지 전송
+     *      서버에서 클라이언트로 메시지를 보내는 경우, 송신될 메시지는 각 클라이언트의 ClientControlBlock::MsgSendingQueue 에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.  
+     *      기본적으로 클라이언트 소켓에 대한 kevent는 WRITE 이벤트에 대한 필터가 비활성화 됩니다.  
+     *      전송할 메시지가 생긴 경우, 해당 클라이언트 소켓에 대한 kevent에 WRITE 이벤트 필터를 활성화합니다.  
+     *      kqueue 이벤트 루프에 의해 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.  
      *
-     *  ## 메시지 수신
-     *      메시지를 받아서 해당하는 클라이언트의 ClientControlBlock::RecvMsgBlocks 에 추가합니다.
-     *      클라이언트가 가진 마지막 메시지 블록에 남은 공간이 있다면 해당 공간에, 없다면 새로운 메시지 블록 공간에 가능한 byte만큼 recv합니다.
-     *      수신받은 메시지는 TCP 속도저하를 방지하기 위해 대기열에 추가되며, 즉시 처리되지 않습니다.
-     *      메시지 처리 대기열은 이벤트가 발생하지 않는 여유러운 시점에 처리됩니다.
-     *      또한 Recv가 발생한 경우 해당하는 클라이언트에 처리할 메시지가 있다는 것을 나타내기 위해 해당 클라이언트를 clientsWithRecvMsgToProcessQueue 목록에 추가해야합니다.
-     *
-     *  ## 메시지 전송
-     *      서버에서 클라이언트로 메시지를 보내는 경우, 송신될 메시지는 각 클라이언트의 ClientControlBlock::MsgSendingQueue 에 추가되며 kqueue를 통해 비동기적으로 처리됩니다.
-     *      기본적으로 클라이언트 소켓에 대한 kevent는 WRITE 이벤트에 대한 필터가 비활성화 됩니다.
-     *      전송할 메시지가 생긴 경우, 해당 클라이언트 소켓에 대한 kevent에 WRITE 이벤트 필터를 활성화합니다.
-     *      비동기적으로 모든 전송이 끝난 후 WRITE 이벤트 필터는 다시 비활성화됩니다.
-     *
-     *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용합니다.
-     *
-     *  ## [English]
-     *      Main event loop of server processes all socket events asynchronously.
-     *      ### Error event
-     *          If an error event occurs, close the socket and, if it is a client, disconnect the connection.
-     *      ### Read event
-     *          If the corresponding socket is a listen socket, add a new client.
-     *          If a client socket, receive messages and add them to the message processing queue of the corresponding client.
-     *      ### Write event
-     *          Send the messages in the message send queue of the corresponding client.
-     *
-     *  ## Event registration
-     *      The new events to be registered are added to event registration queue and are actually registered in the next event loop.
-     *
-     *  ## Message receiving
-     *      Add the received message to the ClientControlBlock::RecvMsgBlocks of the corresponding client.
-     *      If there is space left in the client's last message block, receive as much as possible in that space, otherwise in a new message block space.
-     *      Received messages are added to receiving queue to prevent TCP congestion and is not processed immediately.
-     *      A message processing queue is processed at a convenient time when no events occur.
-     *      Also, when Recv occurs, you must add the corresponding client to clientsWithRecvMsgToProcessQueue to indicate that there is a message to process for the client.
-     *
-     *  ## Message sending
-     *      When server sends a message to client, the message to be sent is added to the ClientControlBlock::MsgSendingQueue of each client and processed asynchronously through kqueue.
-     *      By default, kevent for client socket is disabled for the WRITE event filter.
-     *      When a message to send is generated, enable the WRITE event filter for the kevent of the corresponding client socket.
-     *      After all asynchronous transmissions are completed, the WRITE event filter is disabled again.
-     *
-     *      Also, when sending the same message to multiple clients, use a single message block with SharedPtr for sharing.
+     *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용 가능합니다.
+     *      
+     *      @see "Message sending"
+     * 
+     *      ### 메시지 처리 및 실행
+     *      각 클라이언트의 RecvMsgBlocks 에 저장된 수신 메시지들은 "\r\n"을 기준으로 분리되어 있지 않습니다.  
+     *      그러므로 separateMsgsFromClientRecvMsgs() 함수를 통해 수신 메시지를 "\r\n"을 기준으로 분리한 뒤,  
+     *      processClientMsg() 함수에서 단일 메시지의 커맨드를 식별 후 해당하는 커맨드 실행 함수를 호출합니다.    
+     *      각 커맨드 실행 함수는 클라이언트의 권한 및 유효성 검사, 실행, 모든 응답을 처리합니다.  
+     *      
+     *      각 커맨드 실행 함수는 executeClientCommand_<COMMAND>() 형태로 정의되어 있습니다.
+     *      @see "Client command execution"
+     * 
+     *  ## 클라이언트
+     * 
+     *      ## 클라이언트 생성
+     *          클라이언트가 최초로 Accept()되면 클라이언트의 ClientControlBlock이 생성되고 클라이언트 소켓에 대한 kevent가 등록됩니다.  
+     *          해당 ClientControlBlock은 mUnregistedClients 목록에 추가되고, 후에 PASS/NICK/USER 명령어가 통과되면 mClients 목록으로 이동됩니다.  
+     * 
+     *      ## 클라이언트 소멸
+     *      클라이언트 생성 이후 소켓에 오류가 발생하거나, 클라이언트가 QUIT 명령어를 보내거나 하면 해당 클라이언트는 소멸됩니다.  
+     *      클라이언트는 2가지 종류의 종료가 있습니다.  
+     *      - forceDisconnectClient()  
+     *          곧바로 클라이언트 소켓을 닫습니다.  
+     *      - disconnectClient()  
+     *          클라이언트에게 disconnect 메시지를 보내고 소켓을 닫아야하는 경우에 사용합니다.  
+     *          이 경우 클라이언트는 bExpired 플래그를 설정하고, 남은 메시지 전송이 끝난 후 소켓을 닫습니다.  
+     *      
+     *      소켓이 닫힌 클라이언트의 리소스는 후속 이벤트 루프에서 접근할 가능성이 있으므로, 클라이언트는 mClientReleaseQueue 목록에 추가되어 이벤트 루프에서 소멸됩니다.  
+     * 
+     *  ## 리소스 해제  
+     *      소켓을 제외한 대부분의 리소스는 SharedPtr를 사용하여 관리되기 때문에 명시적인 해제가 필요하지 않습니다.  
+     *      채널 또한 SharedPtr에 의하여 모든 클라이언트가 나가게 되면 자동으로 해제됩니다.  
+     * 
      **/
     class Server
     {
