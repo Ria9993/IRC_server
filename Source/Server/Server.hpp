@@ -152,7 +152,6 @@ namespace IRC
      *      @see "Client command execution"
      * 
      *  ## 클라이언트
-     * 
      *      ### 클라이언트 생성
      *          클라이언트가 최초로 Accept()되면 클라이언트의 ClientControlBlock이 생성되고 클라이언트 소켓에 대한 kevent가 등록됩니다.  
      *          해당 ClientControlBlock은 mUnregistedClients 목록에 추가되고, 후에 PASS/NICK/USER 명령어가 통과되면 mClients 목록으로 이동됩니다.  
