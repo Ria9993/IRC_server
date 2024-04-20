@@ -153,11 +153,11 @@ namespace IRC
      * 
      *  ## 클라이언트
      * 
-     *      ## 클라이언트 생성
+     *      ### 클라이언트 생성
      *          클라이언트가 최초로 Accept()되면 클라이언트의 ClientControlBlock이 생성되고 클라이언트 소켓에 대한 kevent가 등록됩니다.  
      *          해당 ClientControlBlock은 mUnregistedClients 목록에 추가되고, 후에 PASS/NICK/USER 명령어가 통과되면 mClients 목록으로 이동됩니다.  
      * 
-     *      ## 클라이언트 소멸
+     *      ### 클라이언트 소멸
      *      클라이언트 생성 이후 소켓에 오류가 발생하거나, 클라이언트가 QUIT 명령어를 보내거나 하면 해당 클라이언트는 소멸됩니다.  
      *      클라이언트는 2가지 종류의 종료가 있습니다.  
      *      - forceDisconnectClient()  
