@@ -66,6 +66,7 @@ namespace IRC
      * 
      *       subgraph cluster_msgblocks {
      *           label = "MsgBlocks";
+     *           style = dashed;
      *           Msg1
      *           Msg2
      *           Msg3
