@@ -92,7 +92,19 @@ int main()
 같은 메시지를 여러 클라이언트에게 전송할 때 메시지 블록을 공유 가능하도록 한다.  
 
 #### Page Locking Efficiency
-< TODO: Writing >
+kqueue 구현에 해당되는 것은 아니지만,  
+윈도우의 IOCP나 Overlapped I/O같은 경우는 send나 recv를 진행할 때  
+DMA를 위해 해당 메모리 페이지를 Nonpageble하게 일명 page lock을 건다.  
+
+그리고 이를 수행할 때 비용이 존재하고  
+프로세스별로 nonpageble memory를 가질 수 있는 한계가 존재하므로  
+이를 잘 고려하여 구현하는 것이 최대 수용량과 성능을 결정하는데,  
+Recv와 send에 사용되는 `MsgBlock`은 전용 메모리 풀을 사용하고,  
+메모리 풀에서 할당받은 블록은 제일 최근에 해제된 블록이므로  
+Page lock이 필요한 페이지를 최소로 유지할 수 있다.  
+
+거기다 메모리 풀의 구현 또한 이를 고려해  
+내부 청크가 페이지 크기인 4KB 단위로 할당되도록 구구현되어있다.  
 
 #### Delayed Message Processing
 현 구현에서는 클라이언트로부터 받은 메시지를 처리하느라 발생하는 TCP 속도 저하를 방지하기 위해,  
@@ -102,8 +114,8 @@ int main()
 이는 TCP의 속도 저하를 방지하고, 지역성 또한 활용하여 처리 속도를 향상시킬 수 있다.  
 
 #### Delayed Registration
-kqueue에 이벤트를 등록하거나 수정하려면 `kevent()`를 호출해야 하는데  
-`kevent()`는 syscall이므로 호출 횟수를 줄이는 것이 중요하다.  
+kqueue에 이벤트를 등록하거나 수정하려면 `kevent()` 함수를 호출해야 하는데  
+`kevent()` 함수는 syscall이므로 호출 횟수를 줄이는 것이 중요하다.  
 
 이를 위해 kqueue에 대한 모든 이벤트 수정은 `mEventRegistrationQueue` 대기열에 추가되고,  
 다음 이벤트 루프에서 한 번에 처리되게 된다.  
