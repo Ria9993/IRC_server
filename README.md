@@ -55,3 +55,6 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 ### Coding Standard
 - [**./CodingStandard.md**](/CodingStandard.md)
+
+### Core Concepts
+- [**./CoreConcepts.md**](/CoreConcepts.md)
