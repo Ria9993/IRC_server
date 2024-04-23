@@ -103,11 +103,11 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 오히려 이 부분의 복잡도를 올림으로써 다른 부분의 복잡도를 낮추는 등의 기술적인 선택이 이루어졌다.  
 - <https://ria9993.github.io/IRC_server/irc_server_kqueue_udata.html>  
     kevent의 udata필드 값으로 SharedPtr의 ControlBlock을 담는다는 복잡한 구현을 결정한 이유
-- [deferred Message Processing](#deferred-message-processing)  
+- [Deferred Message Processing](#deferred-message-processing)  
     TCP 속도 저하를 방지하기 위해 클라이언트로부터 받은 메시지를 곧바로 처리하지 않고 대기열에 추가하도록 함.  
-- [deferred Registration](#deferred-registration)  
+- [Deferred Registration](#deferred-registration)  
     kqueue에 이벤트를 등록하거나 수정하는 것을 최소화하기 위해 대기열에 추가하고 한 번에 처리함.  
-- [deferred Client Release](#deferred-client-release)  
+- [Deferred Client Release](#deferred-client-release)  
     클라이언트의 연결이 끊어진 후 곧바로 소켓을 닫지 않고 대기열에 추가하여 해제된 클라이언트를 접근하는 예외를 방지함.  
     성능을 더 희생한다면 이 방법을 사용하지 않아도 되었지만,  
     이 방법은 플로우의 분기를 만들지 않고도 예외를 방지할 수 있어 선택함.  
@@ -140,7 +140,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 다만 해당 프로젝트는 C++98을 지원해야 하므로 별도로 구현한 `SharedPtr`와 `WeakPtr`를 사용한다.  
 - Doxygen: [SharedPtr.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_shared_ptr.html)  
-- Source Code: [SharedPtr.h](/Source/Core/SharedPtr.h)
+- Source Code: [SharedPtr.hpp](/Source/Core/SharedPtr.h)
 
 ## Message Block
 보통 고정 크기의 배열에 `recv()`를 받은 후 클라이언트의 `std::string`버퍼에 `append`하는 식으로 구현하지만  
@@ -170,12 +170,13 @@ struct MsgBlock {
 ## Memory Pool
 `MsgBlock`이나 클라이언트는 메모리가 자주 할당되고 해제되는데  
 이를 위해 다음과 같은 메모리 풀을 지원한다.  
-- 고정 개수 메모리 풀: `FixedMemoryPool`  
-- 가변 개수 메모리 풀: `FlexibleFixedMemoryPool`  
+- 고정 개수 메모리 풀: `FixedMemoryPool` (Source: [FixedMemoryPool.hpp](Source/Core/FixedMemoryPool.hpp))
+- 가변 개수 메모리 풀: `FlexibleFixedMemoryPool` (Source: [FlexibleFixedMemoryPool.hpp](Source/Core/FlexibleFixedMemoryPool.hpp))  
 
 또한 메모리 풀을 쉽게 new/delete로 오버로딩하여 사용할 수 있도록  
 `FlexibleMemoryPoolingBase` 베이스 클래스를 제공한다.  
-- Doxygen: [FlexibleMemoryPoolingBase.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_flexible_memory_pooling_base.html)  
+- Doxygen: [FlexibleMemoryPoolingBase.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_flexible_memory_pooling_base.html)
+- Source:  [FlexibleMemoryPoolingBase.hpp](Source/Core/FlexibleMemoryPoolingBase.hpp)
 ```cpp
 class MyClass : public FlexibleMemoryPoolingBase {
     ...
@@ -194,11 +195,11 @@ int main()
 엔트리가 추가되거나 삭제될 때마다 여러 곳의 코드를 수정해야 하는 기능일 때  
 실수를 방지하고 컴파일 시 에러를 발생시킨다.  
 
-- IRC Reply Code: [IrcReplies.h](/Source/Server/IrcReplies.hpp)  
+- IRC Reply Code: [IrcReplies.hpp](/Source/Server/IrcReplies.hpp)  
 서버에서 클라이언트로 보내는 응답 코드를 한 번에 관리한다.  
 전처리기는 enum과, 양식에 맞게 매개변수를 넣으면 메시지를 생성해주는 함수를 생성한다.  
 
-- IRC Command: [IrcCommands.h](/Source/Server/ClientCommand/ClientCommand.hpp)  
+- IRC Command: [ClientCommand.hpp](/Source/Server/ClientCommand/ClientCommand.hpp)  
 클라이언트에서 사용 가능한 커맨드를 한 번에 관리한다.  
 전처리기는 각 커맨드를 수행하는 함수 선언을 생성하고, 명령어를 파싱하여 해당하는 커맨드 함수를 호출하는 코드를 생성한다.  
 
