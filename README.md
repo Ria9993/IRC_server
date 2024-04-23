@@ -69,9 +69,9 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
     - [Memory Pool](#memory-pool)
     - [Preprocessor Tuple](#preprocessor-tuple)
     - [Page Locking Efficiency](#page-locking-efficiency)
-    - [Delayed Message Processing](#delayed-message-processing)
-    - [Delayed Registration](#delayed-registration)
-    - [Delayed Client Release](#delayed-client-release)
+    - [Deferred Message Processing](#deferred-message-processing)
+    - [Deferred Registration](#deferred-registration)
+    - [Deferred Client Release](#deferred-client-release)
 
 # Summary
 해당 프로젝트는 서버로서의 `성능`과 타 프로그래머의 참여를 위한 `유지보수`를 주요 목표로 한다.  
@@ -103,11 +103,11 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 오히려 이 부분의 복잡도를 올림으로써 다른 부분의 복잡도를 낮추는 등의 기술적인 선택이 이루어졌다.  
 - <https://ria9993.github.io/IRC_server/irc_server_kqueue_udata.html>  
     kevent의 udata필드 값으로 SharedPtr의 ControlBlock을 담는다는 복잡한 구현을 결정한 이유
-- [Delayed Message Processing](#delayed-message-processing)  
+- [deferred Message Processing](#deferred-message-processing)  
     TCP 속도 저하를 방지하기 위해 클라이언트로부터 받은 메시지를 곧바로 처리하지 않고 대기열에 추가하도록 함.  
-- [Delayed Registration](#delayed-registration)  
+- [deferred Registration](#deferred-registration)  
     kqueue에 이벤트를 등록하거나 수정하는 것을 최소화하기 위해 대기열에 추가하고 한 번에 처리함.  
-- [Delayed Client Release](#delayed-client-release)  
+- [deferred Client Release](#deferred-client-release)  
     클라이언트의 연결이 끊어진 후 곧바로 소켓을 닫지 않고 대기열에 추가하여 해제된 클라이언트를 접근하는 예외를 방지함.  
     성능을 더 희생한다면 이 방법을 사용하지 않아도 되었지만,  
     이 방법은 플로우의 분기를 만들지 않고도 예외를 방지할 수 있어 선택함.  
@@ -216,21 +216,21 @@ Page lock이 필요한 페이지를 최소로 유지할 수 있다.
 거기다 메모리 풀의 구현 또한 이를 고려해  
 내부 청크가 페이지 크기인 4KB 단위로 할당되도록 구현되어있다.  
 
-## Delayed Message Processing
+## Deferred Message Processing
 현 구현에서는 클라이언트로부터 받은 메시지를 처리하느라 발생하는 TCP 속도 저하를 방지하기 위해,  
 클라이언트로부터 recv한 메시지는 곧바로 처리하지 않고 클라이언트의 `RecvMsgQueue`에 추가 후  
 이벤트가 더 이상 발생하지 않는 여유로운 시점에 한 번에 처리한다.  
 
 이는 TCP의 속도 저하를 방지하고, 지역성 또한 활용하여 처리 속도를 향상시킬 수 있다.  
 
-## Delayed Registration
+## Deferred Registration
 kqueue에 이벤트를 등록하거나 수정하려면 `kevent()` 함수를 호출해야 하는데  
 `kevent()` 함수는 syscall이므로 호출 횟수를 줄이는 것이 중요하다.  
 
 이를 위해 kqueue에 대한 모든 이벤트 수정은 `mEventRegistrationQueue` 대기열에 추가되고,  
 다음 이벤트 루프에서 한 번에 처리되게 된다.  
 
-## Delayed Client Release
+## Deferred Client Release
 위와 다르게 예외를 방지하기 위해서도 딜레이 시키는 경우가 있는데,  
 클라이언트의 소켓에 오류가 나거나 연결이 끊어진 경우는 의도적으로 리소스 해제를 지연시킨다.  
 
