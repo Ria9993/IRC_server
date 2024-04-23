@@ -29,6 +29,7 @@ namespace IRC
 {
 
     /** @class Server
+     *  @nosubgrouping 
      *  
      *  ### Hierarchy diagram
      *   \dot
@@ -140,7 +141,7 @@ namespace IRC
      *
      *      또한 동일한 메시지를 여러 클라이언트에게 보내는 경우, 하나의 메시지 블록을 SharedPtr로 공유하여 사용 가능합니다.
      *      
-     *      @see MessageSending
+     *      @see MessageSending section in IRC::Server class
      * 
      *      ### 메시지 처리 및 실행
      *      각 클라이언트의 RecvMsgBlocks 에 저장된 수신 메시지들은 "\r\n"을 기준으로 분리되어 있지 않습니다.  
@@ -149,7 +150,7 @@ namespace IRC
      *      각 커맨드 실행 함수는 클라이언트의 권한 및 유효성 검사, 실행, 모든 응답을 처리합니다.  
      *      
      *      각 커맨드 실행 함수는 executeClientCommand_<COMMAND>() 형태로 정의되어 있습니다.
-     *      @see ClientCommandExecution
+     *      @see ClientCommandExecution section in IRC::Server class
      * 
      *  ## 클라이언트
      *      ### 클라이언트 생성
@@ -244,7 +245,7 @@ namespace IRC
 
     private:
         /** Client command execution function type
-         *  @see ClientCommandExecution
+         *  @see ClientCommandExecution section in IRC::Server class
          */
         typedef IRC::EIrcErrorCode (Server::*ClientCommandFuncPtr)(SharedPtr<ClientControlBlock> client, const std::vector<char*>& arguments);
 
@@ -276,9 +277,8 @@ namespace IRC
     private:
         /**
          * @name     Client disconnection
-         * @addtogroup ClientDisconnection
          * @note    The releases of the disconnected clients are deferred to the next main event loop for the remaining kevents of the client.
-        */
+         */
         ///@{
         /** Close the client socket and release the client. */
         EIrcErrorCode forceDisconnectClient(SharedPtr<ClientControlBlock> client, const std::string quitMessage = "");
@@ -286,7 +286,7 @@ namespace IRC
         /** Mark the client's bExpired flag and block the messages from the client, then close the socket after remaining messages are sent. 
          * 
          *  Sending to the client is not able after calling this function. 
-        */
+         */
         EIrcErrorCode disconnectClient(SharedPtr<ClientControlBlock> client, const std::string quitMessage = "");
         ///@}
 
@@ -311,10 +311,9 @@ namespace IRC
 
         /** 
          *  @name      Message sending
-         *  @addtogroup  MessageSending
          *  @note      \li Do not modify the passed message after calling this function.
          *             \li No check permission of the client to send the message.
-        */
+         */
         ///@{
         /** Send a message to client.
          * 
@@ -401,7 +400,7 @@ namespace IRC
 
         /** Queue to release expired clients
          * 
-         *  @see   ClientDisconnection
+         *  @see   ClientDisconnection section in IRC::Server class
         */
         std::vector< SharedPtr< ClientControlBlock > > mClientReleaseQueue;
 

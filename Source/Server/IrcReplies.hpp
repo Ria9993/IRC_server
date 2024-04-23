@@ -81,14 +81,14 @@ typedef enum {
 /**  
  * @addtogroup    ReplyMsgMakingFunctions Reply message making functions 
  * @brief       MakeReplyMsg_<reply_code> functions.
-*/
+ */
 ///@{
 /** Make an IRC reply message.
  * 
  * @param  serverName   [in]  The server name.
  * @param  ...          [in]  The arguments of the reply message.
  * @return The reply message that is not contain CR-LF.
-*/
+ */
 IRC_REPLY_TUPLE_LIST
 ///@} 
 
