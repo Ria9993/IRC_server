@@ -79,7 +79,7 @@ typedef enum {
     const std::string    serverName
 
 /**  
- * @defgroup    ReplyMsgMakingFunctions Reply message making functions 
+ * @addtogroup    ReplyMsgMakingFunctions Reply message making functions 
  * @brief       MakeReplyMsg_<reply_code> functions.
 */
 ///@{

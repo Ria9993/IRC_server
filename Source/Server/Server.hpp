@@ -276,7 +276,7 @@ namespace IRC
     private:
         /**
          * @name     Client disconnection
-         * @defgroup ClientDisconnection
+         * @addtogroup ClientDisconnection
          * @note    The releases of the disconnected clients are deferred to the next main event loop for the remaining kevents of the client.
         */
         ///@{
@@ -311,7 +311,7 @@ namespace IRC
 
         /** 
          *  @name      Message sending
-         *  @defgroup  MessageSending
+         *  @addtogroup  MessageSending
          *  @note      \li Do not modify the passed message after calling this function.
          *             \li No check permission of the client to send the message.
         */
