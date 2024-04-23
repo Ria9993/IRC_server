@@ -51,7 +51,8 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 # Documentation
 ## Doxygen Documentation
-- https://ria9993.github.io/IRC_server
+- **<https://ria9993.github.io/IRC_server/annotated.html>**  
+    (Recommand start with **IRC::Server** class)
 
 ## Coding Standard
 - [**./CodingStandard.md**](/CodingStandard.md)
