@@ -59,7 +59,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 ***
 # Core Concepts
 ![image](/dot_inline_dotgraph_2_org.svg)  
-이 단락은 해당 IRC 서버의 목표와 핵심 개념, 세부 구현 등을 설명한다.
+이 단락은 해당 IRC 서버의 목표와 주요 기술사항을 설명한다.
 
 ## Table of contents
 - [Summary](#summary)
@@ -80,7 +80,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 설계와 구현에 있어 사이즈, 수정빈도, 사용빈도, 이를 사용/수정하는 프로그래머의 실력 등을 고려하여 절충점을 찾는 것이 중요하다.  
 
 아래에서 프로젝트 설계에서 일어난 각 결정 사항들을 설명한다.  
-
+<br>
 
 먼저 프로젝트 전반에 걸친 성능과 유지보수 둘 다 얻을 수 있다고 생각된 결정이다.  
 - [Shared Pointer](#shared-pointer)  
@@ -93,7 +93,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - [Page Locking Efficiency](#page-locking-efficiency)  
     메모리 풀로 메시지의 지역성을 높이고 내부 청크가 페이지 단위로 할당되도록 구현하여 page lock을 최소화함.  
 
-
+<br>
 다음은 성능을 우선시한 경우들이다.  
 
 예를 들어, 실제 kqueue와 recv/send를 처리하는 코어 네트워크 코드의 경우  
@@ -112,7 +112,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
     성능을 더 희생한다면 이 방법을 사용하지 않아도 되었지만,  
     이 방법은 플로우의 분기를 만들지 않고도 예외를 방지할 수 있어 선택함.  
 
-
+<br>
 다음은 유지보수를 우선시한 경우이다.  
 
 클라이언트의 메시지 처리나 채널 관리 등은 수정빈도가 높고, 사용빈도가 중간이며, 아무 프로그래머가 수정할 가능성이 높다.  
