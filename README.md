@@ -2,28 +2,27 @@
 IRC server written by C++98 with Unix kqueue
 
 ## Table of contents
-- [Build and Run](#build-and-run)
-- [Features](#features)
-    - [Not Supported](#not-supported)
-    - [Supported Commands](#supported-commands)
-- [Documentation](#documentation)
-    - [Doxygen Documentation](#doxygen-documentation)
-    - [Coding Standard](#coding-standard)
-- [Core Concepts](#core-concepts)
+- **README**
+    - [Requirements](#requirements)
+    - [Build and Run](#build-and-run)
+    - [Features](#features)
+    - [Documentation](#documentation)
+- **Core Concepts**
+    - [Core Concepts](#core-concepts)
 
 ***
-## Requirements
+# Requirements
 - `Unix` or `Linux` or `MacOS` system
 - `clang++` or `g++`
 - `make`
 
-## Build and Run
-### Unix / MacOS
+# Build and Run
+## Unix / MacOS
 ```bash
 $ make
 $ ./ircserv <port> <password>
 ```
-### Linux
+## Linux
 Need to install libkqueue-dev to use kqueue on Linux system
 ```bash
 $ sudo apt install libkqueue-dev
@@ -31,13 +30,13 @@ $ make
 $ ./ircserv <port> <password>
 ```
 
-## Features
+# Features
 Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459 
-### Not Supported
+## Not Supported
 - Server to Server communication
 - Commands not listed in below supported section
 - User mode
-### Supported Commands
+## Supported Commands
 - PASS
 - NICK
 - USER
@@ -50,13 +49,14 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - TOPIC
 - INVITE
 
-## Documentation
-### Doxygen Documentation
+# Documentation
+## Doxygen Documentation
 - https://ria9993.github.io/IRC_server
 
-### Coding Standard
+## Coding Standard
 - [**./CodingStandard.md**](/CodingStandard.md)
 
+***
 # Core Concepts
 ![image](/dot_inline_dotgraph_2_org.svg)  
 이 단락은 해당 IRC 서버의 목표와 핵심 개념, 세부 구현 등을 설명한다.
@@ -73,7 +73,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
     - [Delayed Registration](#delayed-registration)
     - [Delayed Client Release](#delayed-client-release)
 
-## Summary
+# Summary
 해당 프로젝트는 서버로서의 `성능`과 타 프로그래머의 참여를 위한 `유지보수`를 주요 목표로 한다.  
 
 두 요소는 상충관계에 있으므로,  
@@ -124,8 +124,8 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
     이에 대한 함수를 제공하여 별도의 예외 처리를 하거나 누락을 방지하도록 함.  
 
 
-## Detailed Description
-### Shared Pointer
+# Detailed Description
+## Shared Pointer
 메시지, 유저, 채널 등의 리소스가 많은 곳에서 참조되나  
 해제되는 시점이 복잡하기 때문에 `std::shared_ptr`와 같은 스마트 포인터를 사용한다.  
 
@@ -140,7 +140,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - Doxygen: [SharedPtr.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_shared_ptr.html)  
 - Source Code: [SharedPtr.h](/src/SharedPtr.h)
 
-### Message Block
+## Message Block
 보통 고정 크기의 배열에 `recv()`를 받은 후 클라이언트의 `std::string`버퍼에 `append`하는 식으로 구현하지만  
 Append 시 메모리 resize가 주기적으로 발생하고,  
 순간적인 버퍼링을 위해 늘어난 메모리를 다시 사용하지 않는 경우가 많다.  
@@ -165,7 +165,7 @@ struct MsgBlock {
 
 후에 언급할 [Page Locking Efficiency](#page-locking-efficiency)와도 연관이 있다.  
 
-### Memory Pool
+## Memory Pool
 `MsgBlock`이나 클라이언트는 메모리가 자주 할당되고 해제되는데  
 이를 위해 다음과 같은 메모리 풀을 지원한다.  
 - 고정 개수 메모리 풀: `FixedMemoryPool`  
@@ -186,7 +186,7 @@ int main()
 }
 ```
 
-### Preprocessor Tuple
+## Preprocessor Tuple
 "컴파일 시 튜플" 이라고도 불리는 방법을 사용해 에러코드나 커맨드들을 관리한다.  
 
 엔트리가 추가되거나 삭제될 때마다 여러 곳의 코드를 수정해야 하는 기능일 때  
@@ -200,7 +200,7 @@ int main()
 클라이언트에서 사용 가능한 커맨드를 한 번에 관리한다.  
 전처리기는 각 커맨드를 수행하는 함수 선언을 생성하고, 명령어를 파싱하여 해당하는 커맨드 함수를 호출하는 코드를 생성한다.  
 
-### Page Locking Efficiency
+## Page Locking Efficiency
 kqueue 구현에 해당되는 것은 아니지만,  
 윈도우의 IOCP나 Overlapped I/O같은 경우는 send나 recv를 진행할 때  
 DMA를 위해 해당 메모리 페이지를 Nonpageble하게 일명 page lock을 건다.  
@@ -214,21 +214,21 @@ Page lock이 필요한 페이지를 최소로 유지할 수 있다.
 거기다 메모리 풀의 구현 또한 이를 고려해  
 내부 청크가 페이지 크기인 4KB 단위로 할당되도록 구현되어있다.  
 
-### Delayed Message Processing
+## Delayed Message Processing
 현 구현에서는 클라이언트로부터 받은 메시지를 처리하느라 발생하는 TCP 속도 저하를 방지하기 위해,  
 클라이언트로부터 recv한 메시지는 곧바로 처리하지 않고 클라이언트의 `RecvMsgQueue`에 추가 후  
 이벤트가 더 이상 발생하지 않는 여유로운 시점에 한 번에 처리한다.  
 
 이는 TCP의 속도 저하를 방지하고, 지역성 또한 활용하여 처리 속도를 향상시킬 수 있다.  
 
-### Delayed Registration
+## Delayed Registration
 kqueue에 이벤트를 등록하거나 수정하려면 `kevent()` 함수를 호출해야 하는데  
 `kevent()` 함수는 syscall이므로 호출 횟수를 줄이는 것이 중요하다.  
 
 이를 위해 kqueue에 대한 모든 이벤트 수정은 `mEventRegistrationQueue` 대기열에 추가되고,  
 다음 이벤트 루프에서 한 번에 처리되게 된다.  
 
-### Delayed Client Release
+## Delayed Client Release
 위와 다르게 예외를 방지하기 위해서도 딜레이 시키는 경우가 있는데,  
 클라이언트의 소켓에 오류가 나거나 연결이 끊어진 경우는 의도적으로 리소스 해제를 지연시킨다.  
 
