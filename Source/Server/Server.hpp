@@ -364,21 +364,21 @@ namespace IRC
          *          \li [ \ref irc_server_kqueue_udata ]
          *         
          * @page    irc_server_kqueue_udata     Technical reason for using the controlBlock of SharedPtr in the kqueue udata
-         *          ## Summary
-         *              Data in the udata of kevent is the controlBlock of the SharedPtr to corresponding ClientControlBlock (except listensocket).
-         *          ## Details
-         *              There is a technical reason for using the controlBlock of SharedPtr.  
-         *              The original plan was to just use the raw pointer of a ClientControlBlock.   
-         *              However, as the number of resources dependent on the ClientControlBlock increased,  
-         *              it has become difficult to release the memory of ClientControlBlock immediately when the client is disconnected.
+         *  ## Summary
+         *      kevent의 udata에는 해당 ClientControlBlock에 대한 SharedPtr의 controlBlock이 들어갑니다. (listensocket 제외)  
+         *  ## Details
+         *      kevent의 udata에 controlBlock을 넣는 기술적 이유는 다음과 같습니다.  
+         *     
+         *      원래 계획은 ClientControlBlock의 raw pointer를 사용하는 것이었으나,  
+         *      ClientControlBlock에 의존하는 리소스의 수가 증가함에 따라  
+         *      메모리를 해제하는 시점이 복잡해지는 문제가 발생하여 Shared Pointer를 사용하기로 결정했습니다.  
          * 
-         *              Thus, decided to use SharedPtr to manage the memory of ClientControlBlock.  
-         *              However, Sinece the udata field of kevent is a void pointer, it couldn't use SharedPtr directly either.   
-         *              Because SharedPtr is not a POD. And made a risky choice to use SharedPtr's controlBlock that is a POD type.
+         *      따라서 Kevent의 udata에 들어가는 포인터 또한 Shared Pointer로 변경되어야 했는데  
+         *      Shared Pointer는 void pointer로 변환할 수 없기 때문에 직접 사용할 수 없었고,  
+         *      Shared Pointer의 controlBlock을 udata로 사용하는 위험한 선택을 했습니다.  
          * 
-         *              It was thought to be the best choice because in this choice removes the need to worry  
-         *              about the memory release in the part that doesn't directly interact with the udata.  
-         *              and only complicates the one part that does interact with the udata.  
+         *      이 선택은 udata와 직접적으로 상호작용하지 않는 다른 부분들에서 메모리 해제에 대한 걱정을 없애주고,
+         *      udata와 직접적으로 상호작용하는 코어 부분만 복잡하게 만드는 것이므로 최선의 선택이라고 생각했습니다.  
          * 
          * @see     SharedPtr::GetControlBlock(), getClientFromKeventUdata()
          */
