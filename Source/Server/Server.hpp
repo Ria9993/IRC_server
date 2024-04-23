@@ -362,7 +362,7 @@ namespace IRC
          * @brief   Data in the udata of kevent is the controlBlock of the SharedPtr to corresponding ClientControlBlock (except listensocket).
          *          
          * @see     \li SharedPtr::GetControlBlock(), getClientFromKeventUdata()
-         *          \li [ \ref irc_server_kqueue_udata]
+         *          \li [ \ref irc_server_kqueue_udata ]
          *         
          * @page    irc_server_kqueue_udata     Technical reason for using the controlBlock of SharedPtr in the kqueue udata
          *          ## Summary
