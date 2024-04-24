@@ -1,4 +1,4 @@
-# IRC_server
+    # IRC_server
 IRC server written by C++98 with Unix kqueue
 
 ## Table of contents
@@ -123,6 +123,8 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - [**Preprocessor Tuple**](#preprocessor-tuple)  
     명령어나 응답 코드를 한 번에 리스트로 관리하고, 수정/추가할 때의 실수를 방지한다.  
 - 메시지 파싱, 메시지 실행 등의 경우 기능의 Input/Output, 책임 범위를 명확하게 정한다.  
+    한 예로. 모든 명령어 실행 함수는 공백으로 구분된 인자를 받아 메시지 권한 판별과 실행, 응답을 모두 처리해야 한다.  
+    이는 명령어 추가/수정을 쉽게 하고, 실행 플로우를 하나로 유지할 수 있도록 한다.  
 - 채널 참여/퇴장, 클라이언트 연결 해제, Reply 메시지 생성/전송 등의 경우  
     이에 대한 함수를 제공하여 별도의 예외 처리를 하거나 누락을 방지하도록 함.  
 
