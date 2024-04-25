@@ -1,4 +1,4 @@
-    # IRC_server
+# IRC_server
 IRC server written by C++98 with Unix kqueue
 
 ## Table of contents
