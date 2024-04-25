@@ -55,7 +55,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 ## Server Process Flow Overview  
 <p><img src="https://raw.github.com/ria9993/irc_server/master/irc_server_flowgraph_overview.svg" width="700"></p>
-
+(Click to see full size)
 
 ### Class Hierarchy
 <p><img src="https://raw.github.com/ria9993/irc_server/master/dot_inline_dotgraph_2_org.svg" width="400"></p>
