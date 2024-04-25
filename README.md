@@ -47,15 +47,18 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 ## Coding Standard
 - [**./CodingStandard.md**](/CodingStandard.md)
 
+
 ***
-# Architecture / Core Concepts
-이 단락은 해당 프로젝트의 목표와 주요 개념, 설계 사항을 설명한다.  
+
+# Architecture
+이 단락은 해당 프로젝트의 목표와 주요 개념, 설계 사항을 설명한다.
 
 ## Server Process Flow Overview  
-<p><img src="irc_server_flowgraph_overview.svg" width="700"></p>  
+<p><img src="https://raw.github.com/ria9993/irc_server/master/irc_server_flowgraph_overview.svg" width="700"></p>
+
 
 ### Class Hierarchy
-<p><img src="dot_inline_dotgraph_2_org.svg" width="400"></p>
+<p><img src="https://raw.github.com/ria9993/irc_server/master/dot_inline_dotgraph_2_org.svg" width="400"></p>
 
 ## Summary
 해당 프로젝트는 서버로서의 **성능**과 타 프로그래머의 참여를 위한 **유지보수**를 주요 목표로 한다.  
@@ -116,7 +119,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 전체 참조 관계는 다음 다이어그램과 같다.  
 실선은 strong reference, 점선은 weak reference를 의미한다.  
-<p><img src="dot_inline_dotgraph_2_org.svg" width="400"></p>  
+<p><img src="https://raw.github.com/ria9993/irc_server/master/dot_inline_dotgraph_2_org.svg" width="400"></p>  
 
 다만 해당 프로젝트는 C++98을 지원해야 하므로 별도로 구현한 **SharedPtr**와 **WeakPtr**를 사용한다.  
 - Doxygen: [SharedPtr.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_shared_ptr.html)  
