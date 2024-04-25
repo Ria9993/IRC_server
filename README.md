@@ -1,7 +1,6 @@
 # IRC_server
 IRC server written by C++98 with Unix kqueue
 
-***
 ## Requirements
 - **MacOS(Recommanded)** or **Unix** or **Linux** system
 - **clang++(Recommanded)** or **g++**
