@@ -1,28 +1,19 @@
 # IRC_server
 IRC server written by C++98 with Unix kqueue
 
-## Table of contents
-- **README**
-    - [Requirements](#requirements)
-    - [Build and Run](#build-and-run)
-    - [Features](#features)
-    - [Documentation](#documentation)
-- **Core Concepts**
-    - [Core Concepts](#core-concepts)
-
 ***
-# Requirements
+## Requirements
 - **MacOS(Recommanded)** or **Unix** or **Linux** system
 - **clang++(Recommanded)** or **g++**
 - **make**
 
-# Build and Run
-## Unix / MacOS
+## Build and Run
+### Unix / MacOS
 ```bash
 $ make
 $ ./ircserv <port> <password>
 ```
-## Linux
+### Linux
 Need to install libkqueue-dev to use kqueue on Linux system
 ```bash
 $ sudo apt install libkqueue-dev
@@ -30,13 +21,13 @@ $ make
 $ ./ircserv <port> <password>
 ```
 
-# Features
+## Features
 Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459 
-## Not Supported
+### Not Supported
 - Server to Server communication
 - Commands not listed in below supported section
 - User mode
-## Supported Commands
+### Supported Commands
 - PASS
 - NICK
 - USER
@@ -49,7 +40,6 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - TOPIC
 - INVITE
 
-# Documentation
 ## Doxygen Documentation
 - **<https://ria9993.github.io/IRC_server/annotated.html>**  
     (Recommand start with **IRC::Server** class)
@@ -58,32 +48,22 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - [**./CodingStandard.md**](/CodingStandard.md)
 
 ***
-# Core Concepts / Architecture
-![image](/dot_inline_dotgraph_2_org.svg)  
-이 단락은 해당 프로젝트의 목표와 주요 개념, 설계 사항을 설명한다.
+# Architecture / Core Concepts
+이 단락은 해당 프로젝트의 목표와 주요 개념, 설계 사항을 설명한다.  
 
-## Table of contents
-- [**Summary**](#summary)
-- [**General**](#general)
-- [**Performance**](#performance)
-- [**Maintenance**](#maintenance)
-- [**Detailed Description**](#detailed-description)
-    - [**Shared Pointer**](#shared-pointer)
-    - [**Message Block**](#message-block)
-    - [**Memory Pool**](#memory-pool)
-    - [**Preprocessor Tuple**](#preprocessor-tuple)
-    - [**Page Locking Efficiency**](#page-locking-efficiency)
-    - [**Deferred Message Processing**](#deferred-message-processing)
-    - [**Deferred Registration**](#deferred-registration)
-    - [**Deferred Client Release**](#deferred-client-release)
+## Server Process Flow Overview  
+<p><img src="irc_server_flowgraph_overview.svg" width="700"></p>  
 
-# Summary
+### Class Hierarchy
+<p><img src="dot_inline_dotgraph_2_org.svg" width="400"></p>
+
+## Summary
 해당 프로젝트는 서버로서의 **성능**과 타 프로그래머의 참여를 위한 **유지보수**를 주요 목표로 한다.  
 
 두 요소는 상충관계에 있으므로,  
 설계와 구현에 있어 사이즈, 수정빈도, 사용빈도, 이를 사용/수정하는 프로그래머의 실력 등을 고려하여 절충점을 찾는 것이 중요시되었다.  
 
-## General 
+### General 
 - [**Shared Pointer**](#shared-pointer)  
     약간의 오버헤드가 있지만 채팅서버의 특성 상 상호관계가 많아 메모리 해제 시점이 복잡하므로  
     모든 메시지, 클라이언트, 채널 등의 리소스는 자체 구현한 스마트 포인터로 관리한다.  
@@ -94,7 +74,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - [**Page Locking Efficiency**](#page-locking-efficiency)  
     메모리 풀로 메시지 블록의 지역성을 높이고 내부 청크가 페이지 단위로 할당되도록 구현하여 page lock을 최소화함.  
 
-## Performance
+### Performance
 예를 들어, kqueue와 recv/send를 직접 처리하는 코어 네트워크 코드의 경우  
 수정빈도가 낮고, 사용빈도가 높으며, 메인 프로그래머를 제외한 다른 프로그래머가 수정할 가능성이 낮다.  
 
@@ -112,7 +92,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
     성능을 더 희생한다면 이 방법을 사용하지 않아도 되었지만,  
     이 방법은 플로우의 분기를 만들지 않고도 예외를 방지할 수 있어 선택됨.  
 
-## Maintenance
+### Maintenance
 클라이언트 메시지 처리나 채널 관리 등은 수정빈도가 높고, 사용빈도가 중간이며, 아무 프로그래머가 수정할 가능성이 높다.  
 
 이에 따라 이러한 코드는 유지보수를 우선하는 것으로 방향이 잡혔다.  
@@ -136,7 +116,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 전체 참조 관계는 다음 다이어그램과 같다.  
 실선은 strong reference, 점선은 weak reference를 의미한다.  
-![image](/dot_inline_dotgraph_2_org.svg)  
+<p><img src="dot_inline_dotgraph_2_org.svg" width="400"></p>  
 
 다만 해당 프로젝트는 C++98을 지원해야 하므로 별도로 구현한 **SharedPtr**와 **WeakPtr**를 사용한다.  
 - Doxygen: [SharedPtr.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_shared_ptr.html)  
