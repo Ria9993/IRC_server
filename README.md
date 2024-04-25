@@ -55,10 +55,14 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 ## Server Process Flow Overview  
 <p><img src="https://raw.github.com/ria9993/irc_server/master/irc_server_flowgraph_overview.svg" width="700"></p>
+
 (Click to see full size)
 
 ### Class Hierarchy
 <p><img src="https://raw.github.com/ria9993/irc_server/master/dot_inline_dotgraph_2_org.svg" width="400"></p>
+
+Strong  :  ```───►```  
+Weak    :  ```---►```  
 
 ## Summary
 해당 프로젝트는 서버로서의 **성능**과 타 프로그래머의 참여를 위한 **유지보수**를 주요 목표로 한다.  
