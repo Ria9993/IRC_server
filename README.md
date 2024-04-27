@@ -175,20 +175,6 @@ int main()
 }
 ```
 
-## Preprocessor Tuple
-"컴파일 시 튜플" 이라고도 불리는 방법을 사용해 에러코드나 커맨드들을 관리한다.  
-
-엔트리가 추가되거나 삭제될 때마다 여러 곳의 코드를 수정해야 하는 기능일 때  
-실수를 방지하고 컴파일 시 에러를 발생시킨다.  
-
-- IRC Reply Code: [IrcReplies.hpp](/Source/Server/IrcReplies.hpp)  
-서버에서 클라이언트로 보내는 응답 코드를 한 번에 관리한다.  
-전처리기는 enum과, 양식에 맞게 매개변수를 넣으면 메시지를 생성해주는 함수를 생성한다.  
-
-- IRC Command: [ClientCommand.hpp](/Source/Server/ClientCommand/ClientCommand.hpp)  
-클라이언트에서 사용 가능한 커맨드를 한 번에 관리한다.  
-전처리기는 각 커맨드를 수행하는 함수 선언을 생성하고, 명령어를 파싱하여 해당하는 커맨드 함수를 호출하는 코드를 생성한다.  
-
 ## Page Locking Efficiency
 kqueue 구현에 해당되는 것은 아니지만,  
 윈도우의 IOCP나 Overlapped I/O같은 경우는 send나 recv를 진행할 때  
@@ -202,6 +188,20 @@ Page lock이 필요한 페이지를 최소로 유지할 수 있다.
 
 거기다 메모리 풀의 구현 또한 이를 고려해  
 내부 청크가 페이지 크기인 4KB 단위로 할당되도록 구현되어있다.  
+
+## Preprocessor Tuple
+"컴파일 시 튜플" 이라고도 불리는 방법을 사용해 에러코드나 커맨드들을 관리한다.  
+
+엔트리가 추가되거나 삭제될 때마다 여러 곳의 코드를 수정해야 하는 기능일 때  
+실수를 방지하고 컴파일 시 에러를 발생시킨다.  
+
+- IRC Reply Code: [IrcReplies.hpp](/Source/Server/IrcReplies.hpp)  
+서버에서 클라이언트로 보내는 응답 코드를 한 번에 관리한다.  
+전처리기는 enum과, 양식에 맞게 매개변수를 넣으면 메시지를 생성해주는 함수를 생성한다.  
+
+- IRC Command: [ClientCommand.hpp](/Source/Server/ClientCommand/ClientCommand.hpp)  
+클라이언트에서 사용 가능한 커맨드를 한 번에 관리한다.  
+전처리기는 각 커맨드를 수행하는 함수 선언을 생성하고, 명령어를 파싱하여 해당하는 커맨드 함수를 호출하는 코드를 생성한다.  
 
 ## Deferred Message Processing
 현 구현에서는 클라이언트로부터 받은 메시지를 처리하느라 발생하는 TCP 속도 저하를 방지하기 위해,  
