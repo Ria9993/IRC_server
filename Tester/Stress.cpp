@@ -27,7 +27,8 @@ int main()
     std::vector<std::thread> threads;
     for (int i = 0; i < NUM_THREADS; i++)
     {
-        threads.push_back(std::move(std::thread(test)));
+        std::thread t(test);
+        threads.push_back(std::move(t));
     }
 
     for (int i = 0; i < NUM_THREADS; i++)
@@ -109,7 +110,7 @@ int test()
             std::string channel = "#channel";
             channel += std::to_string(rand() % RANDOM_CHAN_RANGE);
             std::string content = "Hello, world. ";
-            for (int i = 0; i < rand() % (MAX_PRIVMSG_LENGTH / 10 - content.length()); i++)
+            for (unsigned int i = 0; i < rand() % (MAX_PRIVMSG_LENGTH / 10 - content.length()); i++)
             {
                 content += "0123456789";
             }
@@ -124,7 +125,7 @@ int test()
             std::string user = "#Tester";
             user += std::to_string(rand() % RANDOM_USER_RANGE);
             std::string content = "Hello, world. ";
-            for (int i = 0; i < rand() % (MAX_PRIVMSG_LENGTH / 10 - content.length()); i++)
+            for (unsigned int i = 0; i < rand() % (MAX_PRIVMSG_LENGTH / 10 - content.length()); i++)
             {
                 content += "0123456789";
             }
@@ -151,7 +152,7 @@ int test()
             fsync(sockfd);
             
             // Wait 10 seconds for the server to process the QUIT message
-            usleep(10 * 1000 * 1000);
+            usleep(5 * 1000 * 1000);
             message = std::string("PART ") + "#DUMMY" + "\r\n";
             send(sockfd, message.c_str(), message.length(), 0);
             fsync(sockfd);
@@ -169,8 +170,11 @@ int test()
                 break;
             }
             buffer[nRecv] = '\0';
-            std::cout << buffer << std::endl;
+            //std::cout << buffer << std::endl;
         }
+
+        // Wait 1 ms
+        usleep(1 * 1000);
     }
 
     // Close the socket

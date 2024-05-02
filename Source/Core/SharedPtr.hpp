@@ -3,6 +3,7 @@
 // DEBUG
 #include <typeinfo>
 
+#include "Core/Log.hpp"
 #include "Core/MacroDefines.hpp"
 #include "Core/AttributeDefines.hpp"
 #include "Core/FlexibleFixedMemoryPool.hpp"
@@ -281,20 +282,23 @@ public:
         if (mControlBlock != NULL)
         {
             Assert(mControlBlock->StrongRefCount > 0);
-            mControlBlock->StrongRefCount -= 1;
 
-            if (mControlBlock->StrongRefCount == 0)
+            if (mControlBlock->StrongRefCount == 1)
             {
+                mControlBlock->bExpired = true;
+
                 T* ptrData = reinterpret_cast<T*>(&mControlBlock->data);
                 ptrData->~T();
 
-                Assert(mControlBlock->StrongRefCount == 0);
-
-                if (mControlBlock->WeakRefCount == 0 && !mControlBlock->bExpired)
+                Assert(mControlBlock->StrongRefCount != 0);
+                if (mControlBlock->WeakRefCount == 0)
                 {
-                    mControlBlock->bExpired = true;
                     delete mControlBlock;
                 }
+            }
+            else
+            {
+                mControlBlock->StrongRefCount -= 1;
             }
         }
 

@@ -40,3 +40,6 @@ docs/
 
 doxygen/
 ./doxygen
+
+# Tester files
+Tester/Stress

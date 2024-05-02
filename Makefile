@@ -17,7 +17,15 @@ OBJS = $(SRCS:.cpp=.o)
 
 CC = c++
 
-FLAGS = -Wall -Wextra -std=c++98 -pedantic -mavx -g -DNDEBUG -DIRCCORE_LOG_ENABLE # -Werror
+FLAGS = \
+	-Wall -Wextra -pedantic \
+	# -Werror
+	-std=c++98 \
+	-mavx \
+	-g3 \
+	-j 12 \
+	-DIRCCORE_LOG_ENABLE \
+	-DIRC_VERBOSE_LOG
 
 all: $(NAME)
 

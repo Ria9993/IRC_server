@@ -62,8 +62,14 @@ public:
 
         // Create new pool if all pools are full
         mChunks.push_back(new FixedMemoryPool<Block, CHUNK_MEMORY_PAGE_CAPACITY>);
-        CoreLog("[FlexibleFixedMemoryPool] New Chunk Created. Total Chunks: " + ValToString(mChunks.size()));
-
+        CoreLog("[FlexibleFixedMemoryPool] New Chunk Created. Total Chunks: " + ValToString(mChunks.size()) + " Type: " + typeid(T).name());
+        
+        // ! DEBUG : Check if there too many chunks
+        if (mChunks.size() > 32)
+        {
+            CoreMemoryLog("[FlexibleFixedMemoryPool] [Warning] Too many chunks. Total Chunks: " + ValToString(mChunks.size()));
+        }
+        
     ALLLOCATE_NEW_BLOCK:
         // CoreLog("[FlexibleFixedMemoryPool] Allocate: ChunkIdx: " + ValToString(mChunkCursor));
         Block* block = mChunks[mChunkCursor]->Allocate();
@@ -78,12 +84,16 @@ public:
             return;
         
         // CoreLog("[FlexibleFixedMemoryPool] Deallocate: Ptr: " + ValToString(ptr));
-
+        // CoreMemoryLog("[FlexibleFixedMemoryPool] Deallocate: ChunkIdx: " + ValToString(block->chunkIdx));
         Block* block = reinterpret_cast<Block*>(reinterpret_cast<char*>(ptr) - offsetof(Block, data));
-        mChunks[block->chunkIdx]->Deallocate(block);
 
         // Update the cursor to the chunk that has empty space
-        mChunkCursor = block->chunkIdx;
+        if (block->chunkIdx < mChunkCursor)
+        {
+            mChunkCursor = block->chunkIdx;
+        }
+        
+        mChunks[block->chunkIdx]->Deallocate(block);
     }
 
 private:

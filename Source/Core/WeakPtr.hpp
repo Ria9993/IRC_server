@@ -121,13 +121,12 @@ public:
         if (mControlBlock != NULL)
         {
             Assert(mControlBlock->WeakRefCount > 0);
+            
             mControlBlock->WeakRefCount -= 1;
-
             if (mControlBlock->WeakRefCount == 0)
             {
-                if (!mControlBlock->bExpired && mControlBlock->StrongRefCount == 0)
+                if (mControlBlock->StrongRefCount == 0)
                 {
-                    mControlBlock->bExpired = true;
                     delete mControlBlock;
                 }
             }

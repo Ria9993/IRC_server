@@ -14,9 +14,9 @@ namespace IRCCore
     void CoreMemoryLog(const std::string& msg);
     void CoreMemoryLeakLog(const std::string& msg);
 #else
-    FORCEINLINE void CoreLog(const std::string& msg) {}
-    FORCEINLINE void CoreMemoryLog(const std::string& msg) {}
-    FORCEINLINE void CoreMemoryLeakLog(const std::string& msg) {}
+    FORCEINLINE void CoreLog(const std::string& msg) { (void)msg; }
+    FORCEINLINE void CoreMemoryLog(const std::string& msg) { (void)msg; }
+    FORCEINLINE void CoreMemoryLeakLog(const std::string& msg) { (void)msg; }
 #endif
 
 template <typename T>

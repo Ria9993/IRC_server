@@ -132,7 +132,7 @@ EIrcErrorCode Server::eventLoop()
 
     while (true)
     {
-        // Release expired clients. (see mClientReleaseQueue description for details)
+        // Release the clients that are deferred to release. (See forceDisconnectClient() for details)
         mClientReleaseQueue.clear();
 
         // Set the timeout of kevent.
@@ -145,7 +145,7 @@ EIrcErrorCode Server::eventLoop()
         }
 
         // Receive observed events from kqueue
-        observedEventNum = kevent(mhKqueue, mEventRegistrationQueue.data(), mEventRegistrationQueue.size(), observedEvents, CLIENT_MAX, timeout);
+        observedEventNum = kevent(mhKqueue, mEventRegistrationQueue.data(), mEventRegistrationQueue.size(), observedEvents, sizeof(observedEvents) / sizeof(kevent_t), timeout);
         if (UNLIKELY(observedEventNum == -1))
         {
             logErrorCode(IRC_FAILED_TO_WAIT_KEVENT);
@@ -155,12 +155,21 @@ EIrcErrorCode Server::eventLoop()
 
         // Process the received messages from the clients when there is no observed event.
         // However, if there are more messages pending than it can handle, it will exceptionally prioritize processing.
-        const size_t pendingMsgWarningThreshold = CLIENT_MAX;
-        if (observedEventNum == 0 || receivedClientMsgProcessQueue.size() > pendingMsgWarningThreshold)
+        const size_t pendingMsgWarningThreshold = 64;
+        if (observedEventNum == 0 || (receivedClientMsgProcessQueue.size() > pendingMsgWarningThreshold))
         {
+            if (receivedClientMsgProcessQueue.size() > pendingMsgWarningThreshold)
+            {
+                logMessage("Too many messages pending. Process the received messages first.");
+            }
+
             for (size_t queueIdx = 0; queueIdx < receivedClientMsgProcessQueue.size(); queueIdx++)
             {
                 SharedPtr<ClientControlBlock> client = receivedClientMsgProcessQueue[queueIdx];
+                if (client == NULL || client->bExpired)
+                {
+                    continue;
+                }
 
                 std::vector< SharedPtr< MsgBlock > > separatedMsgs;
                 EIrcErrorCode err = separateMsgsFromClientRecvMsgs(client, separatedMsgs);
@@ -198,12 +207,20 @@ EIrcErrorCode Server::eventLoop()
                 // Client socket error
                 else
                 {
-                    logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
                     SharedPtr<ClientControlBlock> client = getClientFromKeventUdata(currEvent);
                     if (client == NULL)
                     {
                         continue;
                     }
+
+                    if (client->bSocketClosed || client->bExpired)
+                    {
+                        continue;
+                    }
+
+                    logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
+                    logMessage("Client socket error. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
+                    logMessage("[Status] Socket closed: " + ValToString(client->bSocketClosed) + ", Expired: " + ValToString(client->bExpired));
 
                     EIrcErrorCode err;
                     if (currEvent.flags & EV_EOF)
@@ -285,6 +302,12 @@ EIrcErrorCode Server::eventLoop()
                         continue;
                     }
 
+                    // Intentional ignore due to too many messages pending
+                    if (currClient->RecvMsgBlocks.size() >= NUM_CLIENT_MSGBLOCK_RECV_IGNORE_THRESHOLD)
+                    {
+                        continue;
+                    }
+
                     // If there is space left in the last message block of the client, receive as many bytes as possible in that space,
                     // or if not, in a new message block space.
                     if (currClient->RecvMsgBlocks.empty() || currClient->RecvMsgBlocks.back()->MsgLen == MESSAGE_LEN_MAX)
@@ -307,10 +330,10 @@ EIrcErrorCode Server::eventLoop()
                         }
                         continue;
                     }
+
                     // Client disconnected
                     else if (nRecvBytes == 0)
                     {
-                        logMessage("Client disconnected. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname);
                         EIrcErrorCode err = forceDisconnectClient(currClient, "Connection closed by client.");
                         if (UNLIKELY(err != IRC_SUCCESS))
                         {
@@ -319,14 +342,14 @@ EIrcErrorCode Server::eventLoop()
                         continue;
                     }
 
-                    logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
-
                     recvMsgBlock->MsgLen += nRecvBytes;
+                    logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
                     
                     currClient->LastActiveTime = currentTickServerTime;
-
                     receivedClientMsgProcessQueue.push_back(currClient);
-                }
+
+                } // if (currEvent.ident == mhListenSocket)
+
             } // if (currEvent.filter == EVFILT_READ)
 
             // 3. Write event
@@ -336,7 +359,6 @@ EIrcErrorCode Server::eventLoop()
                 // TODO: Can a listen socket raise a write event? I'll check this later.
                 Assert(static_cast<int>(currEvent.ident) != mhListenSocket);
 
-                // Send message to the client
                 SharedPtr<ClientControlBlock> currClient = getClientFromKeventUdata(currEvent);
                 if (currClient == NULL)
                 {
@@ -724,6 +746,17 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
     }
     client->bSocketClosed = true;
 
+    // Remove reserved event registration of the client
+    for (size_t i = 0; i < mEventRegistrationQueue.size(); i++)
+    {
+        if (static_cast<int>(mEventRegistrationQueue[i].ident) == client->hSocket)
+        {
+            // Fast remove (unordered)
+            mEventRegistrationQueue[i] = mEventRegistrationQueue.back();
+            mEventRegistrationQueue.pop_back();
+        }
+    }
+
     // Remove the client from client lists
     for (size_t i = 0; i < mUnregistedClients.size(); i++)
     {
@@ -750,6 +783,8 @@ EIrcErrorCode Server::forceDisconnectClient(SharedPtr<ClientControlBlock> client
 
     // Defer the release of the client.
     mClientReleaseQueue.push_back(client);
+
+    logMessage("Client disconnected. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
 
     return IRC_SUCCESS;
 }
@@ -807,14 +842,18 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
     sendMsgToConnectedChannels(client, MakeShared<MsgBlock>(quitMsgStr));
 
     // Remove from the channels
-    for (std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin(); it != client->Channels.end(); ++it)
+    while (!client->Channels.empty())
     {
+        std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin();
         SharedPtr<ChannelControlBlock> channel = it->second;
         if (channel != NULL)
         {
             partClientFromChannel(client, channel);
         }
     }
+
+    // Defer the release of the client.
+    mClientReleaseQueue.push_back(client);
 
     return IRC_SUCCESS;
 }
@@ -860,6 +899,8 @@ bool Server::registerClient(SharedPtr<ClientControlBlock> client)
 
     // Send the welcome message
     sendMsgToClient(client, MakeShared<MsgBlock>(MakeReplyMsg_RPL_WELCOME(mServerName, client->Nickname)));
+
+    logMessage("Client registered. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
 
     return true;
 }
