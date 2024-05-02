@@ -7,12 +7,12 @@ IRC server written by C++98 with Unix kqueue
 - **make**
 
 ## Build and Run
-### Unix / MacOS
+### MacOS or Unix(Not tested)
 ```bash
 $ make
 $ ./ircserv <port> <password>
 ```
-### Linux
+### Linux(Not tested)
 Need to install libkqueue-dev to use kqueue on Linux system
 ```bash
 $ sudo apt install libkqueue-dev
@@ -38,6 +38,10 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - KICK
 - TOPIC
 - INVITE
+
+## Todo
+- [ ] Support cross-platform for kqueue
+
 
 ## Doxygen Documentation
 - **<https://ria9993.github.io/IRC_server/annotated.html>**  
