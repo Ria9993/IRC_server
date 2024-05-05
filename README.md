@@ -130,7 +130,7 @@ Weak    :  ```---►```
 
 다만 해당 프로젝트는 C++98을 지원해야 하므로 별도로 구현한 **SharedPtr**와 **WeakPtr**를 사용한다.  
 - Doxygen: [SharedPtr.md](https://ria9993.github.io/IRC_server/class_i_r_c_core_1_1_shared_ptr.html)  
-- Source Code: [SharedPtr.hpp](/Source/Core/SharedPtr.h)
+- Source Code: [SharedPtr.hpp](/Source/Core/SharedPtr.hpp)
 
 ## Message Block
 보통 고정 크기의 배열에 **recv()**를 받은 후 클라이언트의 **std::string** 버퍼에 append 하는 식으로 구현하지만  
