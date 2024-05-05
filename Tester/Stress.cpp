@@ -57,7 +57,6 @@ int test()
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_len = sizeof(serv_addr);
     if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
     {
         std::cerr << "Failed to connect" << std::endl;
