@@ -19,13 +19,12 @@ CC = c++
 
 FLAGS = \
 	-Wall -Wextra -pedantic \
-	# -Werror
 	-std=c++98 \
 	-mavx \
 	-g3 \
-	-j 12 \
 	-DIRCCORE_LOG_ENABLE \
-	-DIRC_VERBOSE_LOG
+	-DIRC_VERBOSE_LOG \
+	-fsanitize=address
 
 all: $(NAME)
 

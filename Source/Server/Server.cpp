@@ -342,8 +342,8 @@ EIrcErrorCode Server::eventLoop()
                         continue;
                     }
 
+                    logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received=[" + (std::string(recvMsgBlock->Msg, recvMsgBlock->MsgLen + nRecvBytes)).substr(recvMsgBlock->MsgLen, nRecvBytes) + "]");
                     recvMsgBlock->MsgLen += nRecvBytes;
-                    logVerbose("Received message from client. IP: " + InetAddrToString(currClient->Addr) + ", Nick: " + currClient->Nickname + ", Received bytes: " + ValToString(nRecvBytes));
                     
                     currClient->LastActiveTime = currentTickServerTime;
                     receivedClientMsgProcessQueue.push_back(currClient);

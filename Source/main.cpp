@@ -1,9 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "Core/Core.hpp"
-using namespace IRCCore;
-
 #include "Server/Server.hpp"
 
 // Usage :   ./<executable> <port> <password>

@@ -13,9 +13,6 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 
-#include "Core/Core.hpp"
-using namespace IRCCore;
-
 #include "Network/SocketTypedef.hpp"
 #include "Server/IrcConstants.hpp"
 #include "Server/IrcErrorCode.hpp"
@@ -24,6 +21,10 @@ using namespace IRCCore;
 #include "Server/IrcReplies.hpp"
 #include "Server/ClientCommand/ClientCommand.hpp"
 #include "Server/ChannelControlBlock.hpp"
+
+#include "Core/Core.hpp"
+using namespace IRCCore;
+
 
 namespace IRC
 {

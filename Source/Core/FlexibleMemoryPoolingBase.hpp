@@ -69,11 +69,15 @@ private:
     void operator delete[](void* ptr);
 
 private:
-    static FlexibleFixedMemoryPool<DerivedType, MinNumDataPerChunk> mPool;
+    /**
+     * Use reference for prevent the error of sizeof to incomplete-type T
+     * Reference : https://stackoverflow.com/questions/47462707/static-class-template-member-invalid-application-of-sizeof-to-incomplete-type
+    */
+    static FlexibleFixedMemoryPool<DerivedType, MinNumDataPerChunk>& mPool;
 };
 
 template <typename DerivedType, size_t MinNumDataPerChunk>
-FlexibleFixedMemoryPool<DerivedType, MinNumDataPerChunk> FlexibleMemoryPoolingBase<DerivedType, MinNumDataPerChunk>::mPool;
+FlexibleFixedMemoryPool<DerivedType, MinNumDataPerChunk>& FlexibleMemoryPoolingBase<DerivedType, MinNumDataPerChunk>::mPool = *(new FlexibleFixedMemoryPool<DerivedType, MinNumDataPerChunk>);
 
 } // namespace IRCCore
 

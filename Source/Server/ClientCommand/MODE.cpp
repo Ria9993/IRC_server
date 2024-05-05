@@ -1,4 +1,5 @@
 #include <cctype>
+#include <cstdlib>
 #include "Server/Server.hpp"
 
 namespace IRC
