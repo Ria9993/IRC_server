@@ -119,8 +119,7 @@ EIrcErrorCode Server::Startup()
 EIrcErrorCode Server::eventLoop()
 {
     struct timespec timeoutZero;
-    timeoutZero.tv_sec  = 0;
-    timeoutZero.tv_nsec = 0;
+    memset(&timeoutZero, 0, sizeof(timeoutZero));
 
     ALIGNAS(PAGE_SIZE) static kevent_t observedEvents[KEVENT_OBSERVE_MAX];
     int observedEventNum = 0;
@@ -220,7 +219,7 @@ EIrcErrorCode Server::eventLoop()
 
                     logErrorCode(IRC_ERROR_CLIENT_SOCKET_EVENT);
                     logMessage("Client socket error. IP: " + InetAddrToString(client->Addr) + ", Nick: " + client->Nickname);
-                    logMessage("[Status] Socket closed: " + ValToString(client->bSocketClosed) + ", Expired: " + ValToString(client->bExpired));
+                    logMessage("[Status] bClosed: " + ValToString(client->bSocketClosed) + ", bExpired: " + ValToString(client->bExpired));
 
                     EIrcErrorCode err;
                     if (currEvent.flags & EV_EOF)
@@ -811,27 +810,14 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
     client->bExpired = true;
 
     // Block the messages from the client
-    kevent_t kev;
-    kev.ident = client->hSocket;
-    kev.filter = EVFILT_READ;
-    kev.flags = EV_DELETE;
-    kev.fflags = 0;
-    kev.data = 0;
-    kev.udata = reinterpret_cast<void *>(client.GetControlBlock());
-    mEventRegistrationQueue.push_back(kev);
-
-    // Remove the client from client lists
-    for (size_t i = 0; i < mUnregistedClients.size(); i++)
-    {
-        if (mUnregistedClients[i] == client)
-        {
-            // Fast remove (unordered)
-            mUnregistedClients[i] = mUnregistedClients.back();
-            mUnregistedClients.pop_back();
-            break;
-        }
-    }
-    mClients.erase(client->Nickname);
+    // kevent_t kev;
+    // kev.ident = client->hSocket;
+    // kev.filter = EVFILT_READ;
+    // kev.flags = EV_DELETE;
+    // kev.fflags = 0;
+    // kev.data = 0;
+    // kev.udata = reinterpret_cast<void *>(client.GetControlBlock());
+    // mEventRegistrationQueue.push_back(kev);
 
     // Send QUIT message to the channels the client is in.
     std::string quitMsgStr = ":" + client->Nickname + " QUIT";
@@ -841,19 +827,8 @@ EIrcErrorCode Server::disconnectClient(SharedPtr<ClientControlBlock> client, con
     }
     sendMsgToConnectedChannels(client, MakeShared<MsgBlock>(quitMsgStr));
 
-    // Remove from the channels
-    while (!client->Channels.empty())
-    {
-        std::map< std::string, SharedPtr< ChannelControlBlock > >::iterator it = client->Channels.begin();
-        SharedPtr<ChannelControlBlock> channel = it->second;
-        if (channel != NULL)
-        {
-            partClientFromChannel(client, channel);
-        }
-    }
-
-    // Defer the release of the client.
-    mClientReleaseQueue.push_back(client);
+    // Part the client from the channels
+    client->Channels.clear();
 
     return IRC_SUCCESS;
 }
