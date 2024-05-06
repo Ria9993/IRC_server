@@ -2,18 +2,19 @@
 IRC server written by C++98 with Unix kqueue
 
 ## Requirements
-- **MacOS(Recommanded)** or **Unix** or **Linux** system
+- **MacOS(Unix)** system
 - **clang++(Recommanded)** or **g++**
 - **make**
 
 ## Build and Run
-### MacOS or Unix(Not tested)
+### MacOS(Unix)
 ```bash
 $ make
 $ ./ircserv <port> <password>
 ```
-### Linux(Not tested)
-Need to install libkqueue-dev to use kqueue on Linux system
+### Linux(Unstable)
+Need to install libkqueue-dev to use kqueue on Linux system.  
+(The libkqueue library is currently experiencing issues and may not work properly. <https://github.com/mheily/libkqueue/issues/89>)
 ```bash
 $ sudo apt install libkqueue-dev
 $ make
