@@ -46,7 +46,7 @@ struct ControlBlock : public FlexibleMemoryPoolingBase< ControlBlock< T > >
     {
     }
 
-    FORCEINLINE ~ControlBlock()
+    ~ControlBlock()
     {
     }
 };
@@ -83,7 +83,7 @@ class WeakPtr;
 ///@{
 /** @copydetails MakeSharedGroup */
 template <typename T>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared()
+NODISCARD SharedPtr<T> MakeShared()
 {
     detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
     new (&controlBlock->data) T();
@@ -91,7 +91,7 @@ NODISCARD FORCEINLINE SharedPtr<T> MakeShared()
 }
 
 template <typename T, typename A1>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1)
+NODISCARD SharedPtr<T> MakeShared(A1 a1)
 {
     detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
     new (&controlBlock->data) T(a1);
@@ -99,7 +99,7 @@ NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1)
 }
 
 template <typename T, typename A1, typename A2>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2)
+NODISCARD SharedPtr<T> MakeShared(A1 a1, A2 a2)
 {
     detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
     new (&controlBlock->data) T(a1, a2);
@@ -107,7 +107,7 @@ NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2)
 }
 
 template <typename T, typename A1, typename A2, typename A3>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3)
+NODISCARD SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3)
 {
     detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
     new (&controlBlock->data) T(a1, a2, a3);
@@ -115,7 +115,7 @@ NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3)
 }
 
 template <typename T, typename A1, typename A2, typename A3, typename A4>
-NODISCARD FORCEINLINE SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4)
+NODISCARD SharedPtr<T> MakeShared(A1 a1, A2 a2, A3 a3, A4 a4)
 {
     detail::ControlBlock<T>* controlBlock = new detail::ControlBlock<T>();
     new (&controlBlock->data) T(a1, a2, a3, a4);
@@ -165,12 +165,12 @@ class SharedPtr
     friend class WeakPtr<T>;
 
 public:
-    FORCEINLINE SharedPtr()
+    inline SharedPtr()
         : mControlBlock(NULL)
     {
     }
 
-    FORCEINLINE SharedPtr(T* ptr)
+    inline SharedPtr(T* ptr)
         : mControlBlock(NULL)
     {
         if (ptr != NULL)

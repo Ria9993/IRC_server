@@ -44,7 +44,7 @@ public:
     }
 
     /** Allocate a data */
-    NODISCARD FORCEINLINE T* Allocate()
+    NODISCARD T* Allocate()
     {
         if (mCursor < mCapacity)
         {

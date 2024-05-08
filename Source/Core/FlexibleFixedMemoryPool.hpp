@@ -49,7 +49,7 @@ public:
         }
     }
 
-    NODISCARD inline T* Allocate()
+    NODISCARD T* Allocate()
     {
         // Find available pool
         for (; mChunkCursor < mChunks.size(); mChunkCursor++)
@@ -78,7 +78,7 @@ public:
         return reinterpret_cast<T*>(&block->data);
     }
 
-    FORCEINLINE void Deallocate(T* ptr)
+    void Deallocate(T* ptr)
     {
         if (ptr == NULL)
             return;

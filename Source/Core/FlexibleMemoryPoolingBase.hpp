@@ -38,24 +38,24 @@ template <typename DerivedType, size_t MinNumDataPerChunk = 64>
 class FlexibleMemoryPoolingBase
 {
 public:
-    void* operator new(size_t size)
+    FORCEINLINE void* operator new(size_t size)
     {
         Assert(size == sizeof(DerivedType));
         return mPool.Allocate();
     }
 
-    void operator delete(void* ptr)
+    FORCEINLINE void operator delete(void* ptr)
     {
         mPool.Deallocate(static_cast<DerivedType*>(ptr));
     }
 
-    void* operator new(size_t size, void* ptr)
+    FORCEINLINE void* operator new(size_t size, void* ptr)
     {
         Assert(size == sizeof(DerivedType));
         return ptr;
     }
 
-    void operator delete(void* ptr, size_t size)
+    FORCEINLINE void operator delete(void* ptr, size_t size)
     {
         (void)ptr;
         (void)size;
