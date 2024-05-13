@@ -21,10 +21,15 @@ FLAGS = \
 	-Wall -Wextra -pedantic \
 	-std=c++98 \
 	-mavx \
-	-g3 \
-	-DIRCCORE_LOG_ENABLE \
-	-DIRC_VERBOSE_LOG \
-	-fsanitize=address
+	-O2
+
+# Debug flags
+#	-g
+#	-fsanitize=address
+
+# Verbose Log flags
+#	-DIRCCORE_LOG_ENABLE
+#	-DIRC_VERBOSE_LOG
 
 all: $(NAME)
 
