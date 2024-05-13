@@ -22,12 +22,14 @@ $ ./ircserv <port> <password>
 ```
 
 ## Features
-Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459 
-### Not Supported
+Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459  
+
+**Not Supported**  
 - Server to Server communication
 - Commands not listed in below supported section
 - User mode
-### Supported Commands
+
+**Supported Commands**  
 - PASS
 - NICK
 - USER
@@ -44,15 +46,15 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - [ ] Support cross-platform for kqueue
 
 
-## Doxygen Documentation [<https://ria9993.github.io/IRC_server/annotated.html>]  
-### Class List
-Recommand start with **IRC::Server** class.  
-See <https://ria9993.github.io/IRC_server/annotated.html>.  
-### Directory Hierarchy 
-See <https://ria9993.github.io/IRC_server/files.html>.  
+## Doxygen Documentation
+- **Class List**  
+    Recommand start with **IRC::Server** class.  
+    See <https://ria9993.github.io/IRC_server/annotated.html>.  
+- **Directory Hierarchy**  
+    See <https://ria9993.github.io/IRC_server/files.html>.  
 
-## Coding Standard [[CodingStandard.md](/CodingStandard.md)]  
-See [CodingStandard.md](/CodingStandard.md).  
+## Coding Standard
+- See [CodingStandard.md](/CodingStandard.md).  
 
 <br>
 
@@ -189,18 +191,20 @@ int main()
 ```
 
 ## Page Locking Efficiency
-kqueue 구현에 해당되는 것은 아니지만,  
+현재 kqueue 구현에 해당되는 것은 아니지만,  
 윈도우의 IOCP나 Overlapped I/O같은 경우는 send나 recv를 진행할 때  
-DMA를 위해 해당 메모리 페이지를 Nonpageble하게 일명 page lock을 건다.  
+DMA를 위해 해당 메모리 페이지를 Nonpageble하게 일명 page lock이 필요하다.  
 
 이를 수행하는 비용과 nonpageble memory의 프로세스별 한계 용량이 존재하므로  
 이를 잘 고려하여 구현하는 것이 최대 수용량과 성능을 결정하는데,  
-Recv와 send에 사용되는 **MsgBlock**은 전용 메모리 풀을 사용하고,  
-메모리 풀에서 할당받은 블록은 제일 최근에 해제된 블록이므로  
+Recv와 send에 사용되는 **MsgBlock**은 전용 메모리 풀을 사용하므로써  
 Page lock이 필요한 페이지를 최소로 유지할 수 있다.  
 
 거기다 메모리 풀의 구현 또한 이를 고려해  
 내부 청크가 페이지 크기인 4KB 단위로 할당되도록 구현되어있다.  
+
+리눅스의 경우에도 최근 도입된 Uring_IO 기능이 이러한 Page locking을 사용하므로,  
+IOCP나 Uring_IO으로 구현을 변경할 때 무리 없이 변경이 가능하다.  
 
 ## Preprocessor Tuple
 "컴파일 시 튜플" 이라고도 불리는 방법을 사용해 에러코드나 커맨드들을 관리한다.  
