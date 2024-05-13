@@ -45,30 +45,11 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 
 
 ## Doxygen Documentation [<https://ria9993.github.io/IRC_server/annotated.html>]  
-See [Doxygen Documentation](https://ria9993.github.io/IRC_server/annotated.html).  
+### Class List
 Recommand start with **IRC::Server** class.  
-
-Directory Structure.
-```
-Source
-├── main.cpp
-├── Server
-│   ├── Server
-│   ├── ClientControlBlock
-│   ├── ChannelControlBlock
-│   ├── MsgBlock
-│   ├── IrcReplies
-│   └── ...
-├── Network
-│   └── ...
-└── Core
-    ├── SharedPtr
-    ├── FlexibleMemoryPoolingBase
-    ├── FlexibleFixedMemoryPool
-    ├── FixedMemoryPool
-    ├── AttributeDefines.hpp
-    └── ...
-```
+See <https://ria9993.github.io/IRC_server/annotated.html>.  
+### Directory Hierarchy 
+See <https://ria9993.github.io/IRC_server/files.html>.  
 
 ## Coding Standard [[CodingStandard.md](/CodingStandard.md)]  
 See [CodingStandard.md](/CodingStandard.md).  
@@ -99,7 +80,7 @@ See [CodingStandard.md](/CodingStandard.md).
 - [**Shared Pointer**](#shared-pointer)  
     약간의 오버헤드가 있지만 채팅서버의 특성 상 상호관계가 많아 메모리 해제 시점이 복잡하므로  
     모든 메시지, 클라이언트, 채널 등의 리소스는 자체 구현한 스마트 포인터로 관리한다.  
-    
+
 - [**Memory Pool**](#memory-pool)  
     메시지, 클라이언트, 채널은 할당이 매우 빈번하므로 메모리 풀을 사용하여 할당/해제 효율, 단편화 방지, 지역성을 챙긴다.  
 
