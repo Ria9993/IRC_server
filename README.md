@@ -134,7 +134,7 @@ Weak    :  ```---►```
 - Source Code: [SharedPtr.hpp](/Source/Core/SharedPtr.hpp)
 
 ## Message Block
-보통 고정 크기의 배열에 **recv()**를 받은 후 클라이언트의 **std::string** 버퍼에 append 하는 식으로 구현하지만  
+보통 고정 크기의 배열에 **recv()** 를 받은 후 클라이언트의 **std::string** 버퍼에 append 하는 식으로 구현하지만  
 Append 시 메모리 resize가 주기적으로 발생하고,  
 순간적인 버퍼링을 위해 늘어난 메모리를 다시 사용하지 않는 경우가 많다.  
 
