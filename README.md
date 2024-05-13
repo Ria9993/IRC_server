@@ -44,9 +44,11 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - [ ] Support cross-platform for kqueue
 
 
-## Doxygen Documentation
-- **<https://ria9993.github.io/IRC_server/annotated.html>**  
-    (Recommand start with **IRC::Server** class)
+## Doxygen Documentation [<https://ria9993.github.io/IRC_server/annotated.html>]  
+See [Doxygen Documentation](https://ria9993.github.io/IRC_server/annotated.html).  
+Recommand start with **IRC::Server** class.  
+
+Directory Structure.
 ```
 Source
 ├── main.cpp
@@ -68,25 +70,24 @@ Source
     └── ...
 ```
 
-## Coding Standard
-- [**./CodingStandard.md**](/CodingStandard.md)
+## Coding Standard [[CodingStandard.md](/CodingStandard.md)]  
+See [CodingStandard.md](/CodingStandard.md).  
 
-
-***
+<br>
 
 # Architecture
 이 단락은 해당 프로젝트의 목표와 주요 개념, 설계 사항을 설명한다.
 
-## Server Process Flow Overview  
-<p><img src="https://raw.github.com/ria9993/irc_server/master/irc_server_flowgraph_overview.svg" width="700"></p>
+## Diagrams
+| <p><img src="https://raw.github.com/ria9993/irc_server/master/irc_server_flowgraph_overview.svg" width="800"></p> |
+|:--:| 
+| **Server Process Flow Overview (Click to see full size)** |
 
-(Click to see full size)
+<br>
 
-### Class Hierarchy
-<p><img src="https://raw.github.com/ria9993/irc_server/master/dot_inline_dotgraph_2_org.svg" width="400"></p>
-
-Strong  :  ```───►```  
-Weak    :  ```---►```  
+| <p><img src="https://raw.github.com/ria9993/irc_server/master/dot_inline_dotgraph_2_org.svg" width="500"></p> |
+|:--:| 
+| **Class Hierarchy (Strong  :  ```───►```  Weak    :  ```---►```)** |
 
 ## Summary
 해당 프로젝트는 서버로서의 **성능**과 타 프로그래머의 참여를 위한 **유지보수**를 주요 목표로 한다.  
@@ -98,10 +99,13 @@ Weak    :  ```---►```
 - [**Shared Pointer**](#shared-pointer)  
     약간의 오버헤드가 있지만 채팅서버의 특성 상 상호관계가 많아 메모리 해제 시점이 복잡하므로  
     모든 메시지, 클라이언트, 채널 등의 리소스는 자체 구현한 스마트 포인터로 관리한다.  
+    
 - [**Memory Pool**](#memory-pool)  
     메시지, 클라이언트, 채널은 할당이 매우 빈번하므로 메모리 풀을 사용하여 할당/해제 효율, 단편화 방지, 지역성을 챙긴다.  
+
 - [**Message Block**](#message-block)  
     메시지 풀을 사용하기 위해 recv/send에 쓰이는 메시지 블록을 고정 길이로 제한함.  
+
 - [**Page Locking Efficiency**](#page-locking-efficiency)  
     메모리 풀로 메시지 블록의 지역성을 높이고 내부 청크가 페이지 단위로 할당되도록 구현하여 page lock을 최소화함.  
 
@@ -114,10 +118,13 @@ Weak    :  ```---►```
 
 - **<https://ria9993.github.io/IRC_server/irc_server_kqueue_udata.html>**  
     kevent의 udata필드 값으로 SharedPtr의 ControlBlock을 담는다는 복잡한 구현을 결정한 이유  
+
 - [**Deferred Message Processing**](#deferred-message-processing)  
     TCP 속도 저하를 방지하기 위해 클라이언트로부터 받은 메시지를 곧바로 처리하지 않고 대기열에 추가됨.  
+
 - [**Deferred Registration**](#deferred-registration)  
     kqueue에 이벤트를 등록하거나 수정하는 것을 최소화하기 위해 대기열에 추가하고 한 번에 처리함.  
+
 - [**Deferred Client Release**](#deferred-client-release)  
     클라이언트의 연결이 끊어진 후 곧바로 소켓을 닫지 않고 대기열에 추가하여 해제된 클라이언트를 접근하는 예외를 방지함.  
     성능을 더 희생한다면 이 방법을 사용하지 않아도 되었지만,  
@@ -130,9 +137,11 @@ Weak    :  ```---►```
 
 - [**Preprocessor Tuple**](#preprocessor-tuple)  
     명령어나 응답 코드를 한 번에 리스트로 관리하고, 수정/추가할 때의 실수를 방지한다.  
+
 - 메시지 파싱, 메시지 실행 등의 경우 기능의 Input/Output, 책임 범위를 명확하게 정한다.  
     한 예로. 모든 명령어 실행 함수는 공백으로 구분된 인자를 받아 메시지 권한 판별과 실행, 응답을 모두 처리해야 한다.  
     이는 명령어 추가/수정을 쉽게 하고, 실행 플로우를 하나로 유지할 수 있도록 한다.  
+
 - 채널 참여/퇴장, 클라이언트 연결 해제, Reply 메시지 생성/전송 등의 경우  
     이에 대한 함수를 제공하여 별도의 예외 처리를 하거나 누락을 방지하도록 함.  
 
