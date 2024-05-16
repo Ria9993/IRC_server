@@ -100,10 +100,11 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 오히려 이 부분의 복잡도를 올림으로써 다른 부분의 복잡도를 낮추는 등의 기술적인 선택이 이루어졌다.  
 
 - **<https://ria9993.github.io/IRC_server/irc_server_kqueue_udata.html>**  
-    kevent의 udata필드 값으로 SharedPtr의 ControlBlock을 담는다는 복잡한 구현을 결정한 이유  
-
+    이벤트 반환 시 포인터 접근으로 File descriptor를 통한 클라이언트 탐색을 없애면서 동시에 Shared pointer 사용을 위해
+    kevent의 udata필드 값으로 SharedPtr의 ControlBlock 주소를 사용함  
+  
 - [**Deferred Message Processing**](#deferred-message-processing)  
-    TCP 속도 저하를 방지하기 위해 클라이언트로부터 받은 메시지를 곧바로 처리하지 않고 대기열에 추가됨.  
+    TCP 속도 저하를 방지하기 위해 클라이언트로부터 받은 메시지를 곧바로 처리하지 않고 대기열에만 추가됨.  
 
 - [**Deferred Registration**](#deferred-registration)  
     kqueue에 이벤트를 등록하거나 수정하는 것을 최소화하기 위해 대기열에 추가하고 한 번에 처리함.  
