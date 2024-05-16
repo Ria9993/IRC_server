@@ -1,5 +1,9 @@
 # IRC_server
-IRC server written by C++98 with Unix kqueue
+IRC server written by C++98 with Unix kqueue  
+
+**Assignment Specification**
+- Implement IRC protocol with single thread  
+- Use kqueue in MacOS  
 
 ## Requirements
 - **MacOS(Unix)** system
