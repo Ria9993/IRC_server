@@ -100,7 +100,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 오히려 이 부분의 복잡도를 올림으로써 다른 부분의 복잡도를 낮추는 등의 기술적인 선택이 이루어졌다.  
 
 - **<https://ria9993.github.io/IRC_server/irc_server_kqueue_udata.html>**  
-    이벤트 반환 시 포인터 접근으로 File descriptor를 통한 클라이언트 탐색을 없애면서 동시에 Shared pointer 사용을 위해
+    이벤트 반환 시 포인터 접근을 사용해 File descriptor를 통한 클라이언트 탐색을 없애면서, 동시에 Shared pointer 사용을 위해
     kevent의 udata필드 값으로 SharedPtr의 ControlBlock 주소를 사용함  
   
 - [**Deferred Message Processing**](#deferred-message-processing)  
