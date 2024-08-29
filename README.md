@@ -1,19 +1,24 @@
 # IRC_server
 IRC server written by C++98 with Unix kqueue  
 
-**Assignment Specification**
-- Implement IRC protocol with single thread  
-- Use kqueue in MacOS
-
-## Preview
+## Table Of Content
+1. [Preview](#preview)
+2. [Build and Run](#build-and-run)
+3. [IRC Feature](#features)
+4. [Documents](#documents)
+5. [**Architecture & Diagrams**](#architecture)
+---
+   
+### Preview
 https://github.com/Ria9993/IRC_server/assets/44316628/81f62e31-5a5e-4266-98fa-d7a93ddd7586
 
-## Requirements
+## Build and Run
+
+### Requirements
 - **MacOS(Unix)** system
 - **clang++(Recommanded)** or **g++**
 - **make**
 
-## Build and Run
 ### MacOS(Unix)
 ```bash
 $ make
@@ -37,6 +42,7 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - User mode
 
 **Supported Commands**  
+```
 - PASS
 - NICK
 - USER
@@ -48,24 +54,21 @@ Based on RFC 1459 : https://datatracker.ietf.org/doc/html/rfc1459
 - KICK
 - TOPIC
 - INVITE
+```
 
-## Todo
-- [ ] Support cross-platform for kqueue
-
-
-## Doxygen Documentation
+## Documents
+### Coding Standard
+- See [CodingStandard.md](/CodingStandard.md).
+### Doxygen
 - **Class List**  
     Recommand start with **IRC::Server** class.  
     See <https://ria9993.github.io/IRC_server/annotated.html>.  
 - **Directory Hierarchy**  
     See <https://ria9993.github.io/IRC_server/files.html>.  
 
-## Coding Standard
-- See [CodingStandard.md](/CodingStandard.md).  
-
 <br>
 
-## + Review
+### + Review
 스마트 포인터가 오히려 해제 시점를 명확하게 하지 못하게 한다는 문제가 있다.  
 스마트 포인터의 사용으로 명시적 해제가 가려지는 부분들이 몇 군데 있어서    
 c/c++의 장점을 오히려 이용하지 못 한다는 느낌이라 채널같은 경우, 로우한 포인터로 관리하는게 맞을 것 같다.  
